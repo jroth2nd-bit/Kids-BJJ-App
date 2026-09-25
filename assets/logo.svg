@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="180" height="180" viewBox="0 0 180 180" fill="none">
+  <defs>
+    <path id="topArc" d="M 25 90 A 65 65 0 0 1 155 90"/>
+    <path id="bottomArc" d="M 155 90 A 65 65 0 0 1 25 90"/>
+  </defs>
+  <g fill="#111111" font-family="Georgia, 'Times New Roman', serif" font-weight="700" letter-spacing="2">
+    <text font-size="15"><textPath href="#topArc" startOffset="50%" text-anchor="middle">BLACK LOTUS</textPath></text>
+    <text font-size="8.2" letter-spacing="1.1"><textPath href="#bottomArc" startOffset="50%" text-anchor="middle">BRAZILIAN JIU JITSU ACADEMY</textPath></text>
+  </g>
+  <g stroke="#111111" stroke-width="2" fill="none">
+    <circle cx="90" cy="90" r="43"/>
+    <circle cx="90" cy="90" r="36" stroke-width="1"/>
+    <path d="M18 90h13M149 90h13"/>
+  </g>
+  <g transform="translate(90 90)" fill="#111111" stroke="#111111" stroke-width="1.2">
+    <path d="M0-30C-7-22-10-12 0 0C10-12 7-22 0-30Z"/>
+    <path d="M0-30C-7-22-10-12 0 0C10-12 7-22 0-30Z" transform="rotate(45)"/>
+    <path d="M0-30C-7-22-10-12 0 0C10-12 7-22 0-30Z" transform="rotate(90)"/>
+    <path d="M0-30C-7-22-10-12 0 0C10-12 7-22 0-30Z" transform="rotate(135)"/>
+    <path d="M0-30C-7-22-10-12 0 0C10-12 7-22 0-30Z" transform="rotate(180)"/>
+    <path d="M0-30C-7-22-10-12 0 0C10-12 7-22 0-30Z" transform="rotate(225)"/>
+    <path d="M0-30C-7-22-10-12 0 0C10-12 7-22 0-30Z" transform="rotate(270)"/>
+    <path d="M0-30C-7-22-10-12 0 0C10-12 7-22 0-30Z" transform="rotate(315)"/>
+    <circle cx="0" cy="0" r="8" fill="#fff"/>
+    <circle cx="0" cy="0" r="3"/>
+  </g>
+</svg>

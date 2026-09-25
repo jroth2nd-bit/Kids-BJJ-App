@@ -1,0 +1,106 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Admin — BJJ Attendance</title>
+    <link rel="stylesheet" href="styles.css?v=24" />
+  </head>
+  <body>
+    <main class="container">
+      <header class="header">
+        <h1>Admin — Import / Export</h1>
+        <p class="sub">CSV/JSON import tools, merge preview and backups</p>
+        <div id="global-nav"></div>
+      </header>
+
+      <section class="admin-layout" aria-label="Admin tools">
+        <article class="admin-card admin-card-import">
+          <h2>Import Data</h2>
+          <p class="muted">Bring in JSON or CSV files from another device or backup.</p>
+
+          <div class="admin-row">
+            <label for="importJsonFile">Import JSON</label>
+            <input id="importJsonFile" type="file" accept="application/json" />
+          </div>
+
+          <div class="admin-row">
+            <label for="csvTypeSelect">CSV type</label>
+            <select id="csvTypeSelect">
+              <option value="students">Students</option>
+              <option value="attendance">Attendance</option>
+            </select>
+            <input id="csvImportFile" type="file" accept="text/csv" />
+            <div class="csv-mode" role="radiogroup" aria-label="CSV import mode">
+              <label><input type="radio" name="csvMode" value="merge" checked /> Merge</label>
+              <label><input type="radio" name="csvMode" value="overwrite" /> Overwrite</label>
+            </div>
+          </div>
+
+          <div id="csvImportContainer" class="csv-import-container"></div>
+        </article>
+
+        <article class="admin-card admin-card-export">
+          <h2>Export & Backup</h2>
+          <p class="muted">Download current app data for transfer or safe keeping.</p>
+
+          <div class="admin-row admin-actions-row">
+            <button id="exportJson" class="btn">Export JSON</button>
+            <button id="exportCsv" class="btn">Export CSV</button>
+            <button id="exportFullBackup" class="btn save">Export Full Backup</button>
+            <button id="undoImport" class="btn cancel">Undo Last Import</button>
+          </div>
+        </article>
+
+        <article class="admin-card admin-card-belts">
+          <h2>Belt Sizes</h2>
+          <p class="muted">Manage the shared Y and A belt sizes shown on Student Info.</p>
+
+          <form id="beltSizeForm" class="admin-row" autocomplete="off">
+            <label for="beltSizeInput">Add Belt Size</label>
+            <input id="beltSizeInput" type="text" placeholder="Y5 or A2L" />
+            <button id="addBeltSize" type="submit" class="btn save">Add Belt Size</button>
+            <button id="resetBeltSizes" type="button" class="btn">Reset Defaults</button>
+          </form>
+
+          <ul id="beltSizesList" class="admin-list"></ul>
+        </article>
+
+        <article class="admin-card admin-card-settings">
+          <h2>Class Settings</h2>
+          <p class="muted">Set the date used to calculate class totals.</p>
+
+          <div class="admin-row admin-settings-row">
+            <label for="classStartDate">Class Count Start Date</label>
+            <input id="classStartDate" type="date" />
+            <button id="saveClassStartDate" class="btn save">Save Start Date</button>
+          </div>
+          <small id="classStartHelp" class="muted">Totals are counted Tue/Thu from this date through today.</small>
+        </article>
+
+        <article class="admin-card admin-card-wide adult-settings">
+          <h2>Adult Class Schedule</h2>
+          <p class="muted">Change Adult class names and times. Monday through Thursday support morning and evening sessions.</p>
+          <div class="admin-row admin-settings-row">
+            <label for="adultClassStartDate">Adult Class Count Start Date</label>
+            <input id="adultClassStartDate" type="date" />
+          </div>
+          <div id="adultScheduleSettings"></div>
+          <div class="notes-actions-row">
+            <button id="saveAdultSettings" class="btn save">Save Adult Schedule</button>
+            <button id="resetAdultSettings" class="btn">Reset Adult Defaults</button>
+            <span id="adultSettingsStatus" class="muted">Ready</span>
+          </div>
+        </article>
+      </section>
+
+      <footer class="footer">
+        <a href="index.html">Back to Attendance</a>
+      </footer>
+    </main>
+
+    <script type="module" src="auth-guard.js"></script>
+    <script type="module" src="nav.js?v=12"></script>
+    <script type="module" src="admin.js?v=9"></script>
+  </body>
+</html>

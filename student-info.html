@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Student Info - Black Lotus BJJ</title>
+    <link rel="stylesheet" href="styles.css?v=26" />
+  </head>
+  <body class="student-info-page">
+    <main class="container">
+      <header class="header">
+        <h1>Student Info</h1>
+        <p class="sub">Manage student profiles, attendance, ranks, belt sizes, and waivers</p>
+        <div id="global-nav"></div>
+      </header>
+      <section class="student-info-controls" aria-label="Student filters">
+        <label>Type<select id="typeFilter"><option value="all">All students</option><option value="child">Child</option><option value="adult">Adult</option></select></label>
+        <label>Search<input id="nameSearch" type="search" placeholder="Search by name" /></label>
+        <label>Rank<select id="rankFilter"><option value="">All ranks</option></select></label>
+        <label>Attendance<select id="attendanceFilter"><option value="all">All attendance</option><option value="none">No attendance</option><option value="recent">Attended in last 30 days</option><option value="high">75% or higher</option><option value="low">Below 50%</option></select></label>
+        <label>Status<select id="statusFilter"><option value="all" selected>All</option><option value="active">Active</option><option value="inactive">Inactive</option></select></label>
+        <label>Promote<select id="promoteFilter"><option value="all" selected>All</option><option value="marked">Marked for promotion</option><option value="unmarked">Not marked</option></select></label>
+        <button id="printStudents" class="btn">Print</button>
+      </section>
+      <div id="studentInfoStatus" class="muted" role="status">Ready</div>
+      <section class="student-info-table" aria-label="Student information">
+        <div class="student-info-header"><span data-sort="firstName">First name</span><span data-sort="lastName">Last name</span><span data-sort="attendance">Attendance</span><span>Type</span><span>Rank</span><span>Belt size</span><span>Target rank</span><span>Promote</span><span>Confirmed</span><span>Start date</span><span>Active</span></div>
+        <div id="studentInfoList"></div>
+        <section id="inactiveStudentsSection" class="student-info-inactive-section" hidden>
+          <button id="inactiveStudentsToggle" class="student-info-inactive-toggle" type="button">&gt; Inactive</button>
+          <div id="inactiveStudentInfoList" hidden></div>
+        </section>
+      </section>
+    </main>
+    <script type="module" src="auth-guard.js"></script>
+    <script type="module" src="nav.js?v=14"></script>
+    <script type="module" src="student-info.js?v=1"></script>
+  </body>
+</html>

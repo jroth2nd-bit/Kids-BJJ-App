@@ -1,0 +1,9 @@
+<!doctype html>
+<html lang="en">
+  <head><meta charset="utf-8" /><meta name="viewport" content="width=device-width,initial-scale=1" /><title>Adult Promotions — BJJ Attendance</title><link rel="stylesheet" href="styles.css?v=22" /></head>
+  <body class="promotion-page adult-promotion-page"><main class="container"><header class="header"><h1>Adult Promotions</h1><p class="sub">Schedule and record Adult belt promotions</p><div id="global-nav"></div></header>
+    <section class="controls"><label>Filter Rank <select id="adultRankFilter"><option value="">All ranks</option></select></label><button id="adultExportJson" class="btn">Export JSON</button><button id="adultExportCsv" class="btn">Export CSV</button><button id="adultPrintBtn" class="btn">Print</button></section>
+    <div class="promo-row header"><div class="col name">Name</div><div class="col current">Current Rank</div><div class="col stats">Attendance Summary</div><div class="col belt">Belt Size</div><div class="col target">Target Rank</div><div class="col stock">In Stock</div><div class="col confirmed">Confirmed</div><div class="col action">Action</div></div><section id="adultPromoList"></section>
+    <div class="note muted">Adult belt sizes: A0, A1, A2, A2L, A3, A3L, A4, A5.</div>
+  </main><script type="module" src="auth-guard.js"></script><script type="module" src="nav.js?v=12"></script><script type="module" src="adult-promotion.js?v=11"></script></body>
+</html>

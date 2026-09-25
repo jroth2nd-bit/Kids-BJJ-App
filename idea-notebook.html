@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Idea Notebook — BJJ Attendance</title>
+    <link rel="stylesheet" href="styles.css?v=16" />
+  </head>
+  <body>
+    <main class="container">
+      <header class="header">
+        <h1>Idea Notebook</h1>
+        <p class="sub">Capture drills, games, warm-up variations, and resource links for future classes</p>
+        <div id="global-nav"></div>
+      </header>
+
+      <section class="ideas-layout">
+        <aside class="ideas-sidebar">
+          <div class="ideas-col-head">
+            <h3>Sections</h3>
+            <button id="addSection" class="btn">Add Section</button>
+          </div>
+          <ul id="sectionsList" class="ideas-list"></ul>
+
+          <div class="ideas-col-head">
+            <h3>Subsections</h3>
+            <button id="addSubsection" class="btn">Add Subsection</button>
+          </div>
+          <ul id="subsectionsList" class="ideas-list"></ul>
+        </aside>
+
+        <section class="ideas-editor-card">
+          <div class="ideas-meta-row">
+            <label for="sectionName">Section</label>
+            <input id="sectionName" type="text" placeholder="Games" />
+            <button id="saveSectionName" class="btn">Rename Section</button>
+            <button id="deleteSection" class="btn cancel">Delete Section</button>
+          </div>
+
+          <div class="ideas-meta-row">
+            <label for="subsectionName">Subsection</label>
+            <input id="subsectionName" type="text" placeholder="Bull in the Ring" />
+            <button id="saveSubsectionName" class="btn">Rename Subsection</button>
+            <button id="deleteSubsection" class="btn cancel">Delete Subsection</button>
+          </div>
+
+          <div id="ideasToolbar" class="notes-toolbar" role="toolbar" aria-label="Idea notebook formatting toolbar">
+            <button type="button" class="btn" data-cmd="bold"><strong>B</strong></button>
+            <button type="button" class="btn" data-cmd="italic"><em>I</em></button>
+            <button type="button" class="btn" data-cmd="underline"><u>U</u></button>
+            <button type="button" class="btn" data-cmd="insertUnorderedList">Bullets</button>
+            <button type="button" class="btn" data-cmd="insertOrderedList">Numbered</button>
+            <button type="button" class="btn" data-cmd="formatBlock" data-value="h3">H3</button>
+            <button type="button" class="btn" data-cmd="formatBlock" data-value="p">Paragraph</button>
+            <input id="linkUrl" type="url" placeholder="https://youtube.com/..." class="link-url-input" />
+            <button type="button" id="insertLink" class="btn">Insert Link</button>
+            <button type="button" class="btn" data-cmd="removeFormat">Clear</button>
+          </div>
+
+          <div id="ideaEditor" class="rich-editor" contenteditable="true" aria-label="Idea notebook rich text editor"></div>
+
+          <div class="notes-actions-row">
+            <button id="saveIdea" class="btn save">Save</button>
+            <button id="exportIdeasJson" class="btn">Export JSON</button>
+            <button id="exportIdeasCsv" class="btn">Export CSV</button>
+            <span id="ideasStatus" class="muted">Ready</span>
+          </div>
+        </section>
+      </section>
+    </main>
+
+    <script type="module" src="auth-guard.js"></script>
+    <script type="module" src="nav.js?v=12"></script>
+    <script type="module" src="idea-notebook.js?v=6"></script>
+  </body>
+</html>

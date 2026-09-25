@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Kids Attendanece — BJJ Attendance Tracker</title>
+    <link rel="stylesheet" href="styles.css?v=16" />
+  </head>
+  <body class="attendance-page">
+    <main class="container">
+      <header class="header">
+        <h1>Kids Attendanece</h1>
+        <p class="sub">Simple attendance tracker for classes</p>
+        <div id="global-nav"></div>
+      </header>
+
+      <section class="controls">
+        <label for="datePicker">Date</label>
+        <input id="datePicker" type="date" />
+
+        <form id="addStudentForm" class="add-student" autocomplete="off">
+          <input id="firstName" name="firstName" placeholder="First name" required />
+          <input id="lastName" name="lastName" placeholder="Last name" required />
+          <button type="submit">Add</button>
+        </form>
+
+        <button id="exportJson" class="btn">Export JSON</button>
+        <button id="exportCsv" class="btn">Export CSV</button>
+      </section>
+
+      <section class="attendance-section">
+        <h2>Attendance</h2>
+        <div class="attendance-headers">
+          <div class="col first">First Name</div>
+          <div class="col last-name">Last Name</div>
+          <div class="col classes">Classes</div>
+          <div class="col percent">Percent</div>
+          <div class="col last">Last Attended</div>
+          <div class="col actions">Actions</div>
+        </div>
+        <ul id="studentsList" class="students-list"></ul>
+      </section>
+
+      <section class="inactive-section">
+        <h3>Inactive Students</h3>
+        <ul id="inactiveList" class="inactive-list"></ul>
+      </section>
+
+      <footer class="footer">
+        <small>Data stored locally in your browser.</small>
+      </footer>
+    </main>
+
+    <script type="module" src="auth-guard.js"></script>
+    <script type="module" src="nav.js?v=12"></script>
+    <script type="module" src="ui.js?v=14"></script>
+  </body>
+</html>

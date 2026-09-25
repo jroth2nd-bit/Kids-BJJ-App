@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Sign In — Black Lotus BJJ</title>
+    <link rel="stylesheet" href="styles.css?v=24" />
+    <style>
+      .auth-shell { min-height: 100vh; display: grid; place-items: center; padding: 24px; }
+      .auth-card { width: min(100%, 420px); background: var(--card); border: 1px solid rgba(255,255,255,.08); border-radius: 8px; padding: 28px; box-shadow: 0 14px 40px rgba(0,0,0,.28); }
+      .auth-card h1 { margin-top: 0; }
+      .auth-form { display: grid; gap: 14px; }
+      .auth-form label { display: grid; gap: 6px; font-weight: 600; }
+      .auth-form input { width: 100%; padding: 11px 12px; border: 1px solid rgba(255,255,255,.18); border-radius: 6px; background: #15171a; color: var(--text); font: inherit; }
+      .auth-form button { padding: 11px 14px; border: 0; border-radius: 6px; background: var(--accent); color: #07111a; font: inherit; font-weight: 700; cursor: pointer; }
+      .auth-form button:disabled { opacity: .65; cursor: wait; }
+      .auth-status { min-height: 1.4em; color: var(--muted); }
+      .auth-error { color: #fca5a5; }
+    </style>
+  </head>
+  <body>
+    <main class="auth-shell">
+      <section class="auth-card" aria-labelledby="loginTitle">
+        <h1 id="loginTitle">Black Lotus BJJ</h1>
+        <p id="loginDescription" class="sub">Sign in to manage the academy app.</p>
+        <form id="loginForm" class="auth-form">
+          <label for="email">Email<input id="email" name="email" type="email" autocomplete="email" required /></label>
+          <label for="password">Password<input id="password" name="password" type="password" autocomplete="current-password" required /></label>
+          <label id="newPasswordRow" for="newPassword" hidden>New password<input id="newPassword" name="newPassword" type="password" autocomplete="new-password" minlength="8" /></label>
+          <button type="submit">Sign in</button>
+          <p id="loginStatus" class="auth-status" role="status" aria-live="polite"></p>
+        </form>
+      </section>
+    </main>
+    <script type="module" src="auth.js"></script>
+  </body>
+</html>

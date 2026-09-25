@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Adult Class Notes — BJJ Attendance</title>
+    <link rel="stylesheet" href="styles.css?v=19" />
+  </head>
+  <body class="adult-notes-page">
+    <main class="container">
+      <header class="header">
+        <h1>Adult Class Notes</h1>
+        <p class="sub">Plan and review Adult lessons by class, session, and coach</p>
+        <div id="global-nav"></div>
+      </header>
+      <section class="notes-layout">
+        <aside class="notes-sidebar">
+          <div class="notes-sidebar-head"><h3>Class History</h3><button id="newAdultNote" class="btn">New</button></div>
+          <ul id="adultNotesHistory" class="notes-history"></ul>
+        </aside>
+        <section class="notes-editor-card">
+          <div class="notes-meta-row adult-notes-meta">
+            <label for="adultNotesDate">Date</label><input id="adultNotesDate" type="date" />
+            <label for="adultNotesSession">Class</label><select id="adultNotesSession"></select>
+            <label for="adultNotesCoach">Coach</label><input id="adultNotesCoach" type="text" list="adultCoachOptions" placeholder="Coach name" /><datalist id="adultCoachOptions"></datalist>
+            <label for="adultNotesTitle">Lesson Title</label><input id="adultNotesTitle" type="text" placeholder="Armbar from Mount" />
+          </div>
+          <div class="notes-toolbar" id="adultNotesToolbar" role="toolbar" aria-label="Adult class notes formatting toolbar">
+            <button type="button" class="btn" data-cmd="bold"><strong>B</strong></button><button type="button" class="btn" data-cmd="italic"><em>I</em></button><button type="button" class="btn" data-cmd="underline"><u>U</u></button><button type="button" class="btn" data-cmd="insertUnorderedList">Bullets</button><button type="button" class="btn" data-cmd="insertOrderedList">Numbered</button><button type="button" class="btn" data-cmd="formatBlock" data-value="h3">H3</button><button type="button" class="btn" data-cmd="formatBlock" data-value="p">Paragraph</button><button type="button" class="btn" data-cmd="removeFormat">Clear</button>
+          </div>
+          <div id="adultNotesEditor" class="rich-editor" contenteditable="true" aria-label="Adult class notes rich text editor"></div>
+          <div class="notes-actions-row"><button id="saveAdultNote" class="btn save">Save</button><button id="copyPreviousAdultNote" class="btn">Copy Previous</button><button id="deleteAdultNote" class="btn cancel">Delete This Note</button><button id="exportAdultNotesJson" class="btn">Export JSON</button><button id="exportAdultNotesCsv" class="btn">Export CSV</button><span id="adultNotesStatus" class="muted">Ready</span></div>
+        </section>
+      </section>
+    </main>
+    <script type="module" src="auth-guard.js"></script>
+    <script type="module" src="nav.js?v=12"></script>
+    <script type="module" src="adult-class-notes.js?v=2"></script>
+  </body>
+</html>

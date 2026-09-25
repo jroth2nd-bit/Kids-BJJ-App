@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Adult Attendance — BJJ Attendance</title>
+    <link rel="stylesheet" href="styles.css?v=16" />
+  </head>
+  <body class="adult-attendance-page">
+    <main class="container">
+      <header class="header">
+        <h1>Adult Attendance</h1>
+        <p class="sub">Track Adult classes, open mat, and rolling sessions</p>
+        <div id="global-nav"></div>
+      </header>
+      <section class="controls">
+        <label for="adultDatePicker">Date</label>
+        <input id="adultDatePicker" type="date" />
+        <label for="adultSessionSelect">Class</label>
+        <select id="adultSessionSelect"></select>
+        <form id="adultAddStudentForm" class="add-student" autocomplete="off">
+          <input id="adultFirstName" name="firstName" placeholder="First name" required />
+          <input id="adultLastName" name="lastName" placeholder="Last name" required />
+          <button type="submit">Add Adult</button>
+        </form>
+        <button id="adultExportJson" class="btn">Export JSON</button>
+        <button id="adultExportCsv" class="btn">Export CSV</button>
+      </section>
+      <section class="attendance-section">
+        <h2 id="adultSelectedClass">Select a class</h2>
+        <div class="attendance-headers"><div class="col first">First Name</div><div class="col last-name">Last Name</div><div class="col classes">Attended / By Class</div><div class="col percent">Last 30 Days</div><div class="col last">Last Attended</div><div class="col actions">Actions</div></div>
+        <ul id="adultStudentsList" class="students-list"></ul>
+      </section>
+      <section><h3>Inactive Adults</h3><ul id="adultInactiveList" class="inactive-list"></ul></section>
+    </main>
+    <script type="module" src="auth-guard.js"></script>
+    <script type="module" src="nav.js?v=12"></script>
+    <script type="module" src="adult-ui.js?v=5"></script>
+  </body>
+</html>

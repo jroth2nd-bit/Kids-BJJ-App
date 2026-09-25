@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Waivers - Black Lotus BJJ</title>
+    <link rel="stylesheet" href="styles.css?v=25" />
+  </head>
+  <body class="waiver-page">
+    <main class="container">
+      <header class="header">
+        <h1>Waivers</h1>
+        <p class="sub">Create, search, and print signed liability waivers</p>
+        <div id="global-nav"></div>
+      </header>
+      <section class="waiver-layout">
+        <section class="waiver-editor-card">
+          <div class="waiver-section-heading"><h2>New Waiver</h2><button id="clearWaiver" class="btn">New Blank Waiver</button></div>
+          <div class="waiver-form-grid">
+            <label>Participant type<select id="participantType"><option value="adult">Adult</option><option value="child">Child</option></select></label>
+            <label>Participant name<input id="participantName" required /></label>
+            <label>Student record<select id="studentRecord"><option value="">Create or select a record</option></select></label>
+            <label>Date of birth<input id="dateOfBirth" type="date" required /></label>
+            <label>Phone<input id="phone" type="tel" required /></label>
+            <label>Email<input id="email" type="email" required /></label>
+            <label>Emergency contact name<input id="emergencyName" required /></label>
+            <label>Emergency relationship<input id="emergencyRelationship" required /></label>
+            <label>Emergency phone<input id="emergencyPhone" type="tel" required /></label>
+          </div>
+          <div id="guardianFields" class="waiver-form-grid"><label>Parent/Guardian printed name<input id="parentGuardianName" /></label></div>
+          <article class="waiver-document" aria-label="Waiver of liability">
+            <div class="waiver-document-brand"><img src="assets/Copilot_20260913_133023.png" alt="Black Lotus BJJ Academy" /><h2>WAIVER OF LIABILITY</h2></div>
+            <p>In consideration of being permitted to participate in any way, including travel to and from Black Lotus Brazilian Jiu Jitsu Academy LLP, I hereby:</p>
+            <ol>
+              <li>Acknowledge that the term “Activity” will refer to any and all training in jiu jitsu, grappling, striking self-defense, boxing/kickboxing, yoga, or any seminar produced by Black Lotus Brazilian Jiu Jitsu Academy LLP or its agents or held at the location of Black Lotus Brazilian Jiu Jitsu Academy.</li>
+              <li>Acknowledge that I am familiar with the sports and activities of jiu jitsu, grappling, boxing/kickboxing, and yoga and understand the rules governing these sports and activities.</li>
+              <li>Agree that, prior to participating, I will inspect the mats, equipment, training area, and facilities and, if I believe anything is unsafe or beyond my capability, I will immediately advise representatives of Black Lotus Brazilian Jiu Jitsu Academy LLP and refuse to participate.</li>
+              <li>In consideration of the risk of injury while participating in the Activity, and as consideration for the right to participate, I hereby, for myself, my heirs, executors, administrators, assigns, or personal representatives, knowingly and voluntarily enter into this waiver and release of liability and waive any and all rights, claims, or causes of action arising out of my participation. I release and forever discharge Black Lotus Brazilian Jiu Jitsu Academy LLP, located at 22241 Lorain Rd., Fairview Park, OH 44126, and its affiliates, managers, members, agents, attorneys, staff, volunteers, heirs, representatives, predecessors, successors, and assigns from any physical or psychological injury or loss that I may suffer as a direct result of my participation, including travel to and from an event related to this Activity.</li>
+              <li>I AM VOLUNTARILY PARTICIPATING IN THE AFOREMENTIONED ACTIVITY AND I AM PARTICIPATING IN THE ACTIVITY ENTIRELY AT MY OWN RISK. I AM AWARE OF THE RISKS ASSOCIATED WITH TRAVELING TO AND FROM AS WELL AS PARTICIPATING IN THIS ACTIVITY, WHICH MAY INCLUDE, BUT ARE NOT LIMITED TO, PHYSICAL OR PSYCHOLOGICAL INJURY, PAIN, SUFFERING, ILLNESS, DISFIGUREMENT, TEMPORARY OR PERMANENT DISABILITY (INCLUDING PARALYSIS), TRAUMATIC BRAIN INJURY, ECONOMIC OR EMOTIONAL LOSS, AND DEATH. I UNDERSTAND THAT THESE INJURIES OR OUTCOMES MAY ARISE FROM MY OWN OR OTHERS’ NEGLIGENCE, CONDITIONS RELATED TO TRAVEL, OR THE CONDITION OF THE ACTIVITY LOCATION(S). NONETHELESS, I ASSUME ALL RELATED RISKS, BOTH KNOWN AND UNKNOWN TO ME, OF MY PARTICIPATION.</li>
+              <li>I agree to indemnify and hold harmless Black Lotus Brazilian Jiu Jitsu Academy LLP and its agents against any and all claims, suits, or actions of any kind for liability, damages, compensation, or otherwise brought by me or anyone on my behalf, including attorney’s fees and related costs. If Black Lotus Brazilian Jiu Jitsu Academy LLP incurs these expenses, I agree to reimburse it.</li>
+            </ol>
+            <p>I HAVE READ THE ABOVE WARNING, WAIVER, AND RELEASE, UNDERSTANDING THAT I GIVE UP SUBSTANTIAL RIGHTS BY SIGNING IT, AND KNOWING THIS, SIGN IT VOLUNTARILY. I AGREE TO PARTICIPATE KNOWING THE RISKS AND CONDITIONS INVOLVED AND DO SO ENTIRELY ON MY OWN FREE WILL. I AFFIRM THAT I AM AT LEAST 18 YEARS OF AGE, OR, IF I AM UNDER 18 YEARS OF AGE, I HAVE OBTAINED THE REQUIRED CONSENT OF MY PARENT/GUARDIAN AS EVIDENCED BY THEIR SIGNATURE BELOW.</p>
+            <div class="waiver-signature-grid"><strong>Participant (Print Name)</strong><strong>Signature</strong><strong>Date</strong></div>
+            <div class="waiver-signature-grid"><span id="participantPrintPreview">&nbsp;</span><span id="participantSignaturePreview">&nbsp;</span><span id="participantDatePreview">&nbsp;</span></div>
+            <section id="minorGuardianDocument"><h3>FOR PARENTS/GUARDIANS OF PARTICIPANTS OF MINORITY AGE</h3><p>This is to certify that I, as parent/guardian with legal responsibility for this participant, consent and agree to the release provided above. For myself, my heirs, assigns, and next of kin, I release and agree to indemnify and hold harmless the releasees from liabilities incident to my minor child’s participation, even if arising from their negligence, to the fullest extent permitted by law. I have instructed the minor participant as to the above warnings and conditions and their consequences.</p><div class="waiver-signature-grid"><strong>Parent/Guardian (Print Name)</strong><strong>Signature</strong><strong>Date</strong></div><div class="waiver-signature-grid"><span id="guardianPrintPreview">&nbsp;</span><span id="guardianSignaturePreview">&nbsp;</span><span id="guardianDatePreview">&nbsp;</span></div></section>
+          </article>
+          <div class="waiver-signatures">
+            <div><label>Participant typed signature<input id="participantTypedSignature" required /></label><canvas id="participantSignature" class="signature-pad" width="500" height="140"></canvas><button type="button" class="btn" data-clear-canvas="participantSignature">Clear signature</button></div>
+            <div id="guardianSignatureFields"><label>Parent/Guardian typed signature<input id="guardianTypedSignature" /></label><canvas id="guardianSignature" class="signature-pad" width="500" height="140"></canvas><button type="button" class="btn" data-clear-canvas="guardianSignature">Clear signature</button></div>
+          </div>
+          <label class="waiver-agreement"><input id="agreement" type="checkbox" required /> I have read and agree to the waiver of liability above.</label>
+          <div class="waiver-actions"><button id="saveWaiver" class="btn save">Save Signed Waiver</button><span id="waiverStatus" class="muted">Ready</span></div>
+        </section>
+        <aside class="waiver-records-card"><div class="waiver-section-heading"><h2>Signed Waivers</h2><button id="printRecord" class="btn" disabled>Print selected</button></div><input id="waiverSearch" class="waiver-search" type="search" placeholder="Search name, phone, or email" /><div id="waiverRecords"></div></aside>
+      </section>
+    </main>
+    <script type="module" src="auth-guard.js"></script>
+    <script type="module" src="nav.js?v=13"></script>
+    <script type="module" src="waiver.js?v=1"></script>
+  </body>
+</html>

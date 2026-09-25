@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Migrate Ideas - Black Lotus BJJ</title>
+    <link rel="stylesheet" href="styles.css?v=24" />
+    <style>
+      .migration-card { max-width: 720px; margin: 24px auto; }
+      .migration-summary { display: grid; gap: 8px; margin: 18px 0; }
+      .migration-actions { display: flex; gap: 10px; flex-wrap: wrap; }
+      .migration-status { min-height: 1.5em; margin-top: 16px; }
+    </style>
+  </head>
+  <body>
+    <main class="container">
+      <header class="header">
+        <h1>Idea Notebook Migration</h1>
+        <p class="sub">Preview and copy shared ideas to Supabase.</p>
+        <div id="global-nav"></div>
+      </header>
+      <section class="admin-card migration-card">
+        <h2>Local records found</h2>
+        <div id="migrationSummary" class="migration-summary"></div>
+        <div class="migration-actions">
+          <button id="refreshMigration" class="btn">Refresh preview</button>
+          <button id="migrateIdeas" class="btn save">Migrate ideas</button>
+        </div>
+        <p id="migrationStatus" class="migration-status muted" role="status" aria-live="polite"></p>
+      </section>
+    </main>
+    <script type="module" src="auth-guard.js"></script>
+    <script type="module" src="nav.js?v=12"></script>
+    <script type="module" src="migrate-ideas.js"></script>
+  </body>
+</html>
