@@ -28,7 +28,7 @@ function makeNav(){
   const a1 = document.createElement('a');
   a1.href = 'index.html';
   a1.className = 'nav-link';
-  a1.textContent = 'Kids Attendanece';
+  a1.textContent = 'Kids Attendance';
 
   const a2 = document.createElement('a');
   a2.href = 'promotion.html';
