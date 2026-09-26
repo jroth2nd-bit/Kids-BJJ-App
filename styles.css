@@ -1486,7 +1486,7 @@ button,input,select,.btn{min-height:38px}
   .attendance-page .detail-actions{gap:6px!important}
   .attendance-page .detail-actions .btn{padding:7px 8px!important}
   .attendance-page .student-main>.edit,.attendance-page .student-main>.inactive,.attendance-page .student-details .student-edit-action,.attendance-page .student-details .student-inactive-action,.attendance-page .detail-actions .history-full,.attendance-page .detail-actions .attendance-add{justify-content:center!important;text-align:center!important}
-  .attendance-page .student-details .student-edit-action{background:transparent!important;border:1px solid #3b82f6!important;color:#bfdbfe!important}
+  .attendance-page .student-details .student-edit-action{display:none!important}
   .attendance-page .student-details .student-edit-action,.attendance-page .student-details .student-inactive-action{min-height:34px!important;padding:6px 10px!important}
 }
 @media (min-width:761px){.attendance-page .student-details .student-edit-action,.attendance-page .student-details .student-inactive-action,.attendance-page .detail-actions .history-full,.attendance-page .detail-actions .attendance-add{text-align:center!important}}
