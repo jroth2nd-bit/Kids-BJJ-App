@@ -11,9 +11,11 @@
       .auth-card h1 { margin-top: 0; }
       .auth-form { display: grid; gap: 14px; }
       .auth-form label { display: grid; gap: 6px; font-weight: 600; }
+      .auth-form [hidden] { display: none; }
       .auth-form input { width: 100%; padding: 11px 12px; border: 1px solid rgba(255,255,255,.18); border-radius: 6px; background: #15171a; color: var(--text); font: inherit; }
       .auth-form button { padding: 11px 14px; border: 0; border-radius: 6px; background: var(--accent); color: #07111a; font: inherit; font-weight: 700; cursor: pointer; }
       .auth-form button:disabled { opacity: .65; cursor: wait; }
+      .auth-form .auth-link { padding: 0; background: transparent; color: var(--accent); font-size: .95rem; text-align: left; text-decoration: underline; }
       .auth-status { min-height: 1.4em; color: var(--muted); }
       .auth-error { color: #fca5a5; }
     </style>
@@ -24,9 +26,12 @@
         <h1 id="loginTitle">Black Lotus BJJ</h1>
         <p id="loginDescription" class="sub">Sign in to manage the academy app.</p>
         <form id="loginForm" class="auth-form">
-          <label for="email">Email<input id="email" name="email" type="email" autocomplete="email" required /></label>
-          <label for="password">Password<input id="password" name="password" type="password" autocomplete="current-password" required /></label>
+          <label id="emailRow" for="email">Email<input id="email" name="email" type="email" autocomplete="email" required /></label>
+          <label id="passwordRow" for="password">Password<input id="password" name="password" type="password" autocomplete="current-password" required /></label>
           <label id="newPasswordRow" for="newPassword" hidden>New password<input id="newPassword" name="newPassword" type="password" autocomplete="new-password" minlength="8" /></label>
+          <label id="passwordConfirmRow" for="passwordConfirm" hidden>Confirm new password<input id="passwordConfirm" name="passwordConfirm" type="password" autocomplete="new-password" minlength="8" /></label>
+          <button id="forgotPassword" type="button" class="auth-link">Forgot password?</button>
+          <button id="backToSignIn" type="button" class="auth-link" hidden>Back to sign in</button>
           <button type="submit">Sign in</button>
           <p id="loginStatus" class="auth-status" role="status" aria-live="polite"></p>
         </form>

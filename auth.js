@@ -1,14 +1,20 @@
 import { supabase } from './supabase-client.js';
 
 const form = document.getElementById('loginForm');
+const emailRow = document.getElementById('emailRow');
 const emailInput = document.getElementById('email');
+const passwordRow = document.getElementById('passwordRow');
 const passwordInput = document.getElementById('password');
 const newPasswordRow = document.getElementById('newPasswordRow');
 const newPasswordInput = document.getElementById('newPassword');
+const passwordConfirmRow = document.getElementById('passwordConfirmRow');
+const passwordConfirmInput = document.getElementById('passwordConfirm');
 const description = document.getElementById('loginDescription');
 const status = document.getElementById('loginStatus');
 const submitButton = form.querySelector('button[type="submit"]');
-let recoveryMode = false;
+const forgotPasswordButton = document.getElementById('forgotPassword');
+const backToSignInButton = document.getElementById('backToSignIn');
+let mode = 'login';
 
 function isRecoveryLink() {
   return new URLSearchParams(window.location.hash.slice(1)).get('type') === 'recovery';
@@ -41,9 +47,14 @@ async function redirectIfSignedIn() {
 form.addEventListener('submit', async (event) => {
   event.preventDefault();
   submitButton.disabled = true;
-  setStatus(recoveryMode ? 'Updating password...' : 'Signing in...');
+  setStatus(mode === 'reset' ? 'Updating password...' : mode === 'forgot' ? 'Sending reset email...' : 'Signing in...');
 
-  if (recoveryMode) {
+  if (mode === 'reset') {
+    if (newPasswordInput.value !== passwordConfirmInput.value) {
+      submitButton.disabled = false;
+      setStatus('The new passwords do not match.', true);
+      return;
+    }
     const { error } = await supabase.auth.updateUser({ password: newPasswordInput.value });
     if (error) {
       submitButton.disabled = false;
@@ -51,15 +62,23 @@ form.addEventListener('submit', async (event) => {
       return;
     }
     await supabase.auth.signOut();
-    recoveryMode = false;
-    newPasswordRow.hidden = true;
-    newPasswordInput.required = false;
-    passwordInput.hidden = false;
-    passwordInput.required = true;
+    setLoginMode();
     description.textContent = 'Your password was updated. Sign in to continue.';
-    submitButton.textContent = 'Sign in';
     setStatus('Password updated successfully.');
     submitButton.disabled = false;
+    return;
+  }
+
+  if (mode === 'forgot') {
+    const { error } = await supabase.auth.resetPasswordForEmail(emailInput.value.trim(), {
+      redirectTo: `${window.location.origin}${window.location.pathname}`,
+    });
+    submitButton.disabled = false;
+    if (error) {
+      setStatus(error.message, true);
+      return;
+    }
+    setStatus('If an account exists for that email, a password reset link has been sent.');
     return;
   }
 
@@ -94,15 +113,56 @@ form.addEventListener('submit', async (event) => {
 redirectIfSignedIn();
 
 function showRecoveryForm() {
-  recoveryMode = true;
+  mode = 'reset';
   description.textContent = 'Choose a new password for your account.';
-  passwordInput.hidden = true;
+  emailRow.hidden = true;
+  passwordRow.hidden = true;
+  forgotPasswordButton.hidden = true;
+  backToSignInButton.hidden = false;
   passwordInput.required = false;
   newPasswordRow.hidden = false;
   newPasswordInput.required = true;
+  passwordConfirmRow.hidden = false;
+  passwordConfirmInput.required = true;
   submitButton.textContent = 'Update password';
   setStatus('');
 }
+
+function setLoginMode() {
+  mode = 'login';
+  emailRow.hidden = false;
+  passwordRow.hidden = false;
+  passwordInput.required = true;
+  newPasswordRow.hidden = true;
+  newPasswordInput.required = false;
+  passwordConfirmRow.hidden = true;
+  passwordConfirmInput.required = false;
+  forgotPasswordButton.hidden = false;
+  backToSignInButton.hidden = true;
+  submitButton.textContent = 'Sign in';
+}
+
+forgotPasswordButton.addEventListener('click', () => {
+  mode = 'forgot';
+  description.textContent = 'Enter your email and we will send a password reset link.';
+  passwordRow.hidden = true;
+  passwordInput.required = false;
+  newPasswordRow.hidden = true;
+  newPasswordInput.required = false;
+  passwordConfirmRow.hidden = true;
+  passwordConfirmInput.required = false;
+  forgotPasswordButton.hidden = true;
+  backToSignInButton.hidden = false;
+  submitButton.textContent = 'Send reset link';
+  setStatus('');
+  emailInput.focus();
+});
+
+backToSignInButton.addEventListener('click', () => {
+  setLoginMode();
+  description.textContent = 'Sign in to manage the academy app.';
+  setStatus('');
+});
 
 supabase.auth.onAuthStateChange((event) => {
   if (event === 'PASSWORD_RECOVERY') showRecoveryForm();
