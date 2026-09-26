@@ -63,7 +63,8 @@ function buildDetails(row, student) {
   const history = document.createElement('div'); history.className = 'attendance-history'; renderHistory(history, student);
   const addArea = document.createElement('div'); addArea.className = 'attendance-add-area';
   const actions = document.createElement('div'); actions.className = 'detail-actions';
-  actions.append(makeButton('View Full History', 'history-full', () => history.classList.toggle('history-expanded')), makeButton('Add Attendance', 'attendance-add', () => addAttendanceForm(addArea, student)));
+  const markInactive = () => { if (confirm(`Mark ${student.firstName} ${student.lastName} inactive?`)) { students.setActiveStatus(student.id, false); render(); } };
+  actions.append(makeButton('Edit student', 'student-edit-action', () => enterStudentEdit(row, student)), makeButton('Mark inactive', 'student-inactive-action', markInactive), makeButton('View Full History', 'history-full', () => history.classList.toggle('history-expanded')), makeButton('Add Attendance', 'attendance-add', () => addAttendanceForm(addArea, student)));
   details.append(info, activeLabel, historyTitle, history, actions, addArea); row.appendChild(details);
   details.hidden = expandedStudentId !== student.id;
 }
@@ -91,7 +92,8 @@ function renderActiveStudents(date) {
     const record = attendance.getAttendance(student.id, date);
     const present = document.createElement('button'); present.type = 'button'; present.className = `attendance-toggle ${record?.present ? 'is-present' : ''}`; present.textContent = record?.present ? 'Present' : 'Absent'; present.title = attendance.isScheduledClassDate(date) ? 'Toggle attendance' : 'Attendance is recorded on Tuesdays and Thursdays';
     present.addEventListener('click', () => { expandedStudentId = student.id; attendance.markAttendance(student.id, date, !present.classList.contains('is-present')); render(); });
-    main.append(name, present, makeButton('Edit', 'edit', () => enterStudentEdit(row, student)), makeButton('Mark inactive', 'inactive', () => { if (confirm(`Mark ${student.firstName} ${student.lastName} inactive?`)) { students.setActiveStatus(student.id, false); render(); } }));
+    const markInactive = () => { if (confirm(`Mark ${student.firstName} ${student.lastName} inactive?`)) { students.setActiveStatus(student.id, false); render(); } };
+    main.append(name, present, makeButton('Edit', 'edit', () => enterStudentEdit(row, student)), makeButton('Mark inactive', 'inactive', markInactive));
     row.append(main); buildDetails(row, student); studentsList.appendChild(row);
   });
 }
