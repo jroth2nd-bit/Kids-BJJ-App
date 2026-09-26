@@ -1491,6 +1491,7 @@ button,input,select,.btn{min-height:38px}
 }
 @media (min-width:761px){.attendance-page .student-details .student-edit-action,.attendance-page .student-details .student-inactive-action,.attendance-page .detail-actions .history-full,.attendance-page .detail-actions .attendance-add{text-align:center!important}}
 .attendance-page .student-main>.btn,.attendance-page .detail-actions>.btn,.attendance-page .history-actions>.btn,.attendance-page .attendance-add-row>.btn{display:inline-flex!important;align-items:center!important;justify-content:center!important;text-align:center!important;line-height:1.1!important}
+.adult-session-bar{display:flex;align-items:center;gap:10px;margin:0 0 14px;padding:10px 12px;border:1px solid rgba(255,255,255,.1);border-radius:8px;background:#202326}.adult-session-bar label{color:var(--muted);font-size:.82rem;font-weight:700}.adult-session-bar select{min-width:250px;padding:8px 10px;border:1px solid rgba(255,255,255,.15);border-radius:6px;background:#151719;color:var(--text);font:inherit}.adult-attendance-add-row select{min-width:180px}
 @media (max-width:760px){
   .attendance-page .student-main{grid-template-columns:minmax(0,1fr) 70px 58px 98px!important;gap:6px!important;min-height:52px!important;padding:7px 8px!important}
   .attendance-page .student-main .edit,.attendance-page .student-main .inactive{display:inline-flex!important;grid-column:auto!important;grid-row:auto!important;min-width:0!important;min-height:34px!important;padding:5px 4px!important;font-size:.74rem!important;white-space:nowrap!important}
@@ -1499,4 +1500,5 @@ button,input,select,.btn{min-height:38px}
   .attendance-page .student-main .attendance-toggle{grid-column:auto!important;grid-row:auto!important;min-width:0!important;min-height:34px!important;padding:5px 4px!important;font-size:.74rem!important}
   .attendance-page .student-name-button{min-width:0!important;overflow:hidden!important}
   .attendance-page .student-name-button strong{font-size:.86rem!important}
+  .adult-session-bar{align-items:stretch;flex-direction:column;gap:6px}.adult-session-bar select{min-width:0;width:100%}.adult-attendance-add-row select{min-width:0}
 }
