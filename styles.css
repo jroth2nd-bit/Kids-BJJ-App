@@ -1478,9 +1478,12 @@ button,input,select,.btn{min-height:38px}
   .attendance-page .active-toggle{min-height:28px!important}
   .attendance-page .detail-heading{margin-top:2px!important}
   .attendance-page .attendance-history{gap:4px!important;max-height:160px!important}
+  .attendance-page .attendance-history.history-expanded{max-height:none!important}
   .attendance-page .attendance-history-row{grid-template-columns:minmax(0,1fr) auto auto!important;gap:7px!important;padding:7px 8px!important}
   .attendance-page .history-actions{grid-column:auto!important;display:flex!important;gap:4px!important}
   .attendance-page .history-actions .btn{padding:4px 7px!important;font-size:.72rem!important}
   .attendance-page .detail-actions{gap:6px!important}
   .attendance-page .detail-actions .btn{padding:7px 8px!important}
+  .attendance-page .student-details .student-edit-action,.attendance-page .student-details .student-inactive-action,.attendance-page .detail-actions .history-full,.attendance-page .detail-actions .attendance-add{justify-content:center!important;text-align:center!important}
 }
+@media (min-width:761px){.attendance-page .student-details .student-edit-action,.attendance-page .student-details .student-inactive-action,.attendance-page .detail-actions .history-full,.attendance-page .detail-actions .attendance-add{text-align:center!important}}

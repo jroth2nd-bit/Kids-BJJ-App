@@ -50,7 +50,8 @@ function addAttendanceForm(container, student) {
   const date = Object.assign(document.createElement('input'), { type: 'date', value: datePicker.value || todayISO(), required: true });
   const state = document.createElement('select'); state.innerHTML = '<option value="true">Present</option><option value="false">Absent</option>';
   const submit = makeButton('Save attendance', 'attendance-add', () => { if (date.value) { attendance.markAttendance(student.id, date.value, state.value === 'true'); render(); } });
-  form.append(date, state, submit); container.appendChild(form);
+  const close = makeButton('Cancel', 'cancel', () => container.replaceChildren());
+  form.append(date, state, submit, close); container.appendChild(form);
 }
 
 function buildDetails(row, student) {
@@ -64,7 +65,12 @@ function buildDetails(row, student) {
   const addArea = document.createElement('div'); addArea.className = 'attendance-add-area';
   const actions = document.createElement('div'); actions.className = 'detail-actions';
   const markInactive = () => { if (confirm(`Mark ${student.firstName} ${student.lastName} inactive?`)) { students.setActiveStatus(student.id, false); render(); } };
-  actions.append(makeButton('Edit student', 'student-edit-action', () => enterStudentEdit(row, student)), makeButton('Mark inactive', 'student-inactive-action', markInactive), makeButton('View Full History', 'history-full', () => history.classList.toggle('history-expanded')), makeButton('Add Attendance', 'attendance-add', () => addAttendanceForm(addArea, student)));
+  const historyButton = makeButton('View Full History', 'history-full', () => {
+    const showingFullHistory = history.classList.toggle('history-expanded');
+    historyButton.textContent = showingFullHistory ? 'Hide History' : 'View Full History';
+    if (!showingFullHistory) requestAnimationFrame(() => row.scrollIntoView({ behavior: 'smooth', block: 'center' }));
+  });
+  actions.append(makeButton('Edit student', 'student-edit-action', () => enterStudentEdit(row, student)), makeButton('Mark inactive', 'student-inactive-action', markInactive), historyButton, makeButton('Add Attendance', 'attendance-add', () => addAttendanceForm(addArea, student)));
   details.append(info, activeLabel, historyTitle, history, actions, addArea); row.appendChild(details);
   details.hidden = expandedStudentId !== student.id;
 }
