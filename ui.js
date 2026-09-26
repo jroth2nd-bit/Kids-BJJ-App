@@ -94,7 +94,12 @@ function renderActiveStudents(date) {
     present.addEventListener('click', () => { expandedStudentId = student.id; attendance.markAttendance(student.id, date, !present.classList.contains('is-present')); render(); });
     const markInactive = () => { if (confirm(`Mark ${student.firstName} ${student.lastName} inactive?`)) { students.setActiveStatus(student.id, false); render(); } };
     main.append(name, present, makeButton('Edit', 'edit', () => enterStudentEdit(row, student)), makeButton('Mark inactive', 'inactive', markInactive));
-    row.append(main); buildDetails(row, student); studentsList.appendChild(row);
+    row.append(main); buildDetails(row, student);
+    row.addEventListener('click', (event) => {
+      if (event.target.closest('.student-details, button, input, select, label, a')) return;
+      const details = row.querySelector('.student-details'); details.hidden = !details.hidden; expandedStudentId = details.hidden ? null : student.id;
+    });
+    studentsList.appendChild(row);
   });
 }
 

@@ -1470,6 +1470,7 @@ button,input,select,.btn{min-height:38px}
 @media (max-width:760px){.attendance-page .student-main .edit,.attendance-page .student-main .inactive{display:none!important}.attendance-page .student-main{grid-template-columns:minmax(0,1fr) auto!important;min-height:52px!important;padding:7px 10px!important}.attendance-page .student-name-button{min-height:38px!important}.attendance-page .student-details .student-edit-action,.attendance-page .student-details .student-inactive-action{display:inline-flex!important}.attendance-page .student-details .detail-actions{display:flex!important}.attendance-page .student-details .detail-actions .btn{flex:1 1 130px!important}}
 @media (min-width:761px){.attendance-page .student-details .student-edit-action,.attendance-page .student-details .student-inactive-action{display:none!important}}
 @media (max-width:760px){
+  .attendance-page .student-main::before,.attendance-page .student-details::before{content:none!important;display:none!important}
   .attendance-page .student-details{gap:8px!important;padding:9px!important}
   .attendance-page .student-detail-info{display:flex!important;flex-wrap:wrap!important;gap:4px 10px!important;line-height:1.25!important}
   .attendance-page .student-detail-info span{display:inline!important;padding:0 10px 0 0!important;border-right:1px solid rgba(255,255,255,.15)!important}
