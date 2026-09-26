@@ -4,39 +4,36 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1" />
     <title>Kids Attendance — BJJ Attendance Tracker</title>
-    <link rel="stylesheet" href="styles.css?v=16" />
+    <link rel="stylesheet" href="styles.css?v=17" />
   </head>
   <body class="attendance-page">
     <main class="container">
-      <header class="header">
-        <h1>Kids Attendance</h1>
-        <p class="sub">Simple attendance tracker for classes</p>
+      <header class="attendance-header">
+        <div class="attendance-brand"><img src="assets/Copilot_20260913_133023.png" alt="Black Lotus BJJ" /><h1>Kids Attendance</h1></div>
+        <label class="attendance-date" for="datePicker"><span aria-hidden="true">&#128197;</span><span class="sr-only">Attendance date</span><input id="datePicker" type="date" /></label>
+        <button id="addStudentToggle" class="attendance-primary" type="button">Add</button>
+      </header>
+      <header class="header attendance-nav-header">
+        <p class="sub">Track class attendance and student progress</p>
         <div id="global-nav"></div>
       </header>
 
-      <section class="controls">
-        <label for="datePicker">Date</label>
-        <input id="datePicker" type="date" />
-
-        <form id="addStudentForm" class="add-student" autocomplete="off">
+      <form id="addStudentForm" class="add-student attendance-add-form" autocomplete="off" hidden>
+        <div>
+          <label for="firstName">First name</label>
           <input id="firstName" name="firstName" placeholder="First name" required />
+        </div>
+        <div>
+          <label for="lastName">Last name</label>
           <input id="lastName" name="lastName" placeholder="Last name" required />
-          <button type="submit">Add</button>
-        </form>
-
-        <button id="exportJson" class="btn">Export JSON</button>
-        <button id="exportCsv" class="btn">Export CSV</button>
-      </section>
+        </div>
+        <button class="attendance-primary" type="submit">Add student</button>
+      </form>
 
       <section class="attendance-section">
-        <h2>Attendance</h2>
+        <div class="attendance-section-heading"><div><p class="eyebrow">Kids program</p><h2>Roster</h2></div><p id="attendanceDayStatus" class="muted"></p></div>
         <div class="attendance-headers">
-          <div class="col first">First Name</div>
-          <div class="col last-name">Last Name</div>
-          <div class="col classes">Classes</div>
-          <div class="col percent">Percent</div>
-          <div class="col last">Last Attended</div>
-          <div class="col actions">Actions</div>
+          <div class="col first">Name</div><div class="col present">Present</div><div class="col edit">Edit</div><div class="col inactive">Mark inactive</div>
         </div>
         <ul id="studentsList" class="students-list"></ul>
       </section>
@@ -47,12 +44,13 @@
       </section>
 
       <footer class="footer">
-        <small>Data stored locally in your browser.</small>
+        <small>Data syncs with the academy account.</small>
+        <div class="attendance-exports"><button id="exportJson" class="btn" type="button">Export JSON</button><button id="exportCsv" class="btn" type="button">Export CSV</button></div>
       </footer>
     </main>
 
     <script type="module" src="auth-guard.js"></script>
     <script type="module" src="nav.js?v=12"></script>
-    <script type="module" src="ui.js?v=14"></script>
+    <script type="module" src="ui.js?v=17"></script>
   </body>
 </html>
