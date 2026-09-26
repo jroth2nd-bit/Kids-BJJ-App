@@ -7,6 +7,7 @@ const inactiveList = document.getElementById('inactiveList');
 const addStudentForm = document.getElementById('addStudentForm');
 const addStudentToggle = document.getElementById('addStudentToggle');
 const attendanceDayStatus = document.getElementById('attendanceDayStatus');
+let expandedStudentId = null;
 
 function todayISO() { return new Date().toISOString().slice(0, 10); }
 function formatDate(date) { return date ? new Date(`${date}T00:00:00`).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' }) : '—'; }
@@ -64,9 +65,11 @@ function buildDetails(row, student) {
   const actions = document.createElement('div'); actions.className = 'detail-actions';
   actions.append(makeButton('View Full History', 'history-full', () => history.classList.toggle('history-expanded')), makeButton('Add Attendance', 'attendance-add', () => addAttendanceForm(addArea, student)));
   details.append(info, activeLabel, historyTitle, history, actions, addArea); row.appendChild(details);
+  details.hidden = expandedStudentId !== student.id;
 }
 
 function enterStudentEdit(row, student) {
+  expandedStudentId = student.id;
   const details = row.querySelector('.student-details'); details.hidden = false;
   const info = row.querySelector('.student-detail-info'); info.replaceChildren();
   const first = Object.assign(document.createElement('input'), { value: student.firstName, 'aria-label': 'First name' });
@@ -84,10 +87,10 @@ function renderActiveStudents(date) {
     const name = document.createElement('button'); name.type = 'button'; name.className = 'student-name-button';
     const stripe = document.createElement('span'); stripe.className = 'belt-stripe'; stripe.setAttribute('aria-hidden', 'true');
     const nameText = document.createElement('span'); nameText.innerHTML = `<strong>${student.firstName} ${student.lastName}</strong><small>${student.rank || 'White'} belt</small>`; name.append(stripe, nameText);
-    name.addEventListener('click', () => { const details = row.querySelector('.student-details'); details.hidden = !details.hidden; });
+    name.addEventListener('click', () => { const details = row.querySelector('.student-details'); details.hidden = !details.hidden; expandedStudentId = details.hidden ? null : student.id; });
     const record = attendance.getAttendance(student.id, date);
     const present = document.createElement('button'); present.type = 'button'; present.className = `attendance-toggle ${record?.present ? 'is-present' : ''}`; present.textContent = record?.present ? 'Present' : 'Absent'; present.title = attendance.isScheduledClassDate(date) ? 'Toggle attendance' : 'Attendance is recorded on Tuesdays and Thursdays';
-    present.addEventListener('click', () => { if (attendance.isScheduledClassDate(date)) { attendance.markAttendance(student.id, date, !present.classList.contains('is-present')); render(); } });
+    present.addEventListener('click', () => { expandedStudentId = student.id; attendance.markAttendance(student.id, date, !present.classList.contains('is-present')); render(); });
     main.append(name, present, makeButton('Edit', 'edit', () => enterStudentEdit(row, student)), makeButton('Mark inactive', 'inactive', () => { if (confirm(`Mark ${student.firstName} ${student.lastName} inactive?`)) { students.setActiveStatus(student.id, false); render(); } }));
     row.append(main); buildDetails(row, student); studentsList.appendChild(row);
   });
