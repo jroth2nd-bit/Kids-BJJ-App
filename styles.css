@@ -1487,3 +1487,4 @@ button,input,select,.btn{min-height:38px}
   .attendance-page .student-details .student-edit-action,.attendance-page .student-details .student-inactive-action,.attendance-page .detail-actions .history-full,.attendance-page .detail-actions .attendance-add{justify-content:center!important;text-align:center!important}
 }
 @media (min-width:761px){.attendance-page .student-details .student-edit-action,.attendance-page .student-details .student-inactive-action,.attendance-page .detail-actions .history-full,.attendance-page .detail-actions .attendance-add{text-align:center!important}}
+.attendance-page .student-main>.btn,.attendance-page .detail-actions>.btn,.attendance-page .history-actions>.btn,.attendance-page .attendance-add-row>.btn{display:inline-flex!important;align-items:center!important;justify-content:center!important;text-align:center!important;line-height:1.1!important}
