@@ -22,6 +22,8 @@ filtersToggle?.addEventListener('click', () => {
   filtersToggle.setAttribute('aria-expanded', String(open));
 });
 const expanded = new Set();
+const expandedAttendanceHistory = new Set();
+const deepLinkParams = new URLSearchParams(window.location.search);
 let sortField = 'name';
 let sortDirection = 1;
 
@@ -141,9 +143,28 @@ function detailsFor(student, row) {
   const saveNotes = makeButton('Save notes', 'save student-info-save-notes', async () => { unified.updateNotes(student, sanitizeNotesMarkup(editor.innerHTML)); const synced = await unified.flushStudentUpdates(); const message = synced ? 'Notes saved.' : 'Notes saved locally; cloud sync failed.'; saveFeedback.textContent = message; setStatus(message); });
   notes.append(notesHeading, toolbar, editor, saveNotes, saveFeedback);
   const addArea = document.createElement('div'); addArea.className = 'attendance-add-area';
-  const historyTitle = document.createElement('div'); historyTitle.className = 'detail-heading'; historyTitle.innerHTML = '<h3>Attendance History</h3>';
-  const addAttendanceButton = makeButton('Add attendance', 'attendance-add', () => addAttendance(student, addArea)); historyTitle.appendChild(addAttendanceButton);
-  const history = document.createElement('div'); history.className = 'attendance-history'; history.appendChild(addArea); attendanceHistory(student, history);
+  const historyTitle = document.createElement('div'); historyTitle.className = 'detail-heading';
+  const historyHeading = Object.assign(document.createElement('h3'), { textContent: 'Attendance History' });
+  const history = document.createElement('div'); history.className = 'attendance-history'; history.id = `attendance-history-${student.studentType}-${student.sourceId}`; history.hidden = !expandedAttendanceHistory.has(key(student));
+  const historyToggle = makeButton(history.hidden ? 'Show history' : 'Hide history', 'student-info-history-toggle', () => {
+    history.hidden = !history.hidden;
+    if (history.hidden) expandedAttendanceHistory.delete(key(student)); else expandedAttendanceHistory.add(key(student));
+    historyToggle.textContent = history.hidden ? 'Show history' : 'Hide history';
+    historyToggle.setAttribute('aria-expanded', String(!history.hidden));
+  });
+  historyToggle.setAttribute('aria-controls', history.id);
+  historyToggle.setAttribute('aria-expanded', String(!history.hidden));
+  const addAttendanceButton = makeButton('Add attendance', 'attendance-add', () => {
+    if (history.hidden) {
+      history.hidden = false;
+      expandedAttendanceHistory.add(key(student));
+      historyToggle.textContent = 'Hide history';
+      historyToggle.setAttribute('aria-expanded', 'true');
+    }
+    addAttendance(student, addArea);
+  });
+  historyTitle.append(historyHeading, historyToggle, addAttendanceButton);
+  history.appendChild(addArea); attendanceHistory(student, history);
   const actions = document.createElement('div'); actions.className = 'detail-actions';
   actions.append(makeButton('Edit name', 'student-edit-action', () => { fields.replaceChildren(); const first = Object.assign(document.createElement('input'), { value: student.firstName, 'aria-label': 'First name' }); const last = Object.assign(document.createElement('input'), { value: student.lastName, 'aria-label': 'Last name' }); const save = makeButton('Save name', 'save', async () => { if (!first.value.trim() || !last.value.trim()) return; unified.updateStudent(student, { firstName: first.value, lastName: last.value }); const synced = await unified.flushStudentUpdates(); setStatus(synced ? 'Student name synced.' : 'Name changed locally; cloud sync failed.'); expanded.add(key(student)); render(); }); fields.append(first, last, save); }));
   detail.append(info, activeLabel, fields, waiverRow, notes, historyTitle, history, actions);
@@ -175,7 +196,7 @@ function render() {
   list.replaceChildren();
   if (!result.length) { list.appendChild(Object.assign(document.createElement('p'), { className: 'muted', textContent: 'No students match these filters.' })); return; }
   result.forEach((student) => {
-    const row = document.createElement('article'); row.className = `student-info-row student-row belt-${String(student.rank || 'white').toLowerCase().replace(/[^a-z0-9]+/g, '-')}`;
+    const row = document.createElement('article'); row.className = `student-info-row student-row belt-${String(student.rank || 'white').toLowerCase().replace(/[^a-z0-9]+/g, '-')}`; row.dataset.studentType = student.studentType; row.dataset.studentId = String(student.sourceId);
     const main = document.createElement('div'); main.className = 'student-main';
     const name = document.createElement('button'); name.type = 'button'; name.className = 'student-name-button'; const stripe = document.createElement('span'); stripe.className = 'belt-stripe';
     const nameText = document.createElement('span'); nameText.innerHTML = `<strong>${student.firstName} ${student.lastName}</strong><small>${typeLabel(student.studentType)} · ${student.rank || 'White'}</small>`; name.append(stripe, nameText);
@@ -199,7 +220,20 @@ document.getElementById('printStudents').addEventListener('click', () => window.
 document.getElementById('studentInfoAddToggle').addEventListener('click', () => { const form = document.getElementById('studentInfoAddForm'); form.hidden = !form.hidden; if (!form.hidden) document.getElementById('studentInfoFirstName').focus(); });
 document.getElementById('studentInfoAddForm').addEventListener('submit', async (event) => { event.preventDefault(); const form = event.currentTarget; const first = document.getElementById('studentInfoFirstName').value.trim(); const last = document.getElementById('studentInfoLastName').value.trim(); const type = document.getElementById('studentInfoNewType').value; if (!first || !last) return; try { await (type === 'child' ? kidsStudents : adultStudents).addStudentAndSync(first, last); form.reset(); form.hidden = true; setStatus('Student added and synced.'); render(); } catch (error) { setStatus(`Student could not be synced: ${error.message}`); } });
 await Promise.allSettled([kidsStudents.syncFromCloud(), adultStudents.syncFromCloud(), kidsAttendance.syncFromCloud(), adultAttendance.syncFromCloud(), waiverStore.syncFromCloud()]);
+const deepLinkId = Number(deepLinkParams.get('studentId'));
+const deepLinkType = deepLinkParams.get('studentType');
+const deepLinkStudent = deepLinkParams.get('expand') === 'true' && Number.isFinite(deepLinkId) ? unified.getStudent(deepLinkType, deepLinkId) : null;
+if (deepLinkStudent) {
+  filters.search.value = `${deepLinkStudent.firstName} ${deepLinkStudent.lastName}`;
+  filters.type.value = deepLinkStudent.studentType;
+  filters.status.value = deepLinkStudent.active === false ? 'inactive' : 'active';
+  expanded.add(key(deepLinkStudent));
+}
 render();
+if (deepLinkStudent) requestAnimationFrame(() => {
+  const row = [...list.querySelectorAll('.student-info-row')].find((item) => item.dataset.studentType === deepLinkStudent.studentType && item.dataset.studentId === String(deepLinkStudent.sourceId));
+  row?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+});
 window.addEventListener('storage', (event) => { if (['bjj_students', 'bjj_adult_students', 'bjj_attendance', 'bjj_adult_attendance', 'bjj_waivers'].includes(event.key)) render(); });
 window.addEventListener('focus', async () => { await Promise.allSettled([kidsStudents.syncFromCloud(), adultStudents.syncFromCloud(), kidsAttendance.syncFromCloud(), adultAttendance.syncFromCloud(), waiverStore.syncFromCloud()]); render(); });
 export function refresh() { render(); }
