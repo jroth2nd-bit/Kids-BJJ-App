@@ -6,6 +6,8 @@ const KIDS_ATTENDANCE_KEY = 'bjj_attendance';
 const ADULT_ATTENDANCE_KEY = 'bjj_adult_attendance';
 const KIDS_PROMO_KEY = 'bjj_promotions';
 const ADULT_PROMO_KEY = 'bjj_adult_promotions';
+let pendingStudentSync = Promise.resolve();
+let studentSyncFailed = false;
 
 function read(key, fallback = []) { try { const value = JSON.parse(localStorage.getItem(key) || JSON.stringify(fallback)); return value; } catch (e) { return fallback; } }
 function write(key, value) { localStorage.setItem(key, JSON.stringify(value)); }
@@ -35,10 +37,12 @@ export function updateStudent(student, patch) {
   if ('beltSize' in patch) cloudPatch.belt_size = String(patch.beltSize || '');
   if ('notes' in patch) cloudPatch.notes = String(patch.notes || '');
   if (Object.keys(cloudPatch).length) {
-    void supabase.from('students').update(cloudPatch)
-      .eq('program', student.studentType === 'child' ? 'kids' : 'adult')
-      .eq('legacy_id', Number(student.sourceId))
-      .then(({ error }) => { if (error) console.error('Student update sync failed', error); });
+    pendingStudentSync = pendingStudentSync.then(async () => {
+      const { error } = await supabase.from('students').update(cloudPatch)
+        .eq('program', student.studentType === 'child' ? 'kids' : 'adult')
+        .eq('legacy_id', Number(student.sourceId));
+      if (error) { console.error('Student update sync failed', error); throw error; }
+    }).catch((error) => { studentSyncFailed = true; console.error('Student update sync failed', error); });
   }
   return true;
 }
@@ -85,4 +89,5 @@ export function changeStudentType(student, targetType) {
 export function updateBeltSize(student, beltSize) { return updateStudent(student, { beltSize }); }
 export function updateRank(student, rank) { return updateStudent(student, { rank }); }
 export function updateNotes(student, notes) { return updateStudent(student, { notes }); }
-export default { getStudents, getStudent, updateStudent, changeStudentType, updateBeltSize, updateRank, updateNotes };
+export async function flushStudentUpdates() { await pendingStudentSync; const succeeded = !studentSyncFailed; studentSyncFailed = false; return succeeded; }
+export default { getStudents, getStudent, updateStudent, changeStudentType, updateBeltSize, updateRank, updateNotes, flushStudentUpdates };

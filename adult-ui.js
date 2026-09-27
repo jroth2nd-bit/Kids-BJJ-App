@@ -1,4 +1,4 @@
-import * as students from './adult-students.js?v=2';
+import * as students from './adult-students.js?v=3';
 import * as attendance from './adult-attendance.js?v=4';
 
 const datePicker = document.getElementById('adultDatePicker');
@@ -110,8 +110,10 @@ function renderInactive() { inactiveList.replaceChildren(); const list = student
 
 datePicker.value = todayISO(); datePicker.addEventListener('change', refreshSessions); sessionSelect.addEventListener('change', render);
 document.getElementById('adultAddStudentToggle').addEventListener('click', () => { const form = document.getElementById('adultAddStudentForm'); form.hidden = !form.hidden; if (!form.hidden) document.getElementById('adultFirstName').focus(); });
-document.getElementById('adultAddStudentForm').addEventListener('submit', (event) => { event.preventDefault(); const first = document.getElementById('adultFirstName'); const last = document.getElementById('adultLastName'); if (first.value.trim() && last.value.trim()) { students.addStudent(first.value, last.value); first.value = ''; last.value = ''; event.currentTarget.hidden = true; render(); } });
+document.getElementById('adultAddStudentForm').addEventListener('submit', async (event) => { event.preventDefault(); const first = document.getElementById('adultFirstName'); const last = document.getElementById('adultLastName'); if (!first.value.trim() || !last.value.trim()) return; const submit = event.currentTarget.querySelector('button[type="submit"]'); submit.disabled = true; try { await students.addStudentAndSync(first.value, last.value); first.value = ''; last.value = ''; event.currentTarget.hidden = true; render(); } catch (error) { console.error('Adult student create sync failed', error); alert(`Student could not be saved: ${error.message}`); } finally { submit.disabled = false; } });
 document.getElementById('adultExportJson').addEventListener('click', () => download('adult-attendance.json', JSON.stringify({ students: students.getStudents(), attendance: attendance.getAllAttendance(), settings: attendance.getSettings() }, null, 2), 'application/json'));
 document.getElementById('adultExportCsv').addEventListener('click', () => { const rows = [['studentId', 'date', 'sessionId', 'sessionLabel', 'present'], ...attendance.getAllAttendance().map((record) => [record.studentId, record.date, record.sessionId, attendance.getSessionById(record.sessionId)?.label || '', record.present])]; download('adult-attendance.csv', rows.map((row) => row.map(csvCell).join(',')).join('\n'), 'text/csv'); });
 
 await Promise.all([students.syncFromCloud(), attendance.syncFromCloud()]); refreshSessions();
+window.addEventListener('storage', (event) => { if (event.key === 'bjj_adult_students' || event.key === 'bjj_adult_attendance') render(); });
+window.addEventListener('focus', async () => { await Promise.allSettled([students.syncFromCloud(), attendance.syncFromCloud()]); render(); });

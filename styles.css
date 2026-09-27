@@ -1557,3 +1557,26 @@ button,input,select,.btn{min-height:38px}
   .promotion-workflow-page .promotion-history-item{grid-template-columns:1fr}
   .promotion-workflow-page .attendance-page-kicker{display:none}
 }
+
+/* UX follow-up: keep sticky layers stacked, preserve mobile navigation, and size filters to their content. */
+.student-info-page .student-info-header{top:calc(var(--student-info-controls-height, 76px) + 6px)!important}
+.student-info-page .attendance-nav-header{position:static!important}
+.student-info-page .container,.promotion-workflow-page .container{overflow:visible!important}
+.attendance-page.student-info-page .student-info-controls{z-index:20!important;align-items:end!important}
+.student-info-controls .filter-search{flex:1 1 220px!important;width:auto!important;max-width:300px!important}
+.student-info-controls .filter-type{flex:0 0 128px!important;width:128px!important}
+.student-info-controls .filter-rank{flex:0 0 164px!important;width:164px!important}
+.student-info-controls .filter-attendance{flex:0 0 172px!important;width:172px!important}
+.student-info-controls .filter-status{flex:0 0 126px!important;width:126px!important}
+.student-info-controls .filter-search input,.student-info-controls .filter-type select,.student-info-controls .filter-rank select,.student-info-controls .filter-attendance select,.student-info-controls .filter-status select{width:100%!important;min-width:0!important}
+@media(max-width:760px){
+  .attendance-page .attendance-nav-header{display:block!important;position:relative!important;top:auto!important;z-index:25!important;margin:0 0 8px!important;padding:0 8px 8px!important;background:#202326!important;border-radius:0 0 8px 8px}
+  .attendance-page .attendance-nav-header>.sub,.attendance-page .attendance-nav-header .site-brand{display:none!important}
+  .attendance-page .attendance-nav-header .header-nav-wrapper{display:grid!important;grid-template-columns:1fr auto!important;min-height:42px!important;gap:0!important}
+  .attendance-page .attendance-nav-header .nav-toggle{display:block!important;grid-column:2!important;justify-self:end!important}
+  .attendance-page .attendance-nav-header .topnav{grid-column:1 / -1!important}
+  .attendance-page.student-info-page .student-info-controls{position:relative!important;top:auto!important;display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:7px!important}
+  .student-info-controls .filter-search{grid-column:1 / -1!important;flex:initial!important;width:100%!important;max-width:none!important}
+  .student-info-controls .filter-type,.student-info-controls .filter-rank,.student-info-controls .filter-attendance,.student-info-controls .filter-status{width:100%!important;max-width:none!important;min-width:0!important}
+  .student-info-controls #printStudents{grid-column:1 / -1!important;width:100%!important}
+}

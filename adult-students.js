@@ -47,6 +47,13 @@ export function addStudent(firstName, lastName) {
   return student;
 }
 
+export async function addStudentAndSync(firstName, lastName) {
+  const student = addStudent(firstName, lastName);
+  const { error } = await supabase.from('students').insert({ program: 'adult', legacy_id: student.id, first_name: student.firstName, last_name: student.lastName, active: true, rank: student.rank, belt_size: student.beltSize, notes: student.notes });
+  if (error) { removeStudent(student.id); throw error; }
+  return student;
+}
+
 export function updateStudent(id, firstName, lastName) {
   const list = loadStudents();
   const student = list.find((item) => item.id === Number(id));
@@ -87,4 +94,4 @@ export function setBeltSize(id, beltSize) {
 }
 export function setNotes(id, notes) { const list = loadStudents(); const student = list.find((item) => item.id === Number(id)); if (!student) return false; student.notes = String(notes || ''); saveStudents(list); return true; }
 
-export default { getStudents, syncFromCloud, getActiveStudents, getStudentById, addStudent, updateStudent, removeStudent, setActiveStatus, setRank, setBeltSize, setNotes };
+export default { getStudents, syncFromCloud, getActiveStudents, getStudentById, addStudent, addStudentAndSync, updateStudent, removeStudent, setActiveStatus, setRank, setBeltSize, setNotes };

@@ -1,11 +1,10 @@
-import { supabase } from './supabase-client.js';
-import * as unified from './unified-students.js?v=2';
-import * as kidsStudents from './students.js?v=4';
-import * as adultStudents from './adult-students.js?v=2';
+import * as unified from './unified-students.js?v=3';
+import * as kidsStudents from './students.js?v=5';
+import * as adultStudents from './adult-students.js?v=3';
 import * as kidsAttendance from './attendance.js?v=6';
 import * as adultAttendance from './adult-attendance.js?v=4';
 import * as beltSizes from './shared-belt-sizes.js?v=1';
-import { syncFromCloud, syncLocalPromotions, deleteStagedPromotion } from './promotion-cloud.js';
+import { syncFromCloud, syncLocalPromotions, deleteStagedPromotion } from './promotion-cloud.js?v=2';
 
 const KIDS_RANKS = ['White', 'White 1', 'White 2', 'White 3', 'White 4', 'Grey/White', 'Grey/White 1', 'Grey/White 2', 'Grey/White 3', 'Grey/White 4', 'Grey', 'Grey 1', 'Grey 2', 'Grey 3', 'Grey 4', 'Grey/Black', 'Grey/Black 1', 'Grey/Black 2', 'Grey/Black 3', 'Grey/Black 4', 'Yellow/White', 'Yellow/White 1', 'Yellow/White 2', 'Yellow/White 3', 'Yellow/White 4', 'Yellow', 'Yellow 1', 'Yellow 2', 'Yellow 3', 'Yellow 4', 'Yellow/Black', 'Yellow/Black 1', 'Yellow/Black 2', 'Yellow/Black 3', 'Yellow/Black 4', 'Orange/White', 'Orange/White 1', 'Orange/White 2', 'Orange/White 3', 'Orange/White 4', 'Orange', 'Orange 1', 'Orange 2', 'Orange 3', 'Orange 4', 'Orange/Black', 'Orange/Black 1', 'Orange/Black 2', 'Orange/Black 3', 'Orange/Black 4', 'Green/White', 'Green/White 1', 'Green/White 2', 'Green/White 3', 'Green/White 4', 'Green', 'Green 1', 'Green 2', 'Green 3', 'Green 4', 'Green/Black', 'Green/Black 1', 'Green/Black 2', 'Green/Black 3', 'Green/Black 4'];
 const ADULT_RANKS = ['White', 'White 1', 'White 2', 'White 3', 'White 4', 'Blue', 'Blue 1', 'Blue 2', 'Blue 3', 'Blue 4', 'Purple', 'Purple 1', 'Purple 2', 'Purple 3', 'Purple 4', 'Brown', 'Brown 1', 'Brown 2', 'Brown 3', 'Brown 4', 'Black', 'Black 1', 'Black 2', 'Black 3', 'Black 4'];
@@ -28,7 +27,7 @@ const today = () => new Date().toISOString();
 const formatDate = (value) => value ? new Date(`${String(value).slice(0, 10)}T00:00:00`).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' }) : '—';
 const setStatus = (message) => { status.textContent = message; };
 function readPromotions(studentType) { try { const value = JSON.parse(localStorage.getItem(studentType === 'adult' ? 'bjj_adult_promotions' : 'bjj_promotions') || '[]'); return Array.isArray(value) ? value : []; } catch { return []; } }
-function savePromotions(studentType, records) { const store = studentType === 'adult' ? 'bjj_adult_promotions' : 'bjj_promotions'; localStorage.setItem(store, JSON.stringify(records)); void syncLocalPromotions(studentType === 'adult' ? 'adult' : 'kids', records).catch((error) => console.error('Promotion sync failed', error)); }
+function savePromotions(studentType, records) { const store = studentType === 'adult' ? 'bjj_adult_promotions' : 'bjj_promotions'; localStorage.setItem(store, JSON.stringify(records)); return syncLocalPromotions(studentType === 'adult' ? 'adult' : 'kids', records).then(() => true).catch((error) => { console.error('Promotion sync failed', error); setStatus('Promotion saved locally; cloud sync failed.'); return false; }); }
 function stagedRecord(student) { return readPromotions(student.studentType).find((record) => Number(record.studentId) === Number(student.sourceId) && record.staged === true) || null; }
 function historyRecords(student) { return readPromotions(student.studentType).filter((record) => Number(record.studentId) === Number(student.sourceId) && !record.staged).sort((a, b) => String(b.promotionDate || b.createdAt || '').localeCompare(String(a.promotionDate || a.createdAt || ''))); }
 function stats(student) { const api = attendanceApi(student); const total = student.studentType === 'adult' ? api.getTotalClasses() : api.getTotalClasses(student.sourceId); const attended = api.getTotalAttended(student.sourceId); return { attended, total, percent: total ? Math.round(attended * 100 / total) : 0 }; }
@@ -68,7 +67,7 @@ async function stagePromotion(student, target, belt, notes) {
   if (existing) await deleteStagedPromotion(program(student), student.sourceId, existing.promotionDate).catch((error) => console.error('Staged promotion cleanup failed', error));
   const store = readPromotions(student.studentType).filter((record) => !(Number(record.studentId) === Number(student.sourceId) && record.staged));
   store.push({ studentId: Number(student.sourceId), oldRank: student.rank || 'White', newRank: target, beltSize: belt || student.beltSize || '', inStock: false, confirmed: false, staged: true, notes: notes || '', createdAt: today(), promotionDate: today() });
-  savePromotions(student.studentType, store); pendingTargets.delete(key(student)); expanded.add(key(student)); setStatus(`${student.firstName} ${student.lastName} promotion staged.`); render();
+  const synced = await savePromotions(student.studentType, store); pendingTargets.delete(key(student)); expanded.add(key(student)); if (synced) setStatus(`${student.firstName} ${student.lastName} promotion staged and synced.`); render();
 }
 
 function renderStudent(student) {
@@ -80,7 +79,7 @@ function renderStudent(student) {
   const current = Object.assign(document.createElement('span'), { className: 'promotion-current-rank', textContent: student.rank || 'White' });
   const target = selectRank(student, savedTarget); target.className = 'promotion-target-select'; target.addEventListener('change', () => { pendingTargets.set(key(student), target.value); render(); });
   const state = Object.assign(document.createElement('span'), { className: `promotion-stage-state ${staged ? 'is-staged' : ''}`, textContent: staged ? 'Staged' : 'Not staged' });
-  const clearStage = () => { savePromotions(student.studentType, readPromotions(student.studentType).filter((record) => record !== staged)); void deleteStagedPromotion(program(student), student.sourceId, staged.promotionDate).catch((error) => console.error('Staged promotion deletion failed', error)); setStatus('Staged promotion cleared.'); render(); };
+  const clearStage = async () => { await savePromotions(student.studentType, readPromotions(student.studentType).filter((record) => record !== staged)); await deleteStagedPromotion(program(student), student.sourceId, staged.promotionDate).catch((error) => console.error('Staged promotion deletion failed', error)); setStatus('Staged promotion cleared.'); render(); };
   const stage = makeButton(staged ? 'Unstage' : 'Stage', staged ? 'cancel' : 'save', () => { if (staged) clearStage(); else void stagePromotion(student, target.value || pendingTargets.get(key(student)), student.beltSize, ''); });
   main.append(name, current, target, state, stage);
   const detail = document.createElement('div'); detail.className = 'student-details'; detail.hidden = !expanded.has(key(student));
@@ -137,9 +136,9 @@ async function applyStaged() {
     record.oldRank = student.rank || 'White'; record.confirmed = true; record.staged = false; record.promotionDate = date; record.createdAt = record.createdAt || date;
     const localUpdate = unified.updateStudent(student, { rank: record.newRank, beltSize: record.beltSize || student.beltSize || '' });
     if (!localUpdate) { failed.push(`${student.firstName} ${student.lastName}`); continue; }
-    const { error } = await supabase.from('students').update({ rank: record.newRank, belt_size: record.beltSize || student.beltSize || '' }).eq('program', program(student)).eq('legacy_id', Number(student.sourceId));
-    savePromotions(student.studentType, store);
-    if (error) failed.push(`${student.firstName} ${student.lastName}`);
+    const synced = await unified.flushStudentUpdates();
+    const promotionSynced = await savePromotions(student.studentType, store);
+    if (!synced || !promotionSynced) failed.push(`${student.firstName} ${student.lastName}`);
   }
   setStatus(failed.length ? `Applied with sync issues: ${failed.join(', ')}` : `Applied ${queue.length} promotion${queue.length === 1 ? '' : 's'}.`); render();
 }
@@ -150,10 +149,10 @@ rankOptions.forEach((label, value) => controls.rank.appendChild(new Option(label
 Object.values(controls).forEach((control) => control.addEventListener('input', render));
 controls.sort.addEventListener('change', render);
 applyButton.addEventListener('click', applyStaged);
-document.getElementById('clearStaged').addEventListener('click', () => {
+document.getElementById('clearStaged').addEventListener('click', async () => {
   const staged = unified.getStudents().filter((student) => stagedRecord(student));
   if (!staged.length || !confirm(`Clear all ${staged.length} staged promotions?`)) return;
-  staged.forEach((student) => { const record = stagedRecord(student); savePromotions(student.studentType, readPromotions(student.studentType).filter((item) => !item.staged || Number(item.studentId) !== Number(student.sourceId))); if (record) void deleteStagedPromotion(program(student), student.sourceId, record.promotionDate).catch((error) => console.error('Staged promotion deletion failed', error)); });
+  for (const student of staged) { const record = stagedRecord(student); await savePromotions(student.studentType, readPromotions(student.studentType).filter((item) => !item.staged || Number(item.studentId) !== Number(student.sourceId))); if (record) await deleteStagedPromotion(program(student), student.sourceId, record.promotionDate).catch((error) => console.error('Staged promotion deletion failed', error)); }
   setStatus('All staged promotions cleared.'); render();
 });
 
@@ -162,3 +161,11 @@ await Promise.allSettled([
   syncFromCloud('kids', 'bjj_promotions'), syncFromCloud('adult', 'bjj_adult_promotions'),
 ]);
 render();
+window.addEventListener('storage', (event) => { if (['bjj_students', 'bjj_adult_students', 'bjj_promotions', 'bjj_adult_promotions'].includes(event.key)) render(); });
+window.addEventListener('focus', async () => {
+  await Promise.allSettled([
+    kidsStudents.syncFromCloud(), adultStudents.syncFromCloud(), kidsAttendance.syncFromCloud(), adultAttendance.syncFromCloud(),
+    syncFromCloud('kids', 'bjj_promotions'), syncFromCloud('adult', 'bjj_adult_promotions'),
+  ]);
+  render();
+});

@@ -1,5 +1,5 @@
-import * as kidsStudents from './students.js?v=4';
-import * as adultStudents from './adult-students.js?v=2';
+import * as kidsStudents from './students.js?v=5';
+import * as adultStudents from './adult-students.js?v=3';
 import * as waiverStore from './waiver-store.js?v=1';
 
 const fields = ['participantName', 'dateOfBirth', 'phone', 'email', 'emergencyName', 'emergencyRelationship', 'emergencyPhone', 'parentGuardianName'];
@@ -82,24 +82,24 @@ function resetForm(message = 'Ready') {
   setStatus(message); updatePreview();
 }
 
-function ensureStudent() {
+async function ensureStudent() {
   const selected = studentRecord.value;
   if (selected) return { id: Number(selected), type: getStudentType() };
   const parts = value('participantName').split(/\s+/).filter(Boolean);
   if (parts.length < 2) return null;
   const first = parts.shift(); const last = parts.join(' ');
-  const student = getStudentType() === 'kids' ? kidsStudents.addStudent(first, last) : adultStudents.addStudent(first, last);
+  const student = getStudentType() === 'kids' ? await kidsStudents.addStudentAndSync(first, last) : await adultStudents.addStudentAndSync(first, last);
   return { id: student.id, type: getStudentType() };
 }
 
-function buildRecord() {
-  const student = ensureStudent();
-  if (!student) return null;
+async function buildRecord() {
   const isChild = getStudentType() === 'kids';
   const contact = { dateOfBirth: value('dateOfBirth'), phone: value('phone'), email: value('email'), emergencyName: value('emergencyName'), emergencyRelationship: value('emergencyRelationship'), emergencyPhone: value('emergencyPhone'), parentGuardianName: isChild ? value('parentGuardianName') : '' };
   const typedSignature = isChild ? value('guardianTypedSignature') : value('participantTypedSignature');
   const drawnCanvas = isChild ? signatureCanvas('guardianSignature') : signatureCanvas('participantSignature');
   if (!value('participantName') || !contact.dateOfBirth || !contact.phone || !contact.email || !contact.emergencyName || !contact.emergencyRelationship || !contact.emergencyPhone || (isChild && !contact.parentGuardianName) || !typedSignature || !canvasHasInk(drawnCanvas) || !el('agreement').checked) return null;
+  const student = await ensureStudent();
+  if (!student) return null;
   return {
     studentType: student.type,
     studentId: student.id,
@@ -111,8 +111,9 @@ function buildRecord() {
   };
 }
 
-function saveWaiver() {
-  const record = buildRecord();
+async function saveWaiver() {
+  let record;
+  try { record = await buildRecord(); } catch (error) { setStatus(`Student could not be synced: ${error.message}`); return; }
   if (!record) { setStatus('Complete all fields, draw the required signature, and accept the waiver'); return; }
   const saved = waiverStore.createWaiver(record);
   selectedRecordId = saved.id;
