@@ -13,6 +13,26 @@ function el(id) { return document.getElementById(id); }
 function setStatus(text) { if (statusEl) statusEl.textContent = text; }
 function value(id) { return el(id)?.value.trim() || ''; }
 function today() { return new Date().toISOString().slice(0, 10); }
+function normalizeDate(value) {
+  const text = String(value || '').trim();
+  let year; let month; let day;
+  let match = text.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})$/);
+  if (match) [, month, day, year] = match;
+  else {
+    match = text.match(/^(\d{4})[\/\-](\d{1,2})[\/\-](\d{1,2})$/);
+    if (match) [, year, month, day] = match;
+  }
+  if (!year || !month || !day) return '';
+  const date = new Date(Number(year), Number(month) - 1, Number(day));
+  if (date.getFullYear() !== Number(year) || date.getMonth() !== Number(month) - 1 || date.getDate() !== Number(day)) return '';
+  return `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+}
+function displayDate(value) {
+  const normalized = normalizeDate(value);
+  if (!normalized) return String(value || '');
+  const [year, month, day] = normalized.split('-');
+  return `${month}/${day}/${year}`;
+}
 function getStudentType() { return participantType.value === 'child' ? 'kids' : 'adult'; }
 function getStudents() { return getStudentType() === 'kids' ? kidsStudents.getStudents() : adultStudents.getStudents(); }
 function signatureCanvas(id) { return el(id); }
@@ -59,7 +79,7 @@ function loadSelectedStudent() {
   const record = waiverStore.getLatestWaiverForStudent(getStudentType(), student.id);
   if (!record) return;
   const contact = record.contact || {};
-  fields.forEach((field) => { if (field !== 'participantName' && el(field)) el(field).value = contact[field] || (field === 'parentGuardianName' ? record.parentGuardianName || '' : ''); });
+  fields.forEach((field) => { if (field !== 'participantName' && el(field)) el(field).value = field === 'dateOfBirth' ? displayDate(contact[field]) : contact[field] || (field === 'parentGuardianName' ? record.parentGuardianName || '' : ''); });
   updatePreview();
 }
 
@@ -94,7 +114,9 @@ async function ensureStudent() {
 
 async function buildRecord() {
   const isChild = getStudentType() === 'kids';
-  const contact = { dateOfBirth: value('dateOfBirth'), phone: value('phone'), email: value('email'), emergencyName: value('emergencyName'), emergencyRelationship: value('emergencyRelationship'), emergencyPhone: value('emergencyPhone'), parentGuardianName: isChild ? value('parentGuardianName') : '' };
+  const dateOfBirth = normalizeDate(value('dateOfBirth'));
+  if (!dateOfBirth) { setStatus('Enter a valid date of birth, such as 04/27/2012'); return null; }
+  const contact = { dateOfBirth, phone: value('phone'), email: value('email'), emergencyName: value('emergencyName'), emergencyRelationship: value('emergencyRelationship'), emergencyPhone: value('emergencyPhone'), parentGuardianName: isChild ? value('parentGuardianName') : '' };
   const typedSignature = isChild ? value('guardianTypedSignature') : value('participantTypedSignature');
   const drawnCanvas = isChild ? signatureCanvas('guardianSignature') : signatureCanvas('participantSignature');
   if (!value('participantName') || !contact.dateOfBirth || !contact.phone || !contact.email || !contact.emergencyName || !contact.emergencyRelationship || !contact.emergencyPhone || (isChild && !contact.parentGuardianName) || !typedSignature || !canvasHasInk(drawnCanvas) || !el('agreement').checked) return null;
@@ -124,7 +146,7 @@ async function saveWaiver() {
 
 function makeInput(label, field, record) {
   const wrapper = document.createElement('label'); wrapper.className = 'waiver-record-field'; wrapper.textContent = label;
-  const input = document.createElement('input'); input.value = record.contact?.[field] || ''; input.dataset.field = field; wrapper.appendChild(input); return wrapper;
+  const input = document.createElement('input'); input.value = field === 'dateOfBirth' ? displayDate(record.contact?.[field]) : record.contact?.[field] || ''; input.dataset.field = field; if (field === 'dateOfBirth') { input.type = 'text'; input.inputMode = 'numeric'; input.placeholder = 'MM/DD/YYYY'; } wrapper.appendChild(input); return wrapper;
 }
 
 function renderRecord(record) {
@@ -140,7 +162,7 @@ function renderRecord(record) {
   const grid = document.createElement('div'); grid.className = 'waiver-record-grid';
   [['Date of birth', 'dateOfBirth'], ['Phone', 'phone'], ['Email', 'email'], ['Emergency name', 'emergencyName'], ['Emergency relationship', 'emergencyRelationship'], ['Emergency phone', 'emergencyPhone']].forEach(([label, field]) => grid.appendChild(makeInput(label, field, record)));
   body.appendChild(grid);
-  const save = document.createElement('button'); save.className = 'btn save'; save.textContent = 'Save contact changes'; save.addEventListener('click', () => { const contact = {}; grid.querySelectorAll('input').forEach((input) => { contact[input.dataset.field] = input.value.trim(); }); waiverStore.updateWaiverContact(record.id, contact); setStatus('Contact details updated'); renderRecords(); });
+  const save = document.createElement('button'); save.className = 'btn save'; save.textContent = 'Save contact changes'; save.addEventListener('click', () => { const contact = {}; grid.querySelectorAll('input').forEach((input) => { contact[input.dataset.field] = input.dataset.field === 'dateOfBirth' ? normalizeDate(input.value) : input.value.trim(); }); if (!contact.dateOfBirth) { setStatus('Enter a valid date of birth, such as 04/27/2012'); return; } waiverStore.updateWaiverContact(record.id, contact); setStatus('Contact details updated'); renderRecords(); });
   const print = document.createElement('button'); print.className = 'btn'; print.textContent = 'Print signed waiver'; print.addEventListener('click', () => printFullRecord(record));
   const actions = document.createElement('div'); actions.className = 'waiver-record-actions'; actions.append(save, print); body.appendChild(actions);
   card.appendChild(body); return card;
