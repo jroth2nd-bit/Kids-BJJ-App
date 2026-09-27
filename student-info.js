@@ -37,6 +37,7 @@ const attendanceApi = (student) => student.studentType === 'adult' ? adultAttend
 const typeLabel = (type) => type === 'child' ? 'Child' : 'Adult';
 const ranks = (type) => type === 'adult' ? ADULT_RANKS : KIDS_RANKS;
 const formatDate = (value) => value ? new Date(`${String(value).slice(0, 10)}T00:00:00`).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' }) : '—';
+const formatPhone = (value) => { const digits = String(value || '').replace(/\D/g, ''); const national = digits.length === 11 && digits.startsWith('1') ? digits.slice(1) : digits; return national.length === 10 ? `(${national.slice(0, 3)}) ${national.slice(3, 6)}-${national.slice(6)}` : String(value || 'Not set'); };
 const setStatus = (message) => { statusEl.textContent = message; };
 function allRanks() { return [...new Set([...KIDS_RANKS, ...ADULT_RANKS])]; }
 function stats(student) {
@@ -113,8 +114,10 @@ function addAttendance(student, container) {
 function detailsFor(student, row) {
   const detail = document.createElement('div'); detail.className = 'student-details'; detail.hidden = !expanded.has(key(student));
   const studentStats = stats(student);
+  const waiver = waiverStore.getLatestWaiverForStudent(student.studentType === 'child' ? 'kids' : 'adult', student.sourceId);
+  const waiverContact = waiver?.contact || {};
   const info = document.createElement('div'); info.className = 'student-detail-info';
-  [typeLabel(student.studentType), `${studentStats.count}/${studentStats.total} attended · ${studentStats.percent}%`, `Last: ${formatDate(studentStats.last)}`].forEach((text) => info.appendChild(Object.assign(document.createElement('span'), { textContent: text })));
+  [typeLabel(student.studentType), `${studentStats.count}/${studentStats.total} attended · ${studentStats.percent}%`, `Last: ${formatDate(studentStats.last)}`, `Phone: ${formatPhone(waiverContact.phone)}`, `DOB: ${waiverContact.dateOfBirth ? formatDate(waiverContact.dateOfBirth) : 'Not set'}`, `Emergency: ${waiverContact.emergencyName || 'Not set'}`, `Emergency phone: ${formatPhone(waiverContact.emergencyPhone)}`, `Relationship: ${waiverContact.emergencyRelationship || 'Not set'}`].forEach((text) => info.appendChild(Object.assign(document.createElement('span'), { textContent: text })));
   const beltSummary = document.createElement('span'); beltSummary.className = 'student-info-belt-summary'; beltSummary.textContent = `Belt size: ${student.beltSize || 'Not set'}`; info.appendChild(beltSummary);
   const activeLabel = document.createElement('label'); activeLabel.className = 'active-toggle'; activeLabel.appendChild(Object.assign(document.createElement('input'), { type: 'checkbox', checked: student.active !== false })); activeLabel.append(' Active');
   activeLabel.querySelector('input').addEventListener('change', async (event) => { unified.updateStudent(student, { active: event.target.checked, inactiveSince: event.target.checked ? '' : new Date().toISOString().slice(0, 10) }); const synced = await unified.flushStudentUpdates(); setStatus(synced ? 'Student status synced.' : 'Status changed locally; cloud sync failed.'); render(); });
@@ -125,7 +128,6 @@ function detailsFor(student, row) {
   const rankField = document.createElement('label'); rankField.textContent = 'Current rank'; rankField.append(rank);
   const beltField = document.createElement('label'); beltField.className = 'student-info-belt-field'; beltField.append(document.createTextNode('Belt size'), belt, makeButton('Save belt size', 'save student-info-save-belt', async () => { unified.updateBeltSize(student, belt.value); const synced = await unified.flushStudentUpdates(); student.beltSize = belt.value; setStatus(synced ? `${student.firstName} ${student.lastName} belt size synced` : 'Belt size saved locally; cloud sync failed.'); const summary = detail.querySelector('.student-info-belt-summary'); if (summary) summary.textContent = `Belt size: ${student.beltSize || 'Not set'}`; }));
   fields.append(rankField, beltField);
-  const waiver = waiverStore.getLatestWaiverForStudent(student.studentType === 'child' ? 'kids' : 'adult', student.sourceId);
   const waiverRow = document.createElement('div'); waiverRow.className = 'student-info-waiver';
   const waiverText = document.createElement('span'); waiverText.textContent = waiver ? `Signed ${formatDate(waiver.signedAt)}` : 'Missing'; waiverText.className = waiver ? 'status-present' : 'status-absent';
   const waiverLink = document.createElement('a'); waiverLink.className = 'btn'; waiverLink.href = `waiver.html?studentType=${student.studentType === 'child' ? 'kids' : 'adult'}&studentId=${student.sourceId}`; waiverLink.textContent = waiver ? 'View' : 'Create'; waiverRow.append(waiverText, waiverLink);
