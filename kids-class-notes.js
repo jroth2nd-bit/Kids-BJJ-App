@@ -66,7 +66,6 @@ function deleteNote() { const notes = loadNotes(); const filtered = notes.filter
 function copyPrevious() { const previous = loadNotes().filter((note) => note.date < dateInput.value).sort((a, b) => b.date.localeCompare(a.date))[0]; if (!previous) return alert('No previous Kids class note found'); classInput.value = previous.className || 'Kids Class'; coachInput.value = previous.coach || ''; titleInput.value = previous.title || ''; editor.innerHTML = previous.content || defaultContent(); markDirty(); }
 function rememberSelection() { const selection = window.getSelection(); if (selection?.rangeCount && editor.contains(selection.anchorNode)) savedRange = selection.getRangeAt(0).cloneRange(); }
 function applyCommand(command, value) { editor.focus(); if (savedRange) { const selection = window.getSelection(); selection.removeAllRanges(); selection.addRange(savedRange); } document.execCommand(command, false, value || null); markDirty(); }
-function download(name, content, type) { const blob = new Blob([content], { type }); const url = URL.createObjectURL(blob); const link = document.createElement('a'); link.href = url; link.download = name; link.click(); URL.revokeObjectURL(url); }
 
 document.addEventListener('selectionchange', rememberSelection);
 toolbar.addEventListener('mousedown', (event) => { if (event.target.closest('button[data-cmd]')) { rememberSelection(); event.preventDefault(); } });
@@ -74,8 +73,6 @@ toolbar.addEventListener('click', (event) => { const button = event.target.close
 dateInput.addEventListener('change', () => { if (dirty && !confirm('Discard unsaved changes?')) return; loadNote(dateInput.value || todayISO()); });
 classInput.addEventListener('input', markDirty); coachInput.addEventListener('input', markDirty); titleInput.addEventListener('input', markDirty); editor.addEventListener('input', markDirty);
 document.getElementById('saveNote').addEventListener('click', saveNote); document.getElementById('copyPrevious').addEventListener('click', copyPrevious); document.getElementById('deleteNote').addEventListener('click', deleteNote); document.getElementById('newNote').addEventListener('click', () => loadNote(dateInput.value || todayISO()));
-document.getElementById('exportNotesJson').addEventListener('click', () => download('kids-class-notes.json', JSON.stringify(loadNotes(), null, 2), 'application/json'));
-document.getElementById('exportNotesCsv').addEventListener('click', () => { const rows = [['date', 'className', 'coach', 'title', 'content'], ...loadNotes().map((note) => [note.date, note.className, note.coach, note.title, note.content])]; download('kids-class-notes.csv', rows.map((row) => row.map((value) => `"${String(value || '').replace(/"/g, '""')}"`).join(',')).join('\n'), 'text/csv'); });
 
 const params = new URLSearchParams(window.location.search);
 dateInput.value = params.get('date') || todayISO();

@@ -2,7 +2,7 @@ import * as unified from './unified-students.js?v=4';
 import * as kidsStudents from './students.js?v=5';
 import * as adultStudents from './adult-students.js?v=3';
 import * as kidsAttendance from './attendance.js?v=6';
-import * as adultAttendance from './adult-attendance.js?v=4';
+import * as adultAttendance from './adult-attendance.js?v=5';
 import * as beltSizes from './shared-belt-sizes.js?v=1';
 import * as waiverStore from './waiver-store.js?v=1';
 
@@ -16,6 +16,11 @@ const filters = {
 };
 const statusEl = document.getElementById('studentInfoStatus');
 const filterBar = document.querySelector('.student-info-controls');
+const filtersToggle = document.getElementById('studentInfoFiltersToggle');
+filtersToggle?.addEventListener('click', () => {
+  const open = document.body.classList.toggle('mobile-filters-open');
+  filtersToggle.setAttribute('aria-expanded', String(open));
+});
 const expanded = new Set();
 let sortField = 'name';
 let sortDirection = 1;
@@ -59,20 +64,15 @@ function sanitizeNotesMarkup(value) {
   Array.from(parsed.body.childNodes).forEach((node) => copy(node, output));
   return output.innerHTML || '<p></p>';
 }
-function sessionSelect(date, current = '') { const select = document.createElement('select'); adultAttendance.getSessionsForDate(date).forEach((session) => select.appendChild(new Option(`${session.label} · ${session.slot}`, session.id, false, session.id === current))); return select; }
-
 function updateAttendanceRecord(student, record, item) {
   item.replaceChildren(); item.classList.add('history-editing');
   const api = attendanceApi(student);
   const date = Object.assign(document.createElement('input'), { type: 'date', value: record.date });
   const present = document.createElement('select'); present.innerHTML = '<option value="true">Present</option><option value="false">Absent</option>'; present.value = String(record.present);
-  let session;
-  if (student.studentType === 'adult') { session = sessionSelect(date.value, record.sessionId); date.addEventListener('change', () => { const next = sessionSelect(date.value); session.replaceWith(next); session = next; }); }
   item.append(date);
-  if (session) item.append(session);
   item.append(present, makeButton('Save', 'save', () => {
     if (!date.value) return;
-    if (student.studentType === 'adult') { if (!session.value) return; api.updateAttendance(student.sourceId, record.date, record.sessionId, date.value, session.value, present.value === 'true'); }
+    if (student.studentType === 'adult') api.updateAttendance(student.sourceId, record.date, date.value, present.value === 'true');
     else api.updateAttendance(student.sourceId, record.date, date.value, present.value === 'true');
     expanded.add(key(student)); render();
   }), makeButton('Cancel', 'cancel', render));
@@ -83,12 +83,12 @@ function attendanceHistory(student, container) {
   if (!data.length) { container.appendChild(Object.assign(document.createElement('p'), { className: 'muted', textContent: 'No attendance recorded.' })); return; }
   data.forEach((record) => {
     const row = document.createElement('div'); row.className = 'attendance-history-row student-info-attendance-row';
-    const detail = document.createElement('span'); detail.textContent = `${formatDate(record.date)}${student.studentType === 'adult' ? ` · ${adultAttendance.getSessionById(record.sessionId)?.label || record.sessionId}` : ''}`;
+    const detail = document.createElement('span'); detail.textContent = formatDate(record.date);
     const present = document.createElement('strong'); present.className = record.present ? 'status-present' : 'status-absent'; present.textContent = record.present ? 'Present' : 'Absent';
     const actions = document.createElement('span'); actions.className = 'history-actions student-info-history-actions';
     actions.append(makeButton('Edit', 'history-edit', () => updateAttendanceRecord(student, record, row)), makeButton('Delete', 'history-delete', () => {
       if (!confirm(`Delete attendance on ${record.date}?`)) return;
-      if (student.studentType === 'adult') adultAttendance.deleteAttendance(student.sourceId, record.date, record.sessionId); else kidsAttendance.deleteAttendance(student.sourceId, record.date);
+      if (student.studentType === 'adult') adultAttendance.deleteAttendance(student.sourceId, record.date); else kidsAttendance.deleteAttendance(student.sourceId, record.date);
       expanded.add(key(student)); render();
     }));
     row.append(detail, present, actions); container.appendChild(row);
@@ -100,13 +100,10 @@ function addAttendance(student, container) {
   const form = document.createElement('form'); form.className = 'attendance-add-row';
   const date = Object.assign(document.createElement('input'), { type: 'date', value: new Date().toISOString().slice(0, 10), required: true });
   const present = document.createElement('select'); present.innerHTML = '<option value="true">Present</option><option value="false">Absent</option>';
-  let session;
-  if (student.studentType === 'adult') { session = sessionSelect(date.value); date.addEventListener('change', () => { const next = sessionSelect(date.value); session.replaceWith(next); session = next; }); }
   form.append(date);
-  if (session) form.append(session);
   form.append(present, makeButton('Save attendance', 'attendance-add', () => {
     if (!date.value) return;
-    if (student.studentType === 'adult') { if (!session.value) return; adultAttendance.markAttendance(student.sourceId, date.value, session.value, present.value === 'true'); }
+    if (student.studentType === 'adult') adultAttendance.markAttendance(student.sourceId, date.value, present.value === 'true');
     else kidsAttendance.markAttendance(student.sourceId, date.value, present.value === 'true');
     expanded.add(key(student)); render();
   }), makeButton('Cancel', 'cancel', () => container.replaceChildren()));
@@ -131,21 +128,23 @@ function detailsFor(student, row) {
   const waiver = waiverStore.getLatestWaiverForStudent(student.studentType === 'child' ? 'kids' : 'adult', student.sourceId);
   const waiverRow = document.createElement('div'); waiverRow.className = 'student-info-waiver';
   const waiverText = document.createElement('span'); waiverText.textContent = waiver ? `Signed ${formatDate(waiver.signedAt)}` : 'Missing'; waiverText.className = waiver ? 'status-present' : 'status-absent';
-  const waiverLink = document.createElement('a'); waiverLink.className = 'btn'; waiverLink.href = `waiver.html?studentType=${student.studentType === 'child' ? 'kids' : 'adult'}&studentId=${student.sourceId}`; waiverLink.textContent = waiver ? 'View waiver' : 'Create waiver'; waiverRow.append(waiverText, waiverLink);
+  const waiverLink = document.createElement('a'); waiverLink.className = 'btn'; waiverLink.href = `waiver.html?studentType=${student.studentType === 'child' ? 'kids' : 'adult'}&studentId=${student.sourceId}`; waiverLink.textContent = waiver ? 'View' : 'Create'; waiverRow.append(waiverText, waiverLink);
   const notes = document.createElement('section'); notes.className = 'student-notes-section';
   const notesHeading = document.createElement('div'); notesHeading.className = 'student-info-notes-heading'; notesHeading.innerHTML = '<h3>Notes</h3>';
   const toolbar = document.createElement('div'); toolbar.className = 'student-info-notes-toolbar'; toolbar.setAttribute('role', 'toolbar'); toolbar.setAttribute('aria-label', 'Notes formatting');
   const editor = document.createElement('div'); editor.className = 'student-info-notes-editor'; editor.contentEditable = 'true'; editor.setAttribute('role', 'textbox'); editor.setAttribute('aria-multiline', 'true'); editor.setAttribute('aria-label', `Notes for ${student.firstName} ${student.lastName}`); editor.innerHTML = sanitizeNotesMarkup(student.notes || '<p></p>');
   [['bold','B'],['italic','I'],['underline','U'],['insertUnorderedList','Bullets'],['insertOrderedList','Numbered']].forEach(([command,label]) => { const button = makeButton(label, 'student-info-format-button', () => { editor.focus(); document.execCommand(command); }); button.setAttribute('aria-label', label === 'B' ? 'Bold' : label === 'I' ? 'Italic' : label === 'U' ? 'Underline' : label); button.addEventListener('mousedown', (event) => event.preventDefault()); toolbar.appendChild(button); });
   const format = document.createElement('select'); format.className = 'student-info-block-format'; format.setAttribute('aria-label', 'Paragraph style'); format.append(new Option('Paragraph','p'),new Option('Heading','h3')); format.addEventListener('change', () => { editor.focus(); document.execCommand('formatBlock', false, format.value); }); toolbar.appendChild(format);
-  const saveNotes = makeButton('Save notes', 'save student-info-save-notes', async () => { unified.updateNotes(student, sanitizeNotesMarkup(editor.innerHTML)); const synced = await unified.flushStudentUpdates(); setStatus(synced ? 'Student notes synced.' : 'Notes saved locally; cloud sync failed.'); });
-  notes.append(notesHeading, toolbar, editor, saveNotes);
-  const historyTitle = document.createElement('div'); historyTitle.className = 'detail-heading'; historyTitle.innerHTML = '<h3>Attendance History</h3>';
-  const history = document.createElement('div'); history.className = 'attendance-history'; attendanceHistory(student, history);
+  const saveFeedback = Object.assign(document.createElement('span'), { className: 'student-info-save-feedback', role: 'status' });
+  const saveNotes = makeButton('Save notes', 'save student-info-save-notes', async () => { unified.updateNotes(student, sanitizeNotesMarkup(editor.innerHTML)); const synced = await unified.flushStudentUpdates(); const message = synced ? 'Notes saved.' : 'Notes saved locally; cloud sync failed.'; saveFeedback.textContent = message; setStatus(message); });
+  notes.append(notesHeading, toolbar, editor, saveNotes, saveFeedback);
   const addArea = document.createElement('div'); addArea.className = 'attendance-add-area';
+  const historyTitle = document.createElement('div'); historyTitle.className = 'detail-heading'; historyTitle.innerHTML = '<h3>Attendance History</h3>';
+  const addAttendanceButton = makeButton('Add attendance', 'attendance-add', () => addAttendance(student, addArea)); historyTitle.appendChild(addAttendanceButton);
+  const history = document.createElement('div'); history.className = 'attendance-history'; history.appendChild(addArea); attendanceHistory(student, history);
   const actions = document.createElement('div'); actions.className = 'detail-actions';
-  actions.append(makeButton('Edit name', 'student-edit-action', () => { fields.replaceChildren(); const first = Object.assign(document.createElement('input'), { value: student.firstName, 'aria-label': 'First name' }); const last = Object.assign(document.createElement('input'), { value: student.lastName, 'aria-label': 'Last name' }); const save = makeButton('Save name', 'save', async () => { if (!first.value.trim() || !last.value.trim()) return; unified.updateStudent(student, { firstName: first.value, lastName: last.value }); const synced = await unified.flushStudentUpdates(); setStatus(synced ? 'Student name synced.' : 'Name changed locally; cloud sync failed.'); expanded.add(key(student)); render(); }); fields.append(first, last, save); }), makeButton('Add attendance', 'attendance-add', () => addAttendance(student, addArea)));
-  detail.append(info, activeLabel, fields, waiverRow, notes, historyTitle, history, actions, addArea);
+  actions.append(makeButton('Edit name', 'student-edit-action', () => { fields.replaceChildren(); const first = Object.assign(document.createElement('input'), { value: student.firstName, 'aria-label': 'First name' }); const last = Object.assign(document.createElement('input'), { value: student.lastName, 'aria-label': 'Last name' }); const save = makeButton('Save name', 'save', async () => { if (!first.value.trim() || !last.value.trim()) return; unified.updateStudent(student, { firstName: first.value, lastName: last.value }); const synced = await unified.flushStudentUpdates(); setStatus(synced ? 'Student name synced.' : 'Name changed locally; cloud sync failed.'); expanded.add(key(student)); render(); }); fields.append(first, last, save); }));
+  detail.append(info, activeLabel, fields, waiverRow, notes, historyTitle, history, actions);
   detail.classList.add('student-info-expanded-details');
   row.appendChild(detail);
 }

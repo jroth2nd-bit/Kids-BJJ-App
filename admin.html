@@ -4,7 +4,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1" />
     <title>Admin — BJJ Attendance</title>
-    <link rel="stylesheet" href="styles.css?v=41" />
+    <link rel="stylesheet" href="styles.css?v=73" />
   </head>
   <body>
     <main class="container">
@@ -71,26 +71,18 @@
           <p class="muted">Set the date used to calculate class totals.</p>
 
           <div class="admin-row admin-settings-row">
-            <label for="classStartDate">Class Count Start Date</label>
+            <label for="classStartDate">Kids Class Count Start Date</label>
             <input id="classStartDate" type="date" />
             <button id="saveClassStartDate" class="btn save">Save Start Date</button>
           </div>
-          <small id="classStartHelp" class="muted">Totals are counted Tue/Thu from this date through today.</small>
-        </article>
-
-        <article class="admin-card admin-card-wide adult-settings">
-          <h2>Adult Class Schedule</h2>
-          <p class="muted">Change Adult class names and times. Monday through Thursday support morning and evening sessions.</p>
+          <small id="classStartHelp" class="muted">Kids totals are counted Tuesday and Thursday from this date through today.</small>
           <div class="admin-row admin-settings-row">
             <label for="adultClassStartDate">Adult Class Count Start Date</label>
             <input id="adultClassStartDate" type="date" />
-          </div>
-          <div id="adultScheduleSettings"></div>
-          <div class="notes-actions-row">
-            <button id="saveAdultSettings" class="btn save">Save Adult Schedule</button>
-            <button id="resetAdultSettings" class="btn">Reset Adult Defaults</button>
+            <button id="saveAdultClassStartDate" class="btn save">Save Start Date</button>
             <span id="adultSettingsStatus" class="muted">Ready</span>
           </div>
+          <small class="muted">Adult totals are counted Sunday, Monday, Tuesday, Wednesday, Thursday, and Saturday from this date through today.</small>
         </article>
       </section>
 
@@ -100,7 +92,7 @@
     </main>
 
     <script type="module" src="auth-guard.js"></script>
-    <script type="module" src="nav.js?v=17"></script>
-    <script type="module" src="admin.js?v=9"></script>
+    <script type="module" src="nav.js?v=20"></script>
+    <script type="module" src="admin.js?v=10"></script>
   </body>
 </html>

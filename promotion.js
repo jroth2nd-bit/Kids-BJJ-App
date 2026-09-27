@@ -2,7 +2,7 @@ import * as unified from './unified-students.js?v=4';
 import * as kidsStudents from './students.js?v=5';
 import * as adultStudents from './adult-students.js?v=3';
 import * as kidsAttendance from './attendance.js?v=6';
-import * as adultAttendance from './adult-attendance.js?v=4';
+import * as adultAttendance from './adult-attendance.js?v=5';
 import * as beltSizes from './shared-belt-sizes.js?v=1';
 import * as kidsBeltSizes from './belt-sizes.js?v=1';
 import * as adultBeltSizes from './adult-belt-sizes.js?v=1';
@@ -15,6 +15,11 @@ const history = document.getElementById('promotionHistory');
 const controls = {
   search: document.getElementById('promotionSearch'), type: document.getElementById('promotionType'), rank: document.getElementById('promotionRank'), attendance: document.getElementById('promotionAttendance'), staged: document.getElementById('promotionStaged'), sort: document.getElementById('promotionSort'),
 };
+const filtersToggle = document.getElementById('promotionFiltersToggle');
+filtersToggle?.addEventListener('click', () => {
+  const open = document.body.classList.toggle('mobile-filters-open');
+  filtersToggle.setAttribute('aria-expanded', String(open));
+});
 const status = document.getElementById('promotionStatus');
 const expanded = new Set();
 const pendingTargets = new Map();

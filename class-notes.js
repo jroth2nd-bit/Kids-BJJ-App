@@ -10,8 +10,6 @@ const saveBtn = document.getElementById('saveNote');
 const copyPreviousBtn = document.getElementById('copyPrevious');
 const deleteBtn = document.getElementById('deleteNote');
 const newBtn = document.getElementById('newNote');
-const exportJsonBtn = document.getElementById('exportNotesJson');
-const exportCsvBtn = document.getElementById('exportNotesCsv');
 const toolbar = document.getElementById('notesToolbar');
 
 let currentDate = '';
@@ -260,48 +258,6 @@ function copyPreviousLesson() {
   setStatus(`Copied lesson from ${formatDateLabel(prev.date)}`);
 }
 
-function download(filename, content, mime) {
-  const blob = new Blob([content], { type: mime });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = filename;
-  a.click();
-  URL.revokeObjectURL(url);
-}
-
-function exportJson() {
-  const list = sortNewestFirst(loadAllNotes());
-  const payload = {
-    notes: list,
-    exportedAt: new Date().toISOString()
-  };
-  download('class-notes.json', JSON.stringify(payload, null, 2), 'application/json');
-}
-
-function csvEscape(value) {
-  return `"${String(value || '').replace(/"/g, '""')}"`;
-}
-
-function exportCsv() {
-  const list = sortNewestFirst(loadAllNotes());
-  const header = ['date', 'title', 'contentHtml', 'contentText', 'createdAt', 'updatedAt'];
-  const rows = [header.join(',')];
-
-  list.forEach((n) => {
-    rows.push([
-      csvEscape(n.date),
-      csvEscape(n.title),
-      csvEscape(n.content),
-      csvEscape(noteToPlainText(n.content)),
-      csvEscape(n.createdAt),
-      csvEscape(n.updatedAt)
-    ].join(','));
-  });
-
-  download('class-notes.csv', rows.join('\n'), 'text/csv');
-}
-
 function applyCommand(cmd, value) {
   if (!notesEditor) return;
   notesEditor.focus();
@@ -359,8 +315,6 @@ saveBtn && saveBtn.addEventListener('click', saveCurrentNote);
 copyPreviousBtn && copyPreviousBtn.addEventListener('click', copyPreviousLesson);
 deleteBtn && deleteBtn.addEventListener('click', deleteCurrentDate);
 newBtn && newBtn.addEventListener('click', resetForSelectedDate);
-exportJsonBtn && exportJsonBtn.addEventListener('click', exportJson);
-exportCsvBtn && exportCsvBtn.addEventListener('click', exportCsv);
 
 function init() {
   const initial = todayISO();

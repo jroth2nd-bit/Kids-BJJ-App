@@ -2,6 +2,7 @@ import { supabase } from './supabase-client.js';
 
 const ATTENDANCE_KEY = 'bjj_adult_attendance';
 const SETTINGS_KEY = 'bjj_adult_class_settings';
+const ADULT_CLASS_DAYS = new Set([0, 1, 2, 3, 4, 6]);
 const DEFAULT_SETTINGS = {
   startDate: '2026-07-01',
   sessions: [
@@ -34,15 +35,11 @@ async function cloudStudentId(legacyId) {
 async function saveCloudRecord(record) {
   const studentId = await cloudStudentId(record.studentId);
   if (!studentId) throw new Error(`Cloud adult student not found for local ID ${record.studentId}`);
-  const { data: existing, error: lookupError } = await supabase
-    .from('attendance')
-    .select('id')
-    .eq('student_id', studentId)
-    .eq('class_date', record.date)
-    .eq('session_id', record.sessionId)
-    .maybeSingle();
+  let lookup = supabase.from('attendance').select('id').eq('student_id', studentId).eq('class_date', record.date);
+  lookup = record.sessionId ? lookup.eq('session_id', record.sessionId) : lookup.is('session_id', null);
+  const { data: existing, error: lookupError } = await lookup.maybeSingle();
   if (lookupError) throw lookupError;
-  const payload = { student_id: studentId, class_date: record.date, session_id: record.sessionId, present: Boolean(record.present) };
+  const payload = { student_id: studentId, class_date: record.date, session_id: record.sessionId || null, present: Boolean(record.present) };
   const result = existing ? await supabase.from('attendance').update(payload).eq('id', existing.id) : await supabase.from('attendance').insert(payload);
   if (result.error) throw result.error;
 }
@@ -50,7 +47,9 @@ async function saveCloudRecord(record) {
 async function deleteCloudRecord(studentId, date, sessionId) {
   const cloudId = await cloudStudentId(studentId);
   if (!cloudId) return;
-  const { error } = await supabase.from('attendance').delete().eq('student_id', cloudId).eq('class_date', date).eq('session_id', sessionId);
+  let query = supabase.from('attendance').delete().eq('student_id', cloudId).eq('class_date', date);
+  query = sessionId ? query.eq('session_id', sessionId) : query;
+  const { error } = await query;
   if (error) throw error;
 }
 
@@ -59,10 +58,9 @@ export async function syncFromCloud() {
     .from('attendance')
     .select('class_date, session_id, present, students!inner(legacy_id, program)')
     .eq('students.program', 'adult')
-    .not('session_id', 'is', null)
     .order('class_date');
   if (error) throw error;
-  const list = data.map((record) => ({ studentId: Number(record.students.legacy_id), date: record.class_date, sessionId: record.session_id, present: record.present }));
+  const list = data.map((record) => ({ studentId: Number(record.students.legacy_id), date: record.class_date, ...(record.session_id ? { sessionId: record.session_id } : {}), present: record.present }));
   saveRecords(list);
   return list;
 }
@@ -94,31 +92,55 @@ export function getSessionsForDate(date) {
 }
 export function getSessionById(id) { return getSettings().sessions.find((session) => session.id === id) || null; }
 export function isScheduledClassDate(date) { return getSessionsForDate(date).length > 0; }
-export function getAttendance(studentId, date, sessionId) { return loadRecords().find((record) => record.studentId === Number(studentId) && record.date === date && record.sessionId === sessionId) || null; }
-export function markAttendance(studentId, date, sessionId, present) {
+export function getAttendance(studentId, date, sessionId = '') {
+  const records = loadRecords().filter((record) => record.studentId === Number(studentId) && record.date === date && (sessionId ? record.sessionId === sessionId : true));
+  return records.find((record) => record.present) || records[0] || null;
+}
+export function markAttendance(studentId, date, sessionIdOrPresent, presentValue) {
+  const legacySessionId = typeof sessionIdOrPresent === 'string' ? sessionIdOrPresent : '';
+  const present = typeof sessionIdOrPresent === 'string' ? presentValue : sessionIdOrPresent;
   const list = loadRecords();
-  const index = list.findIndex((record) => record.studentId === Number(studentId) && record.date === date && record.sessionId === sessionId);
-  const record = { studentId: Number(studentId), date, sessionId, present: Boolean(present) };
+  const index = list.findIndex((record) => record.studentId === Number(studentId) && record.date === date && (legacySessionId ? record.sessionId === legacySessionId : !record.sessionId));
+  const record = { studentId: Number(studentId), date, ...(legacySessionId ? { sessionId: legacySessionId } : {}), present: Boolean(present) };
   if (index === -1) list.push(record); else list[index] = record;
   saveRecords(list);
   void saveCloudRecord(record).catch((error) => console.error('Cloud adult attendance save failed', error));
   return record;
 }
 export function deleteAttendance(studentId, date, sessionId) {
-  saveRecords(loadRecords().filter((record) => !(record.studentId === Number(studentId) && record.date === date && record.sessionId === sessionId)));
+  saveRecords(loadRecords().filter((record) => !(record.studentId === Number(studentId) && record.date === date && (!sessionId || record.sessionId === sessionId))));
   void deleteCloudRecord(studentId, date, sessionId).catch((error) => console.error('Cloud adult attendance delete failed', error));
 }
-export function updateAttendance(studentId, oldDate, oldSessionId, newDate, newSessionId, present) {
-  const list = loadRecords().filter((record) => !(record.studentId === Number(studentId) && record.date === oldDate && record.sessionId === oldSessionId));
-  const duplicateIndex = list.findIndex((record) => record.studentId === Number(studentId) && record.date === newDate && record.sessionId === newSessionId);
-  const record = { studentId: Number(studentId), date: newDate, sessionId: newSessionId, present: Boolean(present) };
+export function updateAttendance(studentId, oldDate, oldSessionIdOrNewDate, newDateOrPresent, newSessionId, presentValue) {
+  const legacy = arguments.length >= 6;
+  const oldSessionId = legacy ? oldSessionIdOrNewDate : '';
+  const newDate = legacy ? newDateOrPresent : oldSessionIdOrNewDate;
+  const present = legacy ? presentValue : newDateOrPresent;
+  const list = loadRecords().filter((record) => !(record.studentId === Number(studentId) && record.date === oldDate && (legacy ? record.sessionId === oldSessionId : true)));
+  const duplicateIndex = list.findIndex((record) => record.studentId === Number(studentId) && record.date === newDate && (legacy ? record.sessionId === newSessionId : !record.sessionId));
+  const record = { studentId: Number(studentId), date: newDate, ...(legacy ? { sessionId: newSessionId } : {}), present: Boolean(present) };
   if (duplicateIndex === -1) list.push(record); else list[duplicateIndex] = record;
   saveRecords(list);
   void deleteCloudRecord(studentId, oldDate, oldSessionId).then(() => saveCloudRecord(record)).catch((error) => console.error('Cloud adult attendance update failed', error));
   return record;
 }
-export function getAllAttendance() { return loadRecords(); }
-export function getAllAttendanceForStudent(studentId) { return loadRecords().filter((record) => record.studentId === Number(studentId)).sort((a, b) => `${a.date}${a.sessionId}`.localeCompare(`${b.date}${b.sessionId}`)); }
+export function getAllAttendance() {
+  const byDate = new Map();
+  loadRecords().forEach((record) => {
+    const key = `${record.studentId}:${record.date}`;
+    const current = byDate.get(key);
+    if (!current || (!current.present && record.present)) byDate.set(key, record);
+  });
+  return [...byDate.values()];
+}
+export function getAllAttendanceForStudent(studentId) {
+  const byDate = new Map();
+  loadRecords().filter((record) => record.studentId === Number(studentId)).forEach((record) => {
+    const current = byDate.get(record.date);
+    if (!current || (!current.present && record.present)) byDate.set(record.date, record);
+  });
+  return [...byDate.values()].sort((a, b) => a.date.localeCompare(b.date));
+}
 export function deleteAttendanceForStudent(studentId) {
   saveRecords(loadRecords().filter((record) => record.studentId !== Number(studentId)));
   void cloudStudentId(studentId).then((cloudId) => cloudId && supabase.from('attendance').delete().eq('student_id', cloudId).not('session_id', 'is', null)).catch((error) => console.error('Cloud adult student attendance delete failed', error));
@@ -129,10 +151,10 @@ export function getTotalClasses() {
   const start = settings.startDate || DEFAULT_SETTINGS.startDate;
   const end = todayISO();
   let total = 0;
-  for (let current = new Date(`${start}T12:00:00`); current <= new Date(`${end}T12:00:00`); current.setDate(current.getDate() + 1)) total += getSessionsForDate(current.toISOString().split('T')[0]).length;
+    for (let current = new Date(`${start}T12:00:00`); current <= new Date(`${end}T12:00:00`); current.setDate(current.getDate() + 1)) if (ADULT_CLASS_DAYS.has(current.getDay())) total += 1;
   return total;
 }
-export function getTotalAttended(studentId) { return getAllAttendanceForStudent(studentId).filter((record) => record.present && record.date >= getSettings().startDate && record.date <= todayISO()).length; }
+export function getTotalAttended(studentId) { return new Set(getAllAttendanceForStudent(studentId).filter((record) => record.present && record.date >= getSettings().startDate && record.date <= todayISO()).map((record) => record.date)).size; }
 export function getClassBreakdown(studentId) {
   const breakdown = {};
   getAllAttendanceForStudent(studentId).filter((record) => record.present && record.date >= getSettings().startDate && record.date <= todayISO()).forEach((record) => {
@@ -152,9 +174,7 @@ export function getPercent(studentId) { const total = getTotalClasses(); return 
 export function getLastClass(studentId) {
   const records = getAllAttendanceForStudent(studentId).filter((record) => record.present);
   if (!records.length) return '';
-  const record = records[records.length - 1];
-  const session = getSessionById(record.sessionId);
-  return `${record.date} — ${session ? session.label : record.sessionId}`;
+  return records[records.length - 1].date;
 }
 export function getLastAttendedForSession(studentId, sessionId) {
   return getAllAttendanceForStudent(studentId)

@@ -4,7 +4,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1" />
     <title>Promotions — Black Lotus BJJ</title>
-    <link rel="stylesheet" href="styles.css?v=46" />
+    <link rel="stylesheet" href="styles.css?v=80" />
   </head>
   <body class="attendance-page promotion-workflow-page">
     <main class="container">
@@ -12,7 +12,8 @@
         <div class="attendance-brand"><img src="assets/Copilot_20260913_133023.png" alt="Black Lotus BJJ" /><h1>Promotions</h1></div>
         <div id="global-nav"></div>
       </header>
-      <section class="student-info-controls promotion-filters" aria-label="Promotion filters">
+      <button id="promotionFiltersToggle" class="mobile-filter-toggle" type="button" aria-expanded="false" aria-controls="promotionFilters">Filters</button>
+      <section id="promotionFilters" class="student-info-controls promotion-filters" aria-label="Promotion filters">
         <label>Search<input id="promotionSearch" type="search" placeholder="Student name" /></label>
         <label>Type<select id="promotionType"><option value="all">All types</option><option value="child">Child</option><option value="adult">Adult</option></select></label>
         <label>Rank<select id="promotionRank"><option value="">All ranks</option></select></label>
@@ -29,7 +30,7 @@
       <section class="promotion-history-section"><h2>Promotion history</h2><div id="promotionHistory"></div></section>
     </main>
     <script type="module" src="auth-guard.js"></script>
-    <script type="module" src="nav.js?v=17"></script>
-    <script type="module" src="promotion.js?v=43"></script>
+    <script type="module" src="nav.js?v=20"></script>
+    <script type="module" src="promotion.js?v=44"></script>
   </body>
 </html>
