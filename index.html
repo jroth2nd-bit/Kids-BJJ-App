@@ -4,19 +4,16 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1" />
     <title>Kids Attendance — BJJ Attendance Tracker</title>
-    <link rel="stylesheet" href="styles.css?v=35" />
+    <link rel="stylesheet" href="styles.css?v=39" />
   </head>
   <body class="attendance-page">
     <main class="container">
       <header class="attendance-header">
         <div class="attendance-brand"><img src="assets/Copilot_20260913_133023.png" alt="Black Lotus BJJ" /><h1>Kids Attendance</h1></div>
-        <label class="attendance-date" for="datePicker"><span aria-hidden="true">&#128197;</span><span class="sr-only">Attendance date</span><input id="datePicker" type="date" /></label>
+        <div id="global-nav"></div>
         <button id="addStudentToggle" class="attendance-primary" type="button">Add</button>
       </header>
-      <header class="header attendance-nav-header">
-        <p class="sub">Track class attendance and student progress</p>
-        <div id="global-nav"></div>
-      </header>
+      <section class="attendance-controls-row"><label class="attendance-date" for="datePicker"><span aria-hidden="true">&#128197;</span><span class="sr-only">Attendance date</span><input id="datePicker" type="date" /></label></section>
 
       <form id="addStudentForm" class="add-student attendance-add-form" autocomplete="off" hidden>
         <div>

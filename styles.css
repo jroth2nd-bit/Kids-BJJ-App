@@ -1580,3 +1580,40 @@ button,input,select,.btn{min-height:38px}
   .student-info-controls .filter-type,.student-info-controls .filter-rank,.student-info-controls .filter-attendance,.student-info-controls .filter-status{width:100%!important;max-width:none!important;min-width:0!important}
   .student-info-controls #printStudents{grid-column:1 / -1!important;width:100%!important}
 }
+
+/* Attendance app bar: keep navigation, branding, and Add together; date/session live in one compact control row. */
+.attendance-page .attendance-header{position:relative;z-index:40;grid-template-columns:auto minmax(0,1fr) auto;gap:12px;padding:12px clamp(14px,2.5vw,32px);margin-bottom:0}
+.attendance-page .attendance-header #global-nav{min-width:0}
+.attendance-page .attendance-header .header-nav-wrapper{justify-content:center;min-width:0}
+.attendance-page .attendance-header .site-brand,.attendance-page .attendance-header .nav-toggle{display:none!important}
+.attendance-page .attendance-header .topnav{justify-content:center;flex-wrap:nowrap;gap:2px;margin:0;padding:2px;background:transparent;overflow-x:auto;scrollbar-width:thin}
+.attendance-page .attendance-header .nav-link{flex:0 0 auto;min-height:36px;padding:7px 8px;border-radius:6px;font-size:.76rem;white-space:nowrap}
+.attendance-page .attendance-controls-row{display:flex;align-items:center;gap:12px;margin:10px 0 16px;padding:8px 12px;min-height:50px;border:1px solid rgba(255,255,255,.1);border-radius:8px;background:#202326}
+.attendance-page .attendance-controls-row .attendance-date{flex:0 1 220px;min-width:160px}
+.attendance-page .attendance-date input{width:100%}
+.adult-attendance-controls .adult-session-control{display:grid;grid-template-columns:auto minmax(180px,1fr);align-items:center;gap:10px;flex:1 1 auto;color:var(--muted);font-size:.82rem;font-weight:700}
+.adult-attendance-controls .adult-session-control select{width:100%;min-width:0;padding:8px 10px;border:1px solid rgba(255,255,255,.15);border-radius:6px;background:#151719;color:var(--text);font:inherit}
+.attendance-class-context{margin:3px 0 0;color:var(--muted);font-size:.8rem}
+@media(max-width:760px){
+  .attendance-page .attendance-header{grid-template-columns:minmax(0,1fr) auto auto;gap:8px;padding:10px 12px}
+  .attendance-page .attendance-brand{min-width:0;gap:8px}
+  .attendance-page .attendance-brand img{width:32px;height:32px}
+  .attendance-page .attendance-brand h1{font-size:1.12rem;overflow:hidden;text-overflow:ellipsis}
+  .attendance-page .attendance-header #global-nav,.attendance-page .attendance-header #global-nav .header-nav-wrapper{display:contents!important}
+  .attendance-page .attendance-header .site-brand{display:none!important}
+  .attendance-page .attendance-header .nav-toggle{display:block!important;grid-column:2;grid-row:1;min-height:38px;padding:7px 9px}
+  .attendance-page .attendance-header .topnav{display:none;position:absolute;top:calc(100% + 4px);left:8px;right:8px;z-index:60;grid-template-columns:repeat(2,minmax(0,1fr));gap:5px;padding:8px;border:1px solid rgba(255,255,255,.12);border-radius:8px;background:#202326;box-shadow:0 10px 26px rgba(0,0,0,.4)}
+  .attendance-page .attendance-header .header-nav-wrapper.nav-open .topnav{display:grid!important}
+  .attendance-page .attendance-header .topnav .nav-link{min-width:0;min-height:42px;padding:7px 5px;white-space:normal;text-align:center;font-size:.76rem}
+  .attendance-page .attendance-primary{grid-column:3;grid-row:1;padding:8px 13px}
+  .attendance-page .attendance-controls-row{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.4fr);gap:8px;margin:8px 0 12px;padding:8px}
+  .attendance-page .attendance-controls-row .attendance-date{display:grid!important;grid-template-columns:18px minmax(0,1fr);align-items:center;gap:4px;width:100%;min-width:0}
+  .adult-attendance-controls .attendance-date{grid-column:1!important;grid-row:1!important}
+  .adult-attendance-controls .adult-session-control{grid-column:2!important;grid-row:1!important}
+  .attendance-page:not(.adult-attendance-page) .attendance-controls-row .attendance-date{grid-column:1 / -1!important;grid-row:1!important}
+  .attendance-page .attendance-controls-row .attendance-date .sr-only{display:none}
+  .attendance-page .attendance-controls-row .attendance-date input{min-width:0!important;width:100%!important;padding:7px 4px!important;font-size:.74rem!important}
+  .adult-attendance-controls .adult-session-control{display:flex!important;grid-template-columns:none;align-items:center;gap:5px;min-width:0;font-size:.68rem;white-space:nowrap}
+  .adult-attendance-controls .adult-session-control select{flex:1 1 auto;min-width:0;padding:7px 5px;font-size:.74rem}
+  .attendance-class-context{font-size:.74rem}
+}
