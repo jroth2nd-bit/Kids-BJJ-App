@@ -1,4 +1,4 @@
-import * as adultAttendance from './adult-attendance.js?v=3';
+import * as adultAttendance from './adult-attendance.js?v=5';
 import { syncFromCloud, syncLocalNotes } from './class-notes-cloud.js';
 
 const NOTES_KEY = 'bjj_adult_class_notes';
@@ -78,8 +78,6 @@ dateInput.addEventListener('change', () => { if (dirty && !confirm('Discard unsa
 sessionSelect.addEventListener('change', () => { if (dirty && !confirm('Discard unsaved changes?')) return; loadNote(dateInput.value, sessionSelect.value); });
 coachInput.addEventListener('input', markDirty); titleInput.addEventListener('input', markDirty); editor.addEventListener('input', markDirty);
 document.getElementById('saveAdultNote').addEventListener('click', saveCurrentNote); document.getElementById('copyPreviousAdultNote').addEventListener('click', copyPreviousNote); document.getElementById('deleteAdultNote').addEventListener('click', deleteCurrentNote); document.getElementById('newAdultNote').addEventListener('click', () => loadNote(dateInput.value || todayISO(), sessionSelect.value));
-document.getElementById('exportAdultNotesJson').addEventListener('click', () => { const blob = new Blob([JSON.stringify(loadNotes(), null, 2)], { type: 'application/json' }); const url = URL.createObjectURL(blob); const link = document.createElement('a'); link.href = url; link.download = 'adult-class-notes.json'; link.click(); URL.revokeObjectURL(url); });
-document.getElementById('exportAdultNotesCsv').addEventListener('click', () => { const rows = [['date', 'sessionId', 'coach', 'title', 'content']].concat(loadNotes().map((note) => [note.date, note.sessionId, note.coach, note.title, note.content])); const csv = rows.map((row) => row.map((value) => `"${String(value || '').replace(/"/g, '""')}"`).join(',')).join('\n'); const blob = new Blob([csv], { type: 'text/csv' }); const url = URL.createObjectURL(blob); const link = document.createElement('a'); link.href = url; link.download = 'adult-class-notes.csv'; link.click(); URL.revokeObjectURL(url); });
 
 const params = new URLSearchParams(window.location.search);
 await syncFromCloud('adult', NOTES_KEY);

@@ -22,8 +22,6 @@ const insertLinkBtn = document.getElementById('insertLink');
 const linkUrlInput = document.getElementById('linkUrl');
 
 const saveIdeaBtn = document.getElementById('saveIdea');
-const exportJsonBtn = document.getElementById('exportIdeasJson');
-const exportCsvBtn = document.getElementById('exportIdeasCsv');
 const statusEl = document.getElementById('ideasStatus');
 
 let selectedSectionId = null;
@@ -539,63 +537,6 @@ function noteToPlainText(html) {
   return (div.textContent || '').replace(/\s+/g, ' ').trim();
 }
 
-function flattenRows() {
-  const notebook = getNotebook();
-  const rows = [];
-  notebook.sections.forEach((section, sIdx) => {
-    section.subsections.forEach((sub, subIdx) => {
-      rows.push({
-        sectionOrder: sIdx + 1,
-        subsectionOrder: subIdx + 1,
-        sectionTitle: section.title || '',
-        subsectionTitle: sub.title || '',
-        contentHtml: sub.content || '',
-        contentText: noteToPlainText(sub.content || ''),
-        createdAt: sub.createdAt || '',
-        updatedAt: sub.updatedAt || '',
-      });
-    });
-  });
-  return rows;
-}
-
-function download(filename, content, mime) {
-  const blob = new Blob([content], { type: mime });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = filename;
-  a.click();
-  URL.revokeObjectURL(url);
-}
-
-function exportJson() {
-  download('idea-notebook.json', JSON.stringify(getNotebook(), null, 2), 'application/json');
-}
-
-function csvEscape(v) {
-  return `"${String(v || '').replace(/"/g, '""')}"`;
-}
-
-function exportCsv() {
-  const rows = flattenRows();
-  const header = ['sectionOrder', 'subsectionOrder', 'sectionTitle', 'subsectionTitle', 'contentHtml', 'contentText', 'createdAt', 'updatedAt'];
-  const out = [header.join(',')];
-  rows.forEach((r) => {
-    out.push([
-      csvEscape(r.sectionOrder),
-      csvEscape(r.subsectionOrder),
-      csvEscape(r.sectionTitle),
-      csvEscape(r.subsectionTitle),
-      csvEscape(r.contentHtml),
-      csvEscape(r.contentText),
-      csvEscape(r.createdAt),
-      csvEscape(r.updatedAt),
-    ].join(','));
-  });
-  download('idea-notebook.csv', out.join('\n'), 'text/csv');
-}
-
 if (toolbar) {
   toolbar.addEventListener('mousedown', (e) => {
     const btn = e.target.closest('button[data-cmd]');
@@ -628,8 +569,6 @@ saveSectionNameBtn && saveSectionNameBtn.addEventListener('click', renameSection
 saveSubsectionNameBtn && saveSubsectionNameBtn.addEventListener('click', renameSubsection);
 deleteSectionBtn && deleteSectionBtn.addEventListener('click', deleteSection);
 deleteSubsectionBtn && deleteSubsectionBtn.addEventListener('click', deleteSubsection);
-exportJsonBtn && exportJsonBtn.addEventListener('click', exportJson);
-exportCsvBtn && exportCsvBtn.addEventListener('click', exportCsv);
 
 async function init() {
   await syncFromCloud(IDEAS_KEY);

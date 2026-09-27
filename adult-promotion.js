@@ -1,5 +1,5 @@
 import * as students from './adult-students.js?v=1';
-import * as attendance from './adult-attendance.js?v=3';
+import * as attendance from './adult-attendance.js?v=5';
 import * as beltSizes from './adult-belt-sizes.js?v=1';
 import * as waiverStore from './waiver-store.js?v=1';
 import { syncFromCloud, syncLocalPromotions } from './promotion-cloud.js';
@@ -181,8 +181,6 @@ if (header) {
   header.querySelectorAll('.col.name, .col.current, .col.stats, .col.belt').forEach((column) => { column.style.cursor = 'pointer'; });
 }
 document.getElementById('adultPrintBtn').addEventListener('click', () => window.print());
-document.getElementById('adultExportJson').addEventListener('click', () => { const blob = new Blob([JSON.stringify(loadPromotions(), null, 2)], { type: 'application/json' }); const url = URL.createObjectURL(blob); const link = document.createElement('a'); link.href = url; link.download = 'adult-promotions.json'; link.click(); URL.revokeObjectURL(url); });
-document.getElementById('adultExportCsv').addEventListener('click', () => { const rows = [['studentId', 'oldRank', 'newRank', 'beltSize', 'inStock', 'promotionDate'], ...loadPromotions().map((item) => [item.studentId, item.oldRank, item.newRank, item.beltSize, item.inStock, item.promotionDate])]; const blob = new Blob([rows.map((row) => row.map((value) => `"${String(value ?? '').replace(/"/g, '""')}"`).join(',')).join('\n')], { type: 'text/csv' }); const url = URL.createObjectURL(blob); const link = document.createElement('a'); link.href = url; link.download = 'adult-promotions.csv'; link.click(); URL.revokeObjectURL(url); });
 function attachPromotionNotesEditor(item, studentId, promotionDate) {
   if (item.querySelector('.promotion-notes-editor')) return;
   const notes = document.createElement('div'); notes.className = 'promotion-notes-editor'; notes.contentEditable = 'true'; notes.innerHTML = '';

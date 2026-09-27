@@ -1,7 +1,7 @@
 import * as students from './students.js';
 import * as attendance from './attendance.js?v=4';
 import * as beltSizes from './shared-belt-sizes.js?v=1';
-import * as adultAttendance from './adult-attendance.js?v=3';
+import * as adultAttendance from './adult-attendance.js?v=5';
 
 const importJsonFile = document.getElementById('importJsonFile');
 const csvImportFile = document.getElementById('csvImportFile');
@@ -17,12 +17,9 @@ const beltSizeForm = document.getElementById('beltSizeForm');
 const beltSizeInput = document.getElementById('beltSizeInput');
 const beltSizesList = document.getElementById('beltSizesList');
 const resetBeltSizesBtn = document.getElementById('resetBeltSizes');
-const adultScheduleSettings = document.getElementById('adultScheduleSettings');
-const saveAdultSettingsBtn = document.getElementById('saveAdultSettings');
-const resetAdultSettingsBtn = document.getElementById('resetAdultSettings');
+const saveAdultClassStartDateBtn = document.getElementById('saveAdultClassStartDate');
 const adultSettingsStatus = document.getElementById('adultSettingsStatus');
 const adultClassStartDate = document.getElementById('adultClassStartDate');
-const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 
 function download(filename, content, mime='application/json'){
   const blob = new Blob([content], {type: mime});
@@ -125,40 +122,13 @@ function renderBeltSizes() {
   });
 }
 
-function renderAdultSchedule() {
-  if (!adultScheduleSettings) return;
+function syncAdultClassStartDateInput() {
   if (adultClassStartDate) adultClassStartDate.value = adultAttendance.getSettings().startDate;
-  adultScheduleSettings.innerHTML = '';
-  const groups = new Map();
-  adultAttendance.getSettings().sessions.forEach((session) => {
-    if (!groups.has(session.day)) groups.set(session.day, []);
-    groups.get(session.day).push(session);
-  });
-  groups.forEach((sessions, day) => {
-    const group = document.createElement('section'); group.className = 'adult-schedule-day';
-    const heading = document.createElement('h3'); heading.textContent = dayNames[day]; group.appendChild(heading);
-    const labels = document.createElement('div'); labels.className = 'adult-schedule-labels'; labels.innerHTML = '<span>Session</span><span>Class name</span><span>Start</span><span>End</span>'; group.appendChild(labels);
-    sessions.forEach((session) => {
-      const row = document.createElement('div'); row.className = 'adult-schedule-row'; row.dataset.id = session.id;
-      const title = document.createElement('strong'); title.textContent = session.slot;
-      const label = document.createElement('input'); label.type = 'text'; label.value = session.label; label.dataset.field = 'label'; label.placeholder = 'Class name'; label.setAttribute('aria-label', `${dayNames[day]} ${session.slot} class name`);
-      const start = document.createElement('input'); start.type = 'time'; start.value = session.start; start.dataset.field = 'start'; start.setAttribute('aria-label', `${dayNames[day]} ${session.slot} start time`);
-      const end = document.createElement('input'); end.type = 'time'; end.value = session.end; end.dataset.field = 'end'; end.setAttribute('aria-label', `${dayNames[day]} ${session.slot} end time`);
-      row.append(title, label, start, end); group.appendChild(row);
-    });
-    adultScheduleSettings.appendChild(group);
-  });
 }
 
-function saveAdultSchedule() {
+function saveAdultClassStartDate() {
   const settings = adultAttendance.getSettings();
   if (adultClassStartDate && adultClassStartDate.value) settings.startDate = adultClassStartDate.value;
-  settings.sessions.forEach((session) => {
-    const row = adultScheduleSettings.querySelector(`[data-id="${session.id}"]`);
-    session.label = row.querySelector('[data-field="label"]').value.trim() || session.label;
-    session.start = row.querySelector('[data-field="start"]').value;
-    session.end = row.querySelector('[data-field="end"]').value;
-  });
   adultAttendance.saveSettings(settings);
   if (adultSettingsStatus) adultSettingsStatus.textContent = 'Saved';
 }
@@ -344,13 +314,8 @@ resetBeltSizesBtn && resetBeltSizesBtn.addEventListener('click', () => {
   renderBeltSizes();
 });
 
-saveAdultSettingsBtn && saveAdultSettingsBtn.addEventListener('click', saveAdultSchedule);
-resetAdultSettingsBtn && resetAdultSettingsBtn.addEventListener('click', () => {
-  adultAttendance.resetSettings();
-  renderAdultSchedule();
-  if (adultSettingsStatus) adultSettingsStatus.textContent = 'Defaults restored';
-});
+saveAdultClassStartDateBtn && saveAdultClassStartDateBtn.addEventListener('click', saveAdultClassStartDate);
 
 syncClassStartDateInput();
+syncAdultClassStartDateInput();
 renderBeltSizes();
-renderAdultSchedule();

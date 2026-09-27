@@ -4,7 +4,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1" />
     <title>Adult Attendance — BJJ Attendance</title>
-    <link rel="stylesheet" href="styles.css?v=41" />
+    <link rel="stylesheet" href="styles.css?v=80" />
   </head>
   <body class="attendance-page adult-attendance-page">
     <main class="container">
@@ -13,7 +13,7 @@
         <div id="global-nav"></div>
         <button id="adultAddStudentToggle" class="attendance-primary" type="button">Add</button>
       </header>
-      <section class="attendance-controls-row adult-attendance-controls"><label class="attendance-date" for="adultDatePicker"><span aria-hidden="true">&#128197;</span><span class="sr-only">Attendance date</span><input id="adultDatePicker" type="date" /></label><label class="adult-session-control" for="adultSessionSelect">Class session<select id="adultSessionSelect"></select></label></section>
+      <section class="attendance-controls-row adult-attendance-controls"><label class="attendance-date" for="adultDatePicker"><span aria-hidden="true">&#128197;</span><span class="sr-only">Attendance date</span><input id="adultDatePicker" type="date" /></label></section>
       <form id="adultAddStudentForm" class="add-student attendance-add-form" autocomplete="off" hidden>
         <div><label for="adultFirstName">First name</label>
           <input id="adultFirstName" name="firstName" placeholder="First name" required />
@@ -24,15 +24,15 @@
         <button class="attendance-primary" type="submit">Add adult</button>
       </form>
       <section class="attendance-section">
-        <div class="attendance-section-heading"><div><p class="eyebrow">Adult program</p><h2>Roster</h2><p id="adultSelectedClass" class="attendance-class-context">Select a class</p></div><p id="adultDayStatus" class="muted"></p></div>
+        <div class="attendance-section-heading"><div><p class="eyebrow">Adult program</p><h2>Roster</h2></div><p id="adultDayStatus" class="muted"></p></div>
         <div class="attendance-headers"><div class="col first">Name</div><div class="col present">Present</div><div class="col edit">Edit</div><div class="col inactive">Mark inactive</div></div>
         <ul id="adultStudentsList" class="students-list"></ul>
       </section>
       <section class="inactive-section"><h3>Inactive Adults</h3><ul id="adultInactiveList" class="inactive-list"></ul></section>
-      <footer class="footer"><small>Data syncs with the academy account.</small><div class="attendance-exports"><button id="adultExportJson" class="btn" type="button">Export JSON</button><button id="adultExportCsv" class="btn" type="button">Export CSV</button></div></footer>
+      <footer class="footer"><small>Data syncs with the academy account.</small></footer>
     </main>
     <script type="module" src="auth-guard.js"></script>
-    <script type="module" src="nav.js?v=17"></script>
-    <script type="module" src="adult-ui.js?v=8"></script>
+    <script type="module" src="nav.js?v=20"></script>
+    <script type="module" src="adult-ui.js?v=10"></script>
   </body>
 </html>

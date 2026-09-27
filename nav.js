@@ -5,6 +5,8 @@ const containerId = 'global-nav';
 function makeNav(){
   const container = document.getElementById(containerId);
   if (!container) return;
+  const header = container.closest('header');
+  const legacyHeader = header && !header.classList.contains('attendance-header');
   container.innerHTML = '';
   const brandWrap = document.createElement('div');
   brandWrap.className = 'site-brand';
@@ -64,10 +66,6 @@ function makeNav(){
   a8.href = 'adult-class-notes.html';
   a8.className = 'nav-link';
   a8.textContent = 'Adult Class Notes';
-  const a9 = document.createElement('a');
-  a9.href = 'calendar.html';
-  a9.className = 'nav-link';
-  a9.textContent = 'Calendar';
   const a10 = document.createElement('a');
   a10.href = 'waiver.html';
   a10.className = 'nav-link';
@@ -97,7 +95,6 @@ function makeNav(){
     else if (cur.startsWith('adult-attendance')) a6.classList.add('active');
     else if (cur.startsWith('adult-promotions')) a7.classList.add('active');
     else if (cur.startsWith('adult-class-notes')) a8.classList.add('active');
-    else if (cur.startsWith('calendar')) a9.classList.add('active');
     else if (cur.startsWith('waiver')) a10.classList.add('active');
     else if (cur.startsWith('student-info')) a11.classList.add('active');
     else a1.classList.add('active');
@@ -107,7 +104,6 @@ function makeNav(){
   nav.appendChild(a1);
   nav.appendChild(a2);
   nav.appendChild(a11);
-  nav.appendChild(a9);
   nav.appendChild(a10);
   nav.appendChild(a8);
   nav.appendChild(a3);
@@ -117,7 +113,15 @@ function makeNav(){
 
   const wrapper = document.createElement('div');
   wrapper.className = 'header-nav-wrapper';
-  wrapper.appendChild(brandWrap);
+  if (legacyHeader) {
+    const title = header.querySelector(':scope > h1');
+    brandWrap.className = 'attendance-brand';
+    if (title) brandWrap.appendChild(title);
+    header.querySelector(':scope > .sub')?.remove();
+    header.insertBefore(brandWrap, container);
+  } else {
+    wrapper.appendChild(brandWrap);
+  }
   navToggle.addEventListener('click', () => {
     const open = wrapper.classList.toggle('nav-open');
     navToggle.setAttribute('aria-expanded', String(open));

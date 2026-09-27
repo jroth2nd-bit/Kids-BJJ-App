@@ -11,8 +11,6 @@ let expandedStudentId = null;
 
 function todayISO() { return new Date().toISOString().slice(0, 10); }
 function formatDate(date) { return date ? new Date(`${date}T00:00:00`).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' }) : '—'; }
-function download(filename, content, mime = 'application/json') { const url = URL.createObjectURL(new Blob([content], { type: mime })); const link = document.createElement('a'); link.href = url; link.download = filename; link.click(); URL.revokeObjectURL(url); }
-function csvCell(value) { const text = String(value ?? ''); return /[",\n\r]/.test(text) ? `"${text.replace(/"/g, '""')}"` : text; }
 function beltClass(rank) { return `belt-${String(rank || 'white').toLowerCase().replace(/[^a-z0-9]+/g, '-')}`; }
 function summary(student) { return `${attendance.getTotalAttended(student.id)}/${attendance.getTotalClasses(student.id)} attended`; }
 function makeButton(text, className, handler) { const button = document.createElement('button'); button.type = 'button'; button.className = `btn ${className}`; button.textContent = text; button.addEventListener('click', handler); return button; }
@@ -119,8 +117,6 @@ function renderInactiveStudents() {
 addStudentToggle.addEventListener('click', () => { addStudentForm.hidden = !addStudentForm.hidden; if (!addStudentForm.hidden) document.getElementById('firstName').focus(); });
 addStudentForm.addEventListener('submit', async (event) => { event.preventDefault(); const button = addStudentForm.querySelector('button[type="submit"]'); button.disabled = true; try { await students.addStudentAndSync(document.getElementById('firstName').value, document.getElementById('lastName').value); addStudentForm.reset(); addStudentForm.hidden = true; render(); } catch (error) { console.error('Student create sync failed', error); alert(`Student could not be saved: ${error.message}`); } finally { button.disabled = false; } });
 datePicker.addEventListener('change', render);
-document.getElementById('exportJson').addEventListener('click', () => download('bjj-data.json', JSON.stringify({ students: students.getStudents(), attendance: attendance.getAllAttendance(), classStartDate: attendance.getClassStartDate(), exportedAt: new Date().toISOString() }, null, 2)));
-document.getElementById('exportCsv').addEventListener('click', () => { const rows = [['studentId', 'date', 'present'], ...attendance.getAllAttendance().map((record) => [record.studentId, record.date, record.present])]; download('attendance.csv', rows.map((row) => row.map(csvCell).join(',')).join('\n'), 'text/csv'); });
 
 if (!datePicker.value) datePicker.value = todayISO();
 await Promise.all([students.syncFromCloud(), attendance.syncFromCloud()]);

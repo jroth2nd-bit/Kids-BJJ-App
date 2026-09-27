@@ -4,7 +4,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1" />
     <title>Student Info - Black Lotus BJJ</title>
-    <link rel="stylesheet" href="styles.css?v=50" />
+    <link rel="stylesheet" href="styles.css?v=80" />
   </head>
   <body class="attendance-page student-info-page">
     <main class="container">
@@ -14,12 +14,13 @@
         <button id="studentInfoAddToggle" class="attendance-primary" type="button">Add</button>
       </header>
       <form id="studentInfoAddForm" class="attendance-add-form" hidden><div><label for="studentInfoFirstName">First name</label><input id="studentInfoFirstName" required /></div><div><label for="studentInfoLastName">Last name</label><input id="studentInfoLastName" required /></div><label>Type<select id="studentInfoNewType"><option value="child">Child</option><option value="adult">Adult</option></select></label><button class="attendance-primary" type="submit">Add student</button></form>
-      <section class="student-info-controls" aria-label="Student filters"><label class="filter-search">Search<input id="nameSearch" type="search" placeholder="Search by name" /></label><label class="filter-type">Type<select id="typeFilter"><option value="all">All types</option><option value="child">Child</option><option value="adult">Adult</option></select></label><label class="filter-rank">Rank<select id="rankFilter"><option value="">All ranks</option></select></label><label class="filter-attendance">Attendance<select id="attendanceFilter"><option value="all">All attendance</option><option value="none">No attendance</option><option value="high">75% or higher</option><option value="low">Below 50%</option></select></label><label class="filter-status">Status<select id="statusFilter"><option value="active" selected>Active</option><option value="all">All</option><option value="inactive">Inactive</option></select></label><button id="printStudents" class="btn" type="button">Print</button></section>
+      <button id="studentInfoFiltersToggle" class="mobile-filter-toggle" type="button" aria-expanded="false" aria-controls="studentInfoFilters">Filters</button>
+      <section id="studentInfoFilters" class="student-info-controls" aria-label="Student filters"><label class="filter-search">Search<input id="nameSearch" type="search" placeholder="Search by name" /></label><label class="filter-type">Type<select id="typeFilter"><option value="all">All types</option><option value="child">Child</option><option value="adult">Adult</option></select></label><label class="filter-rank">Rank<select id="rankFilter"><option value="">All ranks</option></select></label><label class="filter-attendance">Attendance<select id="attendanceFilter"><option value="all">All attendance</option><option value="none">No attendance</option><option value="high">75% or higher</option><option value="low">Below 50%</option></select></label><label class="filter-status">Status<select id="statusFilter"><option value="active" selected>Active</option><option value="all">All</option><option value="inactive">Inactive</option></select></label><button id="printStudents" class="btn" type="button">Print</button></section>
       <div id="studentInfoStatus" class="muted" role="status">Ready</div>
       <section class="student-info-table" aria-label="Student information"><div class="student-info-header"><span data-sort="name">Name</span><span data-sort="type">Type</span><span data-sort="rank">Rank</span><span data-sort="attendance">Attendance</span><span>Waiver</span><span>Status</span></div><div id="studentInfoList"></div></section>
     </main>
     <script type="module" src="auth-guard.js"></script>
-    <script type="module" src="nav.js?v=17"></script>
-    <script type="module" src="student-info.js?v=36"></script>
+    <script type="module" src="nav.js?v=20"></script>
+    <script type="module" src="student-info.js?v=43"></script>
   </body>
 </html>
