@@ -1617,3 +1617,23 @@ button,input,select,.btn{min-height:38px}
   .adult-attendance-controls .adult-session-control select{flex:1 1 auto;min-width:0;padding:7px 5px;font-size:.74rem}
   .attendance-class-context{font-size:.74rem}
 }
+
+/* One shared navigation pattern: full row on wide desktop, Menu dropdown on tablet and mobile. */
+@media(max-width:1240px){
+  .header:not(.attendance-header) .header-nav-wrapper{position:relative;display:grid!important;grid-template-columns:1fr auto!important;align-items:center!important;gap:8px!important;min-height:42px}
+  .header:not(.attendance-header) .header-nav-wrapper .site-brand{display:none!important}
+  .header:not(.attendance-header) .header-nav-wrapper .nav-toggle{display:block!important;grid-column:2;justify-self:end}
+  .header:not(.attendance-header) .header-nav-wrapper .topnav{display:none!important;position:absolute;top:calc(100% + 5px);left:0;right:0;z-index:70;grid-template-columns:repeat(3,minmax(0,1fr));gap:5px;max-height:calc(100vh - 110px);overflow:auto;padding:8px;border:1px solid rgba(255,255,255,.12);border-radius:8px;background:#202326;box-shadow:0 10px 26px rgba(0,0,0,.4)}
+  .header:not(.attendance-header) .header-nav-wrapper.nav-open .topnav{display:grid!important}
+  .header:not(.attendance-header) .topnav .nav-link{min-width:0;min-height:42px;justify-content:center;white-space:normal;text-align:center}
+  .attendance-page .attendance-header{grid-template-columns:minmax(0,1fr) auto auto!important;gap:8px!important}
+  .attendance-page .attendance-header #global-nav,.attendance-page .attendance-header #global-nav .header-nav-wrapper{display:contents!important}
+  .attendance-page .attendance-header .site-brand{display:none!important}
+  .attendance-page .attendance-header .nav-toggle{display:block!important;grid-column:2;grid-row:1;justify-self:end;min-height:38px;padding:7px 9px}
+  .attendance-page .attendance-header .topnav{display:none!important;position:absolute;top:calc(100% + 4px);left:8px;right:8px;z-index:70;grid-template-columns:repeat(3,minmax(0,1fr));gap:5px;max-height:calc(100vh - 110px);overflow:auto;padding:8px;border:1px solid rgba(255,255,255,.12);border-radius:8px;background:#202326;box-shadow:0 10px 26px rgba(0,0,0,.4)}
+  .attendance-page .attendance-header .header-nav-wrapper.nav-open .topnav{display:grid!important}
+  .attendance-page .attendance-header .topnav .nav-link{min-width:0;min-height:42px;padding:7px 5px;white-space:normal;text-align:center}
+}
+@media(max-width:760px){
+  .header:not(.attendance-header) .header-nav-wrapper.nav-open .topnav,.attendance-page .attendance-header .header-nav-wrapper.nav-open .topnav{grid-template-columns:repeat(2,minmax(0,1fr))!important}
+}

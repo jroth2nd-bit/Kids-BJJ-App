@@ -4,16 +4,15 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1" />
     <title>Promotions — Black Lotus BJJ</title>
-    <link rel="stylesheet" href="styles.css?v=35" />
+    <link rel="stylesheet" href="styles.css?v=41" />
   </head>
   <body class="attendance-page promotion-workflow-page">
     <main class="container">
       <header class="attendance-header">
         <div class="attendance-brand"><img src="assets/Copilot_20260913_133023.png" alt="Black Lotus BJJ" /><h1>Promotions</h1></div>
-        <span class="attendance-page-kicker">Batch workflow</span>
+        <div id="global-nav"></div>
         <button id="applyPromotions" class="attendance-primary" type="button" disabled>Apply staged</button>
       </header>
-      <header class="header attendance-nav-header"><p class="sub">Stage rank changes and apply them together</p><div id="global-nav"></div></header>
       <section class="student-info-controls promotion-filters" aria-label="Promotion filters">
         <label>Search<input id="promotionSearch" type="search" placeholder="Student name" /></label>
         <label>Type<select id="promotionType"><option value="all">All types</option><option value="child">Child</option><option value="adult">Adult</option></select></label>
@@ -31,7 +30,7 @@
       <section class="promotion-history-section"><h2>Promotion history</h2><div id="promotionHistory"></div></section>
     </main>
     <script type="module" src="auth-guard.js"></script>
-    <script type="module" src="nav.js?v=16"></script>
+    <script type="module" src="nav.js?v=17"></script>
     <script type="module" src="promotion.js?v=33"></script>
   </body>
 </html>
