@@ -16,7 +16,6 @@ const controls = {
   search: document.getElementById('promotionSearch'), type: document.getElementById('promotionType'), rank: document.getElementById('promotionRank'), attendance: document.getElementById('promotionAttendance'), staged: document.getElementById('promotionStaged'), sort: document.getElementById('promotionSort'),
 };
 const status = document.getElementById('promotionStatus');
-const applyButton = document.getElementById('applyPromotions');
 const expanded = new Set();
 const pendingTargets = new Map();
 const key = (student) => `${student.studentType}:${student.sourceId}`;
@@ -155,19 +154,7 @@ function render() {
   }).sort(sortStudents);
   list.replaceChildren();
   students.forEach((student) => list.appendChild(renderStudent(student)));
-  const stagedCount = unified.getStudents().filter((student) => student.active !== false && stagedRecord(student)).length;
-  applyButton.disabled = stagedCount === 0; applyButton.textContent = stagedCount ? `Apply staged (${stagedCount})` : 'Apply staged';
   renderHistory();
-}
-
-async function applyStaged() {
-  const all = unified.getStudents(); const queue = all.map((student) => ({ student, stage: stagedRecord(student) })).filter((entry) => entry.student.active !== false && entry.stage);
-  if (!queue.length) return;
-  if (!confirm(`Apply ${queue.length} staged promotion${queue.length === 1 ? '' : 's'}?`)) return;
-  applyButton.disabled = true; setStatus('Applying staged promotions...');
-  const failed = [];
-  for (const { student, stage } of queue) if (!await applyPromotion(student, stage, false, false)) failed.push(`${student.firstName} ${student.lastName}`);
-  setStatus(failed.length ? `Applied with sync issues: ${failed.join(', ')}` : `Applied ${queue.length} promotion${queue.length === 1 ? '' : 's'}.`); render();
 }
 
 const rankOptions = new Map();
@@ -175,7 +162,6 @@ const rankOptions = new Map();
 rankOptions.forEach((label, value) => controls.rank.appendChild(new Option(label, value)));
 Object.values(controls).forEach((control) => control.addEventListener('input', render));
 controls.sort.addEventListener('change', render);
-applyButton.addEventListener('click', applyStaged);
 document.getElementById('clearStaged').addEventListener('click', async () => {
   const staged = unified.getStudents().filter((student) => stagedRecord(student));
   if (!staged.length || !confirm(`Clear all ${staged.length} staged promotions?`)) return;
