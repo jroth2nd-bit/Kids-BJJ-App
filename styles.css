@@ -1736,9 +1736,8 @@ button,input,select,.btn{min-height:38px}
   .student-info-page .student-main>.student-info-type,.student-info-page .student-main>.student-info-rank{display:none!important}
   .student-info-page .student-main>.student-info-waiver{grid-column:1!important;grid-row:2!important;min-width:0!important;font-size:.76rem!important}
   .student-info-page .student-main>.student-info-active{grid-column:2!important;grid-row:2!important;text-align:right!important;font-size:.76rem!important}
-  .student-info-page .student-details{display:grid!important;grid-template-columns:minmax(0,.9fr) minmax(0,1.1fr)!important;grid-template-areas:"meta meta" "active waiver" "fields fields" "notes history-title" "notes history" "actions history" "add add";gap:8px 12px!important;width:100%!important;min-width:0!important;max-width:100%!important;padding:10px!important;overflow:hidden!important}
+  .student-info-page .student-details{display:grid!important;grid-template-columns:minmax(0,1fr) minmax(0,1fr)!important;grid-template-areas:"meta meta" "waiver waiver" "fields fields" "actions actions" "notes history-title" "notes history" "add add";align-items:start!important;gap:8px 12px!important;width:100%!important;min-width:0!important;max-width:100%!important;padding:10px!important;overflow:hidden!important}
   .student-info-page .student-details>.student-detail-info{grid-area:meta;display:flex!important;flex-wrap:wrap!important;gap:5px 10px!important;min-width:0!important}
-  .student-info-page .student-details>.active-toggle{grid-area:active;min-width:0!important}
   .student-info-page .student-details>.student-info-edit-fields{grid-area:fields;grid-template-columns:repeat(2,minmax(0,1fr))!important;min-width:0!important}
   .student-info-page .student-details>.student-info-edit-fields label{min-width:0!important}
   .student-info-page .student-details>.student-info-edit-fields select,.student-info-page .student-details>.student-info-edit-fields input{width:100%!important;min-width:0!important;max-width:100%!important}
@@ -1786,10 +1785,9 @@ button,input,select,.btn{min-height:38px}
 @media (min-width:981px){
   .student-info-page .student-main::before{content:none!important;display:none!important}
   .student-info-page .student-info-header{position:static!important;top:auto!important;z-index:auto!important;background:#25292d!important}
-  .student-info-page .student-details{display:grid!important;grid-template-columns:minmax(120px,.8fr) minmax(120px,.8fr) minmax(320px,2fr) minmax(240px,1.35fr)!important;grid-template-areas:"meta meta meta meta" "edit active fields waiver" "notes notes history-title history-title" "notes notes history history" "notes notes add add";align-items:start!important;gap:9px 14px!important;width:100%!important;min-width:0!important;max-width:100%!important;padding:12px!important;overflow:hidden!important}
+  .student-info-page .student-details{display:grid!important;grid-template-columns:minmax(0,1fr) minmax(0,1fr)!important;grid-template-areas:"meta meta" "waiver waiver" "fields fields" "edit edit" "notes history-title" "notes history" "add add";align-items:start!important;gap:9px 14px!important;width:100%!important;min-width:0!important;max-width:100%!important;padding:12px!important;overflow:hidden!important}
   .student-info-page .student-details>*{min-width:0!important;max-width:100%!important}
   .student-info-page .student-details>.student-detail-info{grid-area:meta;display:flex!important;flex-wrap:wrap!important;gap:5px 12px!important}
-  .student-info-page .student-details>.active-toggle{grid-area:active;align-self:center!important}
   .student-info-page .student-details>.student-info-edit-fields{grid-area:fields;grid-template-columns:repeat(2,minmax(0,1fr))!important;align-items:center!important;gap:8px!important}
   .student-info-page .student-details>.student-info-edit-fields label{display:grid!important;grid-template-columns:auto minmax(0,1fr)!important;align-items:center!important;gap:6px!important}
   .student-info-page .student-details>.student-info-edit-fields .student-info-belt-field{grid-template-columns:auto minmax(0,1fr) auto!important}
@@ -1852,8 +1850,7 @@ button,input,select,.btn{min-height:38px}
   .mobile-filters-open.attendance-page.student-info-page .student-info-controls,.mobile-filters-open.attendance-page.promotion-workflow-page .promotion-filters{display:grid!important}
 }
 @media (min-width:981px) and (max-width:1150px){
-  .student-info-page .student-details{grid-template-columns:84px 84px repeat(3,minmax(150px,1fr)) minmax(190px,1.1fr)!important;grid-template-areas:"meta meta meta meta meta meta" "edit active fields fields fields waiver" "notes notes notes notes history-title history-title" "notes notes notes notes history history" "notes notes notes notes add add"!important}
-  .student-info-page .student-details>.active-toggle{grid-area:active!important;align-self:center!important;justify-self:stretch!important}
+  .student-info-page .student-details{grid-template-columns:minmax(0,1fr) minmax(0,1fr)!important;grid-template-areas:"meta meta" "waiver waiver" "fields fields" "edit edit" "notes history-title" "notes history" "add add"!important}
   .student-info-page .student-details>.student-info-edit-fields{grid-area:fields!important}
   .student-info-page .student-details>.student-info-waiver{grid-area:waiver!important;display:flex!important;flex-wrap:nowrap!important;align-items:center!important;gap:8px!important;white-space:nowrap!important}
   .student-info-page .student-details>.student-info-waiver .btn{width:auto!important;min-width:max-content!important;min-height:38px!important;height:38px!important;max-width:none!important;white-space:nowrap!important;flex:0 0 auto!important}
@@ -1887,4 +1884,35 @@ button,input,select,.btn{min-height:38px}
   .attendance-page:not(.student-info-page):not(.promotion-workflow-page) .students-list .student-main{grid-template-columns:minmax(0,1fr) 66px 78px!important}
   .attendance-page:not(.student-info-page):not(.promotion-workflow-page) .students-list .student-main>.edit{display:none!important}
   .attendance-page:not(.student-info-page):not(.promotion-workflow-page) .students-list .student-main>.inactive{grid-column:3!important}
+}
+
+ .student-info-page .student-details>.student-detail-info{display:grid!important;grid-template-columns:repeat(4,minmax(0,1fr))!important;align-items:start!important;gap:0 18px!important}
+ .student-info-page .student-detail-info>.student-info-summary-field{display:flex!important;flex-direction:column!important;align-items:flex-start!important;gap:4px!important;min-width:0!important;padding:9px 2px!important;border:0!important;border-bottom:1px solid rgba(255,255,255,.08)!important;overflow-wrap:anywhere!important}
+ .student-info-page .student-detail-info>.student-info-summary-field>strong{min-width:0!important;color:var(--muted)!important;font-size:.68rem!important;line-height:1.2!important;text-transform:uppercase}
+ .student-info-page .student-detail-info>.student-info-summary-field>small{color:var(--text)!important;font-size:.84rem!important;font-weight:600!important;line-height:1.35!important;white-space:normal!important;overflow-wrap:anywhere!important}
+@media (min-width:761px) and (max-width:980px){
+  .student-info-page .student-details>.student-detail-info{grid-template-columns:repeat(3,minmax(0,1fr))!important;gap:0 16px!important}
+}
+@media (max-width:760px){
+  .student-info-page .student-details>.student-detail-info{grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:0 14px!important}
+  .student-info-page .student-detail-info>.student-info-summary-field{gap:3px!important;padding:7px 0!important}
+  .student-info-page .student-detail-info>.student-info-summary-field>strong{font-size:.66rem!important}
+  .student-info-page .student-detail-info>.student-info-summary-field>small{font-size:.8rem!important;line-height:1.3!important}
+}
+@media (max-width:760px){
+  .student-info-page .student-details>.student-info-edit-fields{grid-template-columns:minmax(0,1fr)!important;gap:10px!important}
+}
+
+.student-info-page .student-details>.student-info-edit-fields>.student-info-rank-field,
+.student-info-page .student-details>.student-info-edit-fields>.student-info-belt-field{display:grid!important;grid-template-columns:minmax(0,1fr) minmax(94px,auto)!important;grid-template-rows:auto auto!important;align-items:end!important;gap:5px 8px!important;min-width:0!important}
+.student-info-page .student-details>.student-info-edit-fields>.student-info-rank-field>label,
+.student-info-page .student-details>.student-info-edit-fields>.student-info-belt-field>label{display:block!important;grid-column:1 / -1!important;grid-row:1!important;min-width:0!important;color:var(--muted)!important}
+.student-info-page .student-details>.student-info-edit-fields>.student-info-rank-field>select,
+.student-info-page .student-details>.student-info-edit-fields>.student-info-belt-field>select{grid-column:1!important;grid-row:2!important;width:100%!important;min-width:0!important;max-width:100%!important}
+.student-info-page .student-details>.student-info-edit-fields>.student-info-rank-field>.btn,
+.student-info-page .student-details>.student-info-edit-fields>.student-info-belt-field>.btn{grid-column:2!important;grid-row:2!important;justify-self:stretch!important;align-self:end!important;width:auto!important;min-width:94px!important;min-height:38px!important;padding:6px 8px!important;white-space:nowrap!important}
+.student-info-page .student-detail-info>.student-info-summary-active{display:flex!important;flex-direction:row!important;align-items:center!important;gap:8px!important;width:100%!important;min-width:0!important;min-height:56px!important;padding:9px 2px!important;border:0!important;border-bottom:1px solid rgba(255,255,255,.08)!important;color:var(--text)!important;font-size:.84rem!important;font-weight:600!important;box-sizing:border-box!important}
+.student-info-page .student-detail-info>.student-info-summary-active>input{flex:0 0 20px!important;width:20px!important;height:20px!important;min-width:20px!important;min-height:20px!important;margin:0!important}
+@media (max-width:760px){
+  .student-info-page .student-detail-info>.student-info-summary-active{min-height:47px!important;padding:7px 0!important;font-size:.8rem!important}
 }
