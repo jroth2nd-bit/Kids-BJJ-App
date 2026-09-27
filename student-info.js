@@ -23,6 +23,7 @@ filtersToggle?.addEventListener('click', () => {
 });
 const expanded = new Set();
 const expandedAttendanceHistory = new Set();
+const pendingRankChanges = new Map();
 const deepLinkParams = new URLSearchParams(window.location.search);
 let sortField = 'name';
 let sortDirection = 1;
@@ -51,6 +52,11 @@ function stats(student) {
   return { count, total, percent: total ? Math.round(count / total * 100) : 0, last, history };
 }
 function makeButton(label, className, onClick) { const button = document.createElement('button'); button.type = 'button'; button.className = `btn ${className}`; button.textContent = label; button.addEventListener('click', onClick); return button; }
+function studentSummaryField(label, value) {
+  const field = document.createElement('span'); field.className = 'student-info-summary-field';
+  field.append(Object.assign(document.createElement('strong'), { textContent: label }), Object.assign(document.createElement('small'), { textContent: value }));
+  return field;
+}
 function fillRanks(select, type, selected) { select.replaceChildren(); ranks(type).forEach((rank) => select.appendChild(new Option(rank, rank, false, rank === selected))); }
 function fillBelts(select, type, selected) { select.replaceChildren(new Option('Select size', '')); beltSizes.getSizesForType(type === 'child' ? 'kids' : 'adult').forEach((size) => select.appendChild(new Option(size, size, false, size === selected))); }
 function sanitizeNotesMarkup(value) {
@@ -119,16 +125,44 @@ function detailsFor(student, row) {
   const waiver = waiverStore.getLatestWaiverForStudent(student.studentType === 'child' ? 'kids' : 'adult', student.sourceId);
   const waiverContact = waiver?.contact || {};
   const info = document.createElement('div'); info.className = 'student-detail-info';
-  [typeLabel(student.studentType), `${studentStats.count}/${studentStats.total} attended · ${studentStats.percent}%`, `Last: ${formatDate(studentStats.last)}`, `Phone: ${formatPhone(waiverContact.phone)}`, `DOB: ${waiverContact.dateOfBirth ? formatDate(waiverContact.dateOfBirth) : 'Not set'}`, `Emergency: ${waiverContact.emergencyName || 'Not set'}`, `Emergency phone: ${formatPhone(waiverContact.emergencyPhone)}`, `Relationship: ${waiverContact.emergencyRelationship || 'Not set'}`].forEach((text) => info.appendChild(Object.assign(document.createElement('span'), { textContent: text })));
-  const beltSummary = document.createElement('span'); beltSummary.className = 'student-info-belt-summary'; beltSummary.textContent = `Belt size: ${student.beltSize || 'Not set'}`; info.appendChild(beltSummary);
-  const activeLabel = document.createElement('label'); activeLabel.className = 'active-toggle'; activeLabel.appendChild(Object.assign(document.createElement('input'), { type: 'checkbox', checked: student.active !== false })); activeLabel.append(' Active');
+  [
+    ['Attendance', `${studentStats.count}/${studentStats.total} attended · ${studentStats.percent}%`],
+    ['Last attended', formatDate(studentStats.last)],
+    ['Phone', formatPhone(waiverContact.phone)],
+    ['Date of birth', waiverContact.dateOfBirth ? formatDate(waiverContact.dateOfBirth) : 'Not set'],
+    ['Emergency contact', waiverContact.emergencyName || 'Not set'],
+    ['Emergency phone', formatPhone(waiverContact.emergencyPhone)],
+    ['Relationship', waiverContact.emergencyRelationship || 'Not set'],
+  ].forEach(([label, value]) => info.appendChild(studentSummaryField(label, value)));
+  const activeLabel = document.createElement('label'); activeLabel.className = 'active-toggle student-info-summary-active'; activeLabel.appendChild(Object.assign(document.createElement('input'), { type: 'checkbox', checked: student.active !== false })); activeLabel.append(' Active');
   activeLabel.querySelector('input').addEventListener('change', async (event) => { unified.updateStudent(student, { active: event.target.checked, inactiveSince: event.target.checked ? '' : new Date().toISOString().slice(0, 10) }); const synced = await unified.flushStudentUpdates(); setStatus(synced ? 'Student status synced.' : 'Status changed locally; cloud sync failed.'); render(); });
+  info.appendChild(activeLabel);
   const fields = document.createElement('div'); fields.className = 'student-info-edit-fields';
-  const rank = document.createElement('select'); fillRanks(rank, student.studentType, student.rank || 'White');
-  rank.addEventListener('change', async () => { unified.updateRank(student, rank.value); const synced = await unified.flushStudentUpdates(); setStatus(synced ? `${student.firstName} ${student.lastName} rank synced` : 'Rank changed locally; cloud sync failed.'); render(); });
+  const currentRank = student.rank || 'White';
+  const rank = document.createElement('select'); rank.id = `student-info-rank-${student.studentType}-${student.sourceId}`; fillRanks(rank, student.studentType, pendingRankChanges.get(key(student)) || currentRank);
+  const rankField = document.createElement('div'); rankField.className = 'student-info-rank-field';
+  const rankLabel = document.createElement('label'); rankLabel.htmlFor = rank.id; rankLabel.textContent = 'Current rank';
+  const saveRank = makeButton('Save rank', 'save student-info-save-rank', async () => {
+    if (rank.value === currentRank) return;
+    unified.updateRank(student, rank.value);
+    const synced = await unified.flushStudentUpdates();
+    pendingRankChanges.delete(key(student));
+    setStatus(synced ? `${student.firstName} ${student.lastName} rank synced` : 'Rank changed locally; cloud sync failed.');
+    render();
+  });
+  saveRank.disabled = rank.value === currentRank;
+  rank.addEventListener('change', () => {
+    if (rank.value === currentRank) pendingRankChanges.delete(key(student));
+    else pendingRankChanges.set(key(student), rank.value);
+    saveRank.disabled = rank.value === currentRank;
+  });
+  rankField.append(rankLabel, rank, saveRank);
   const belt = document.createElement('select'); fillBelts(belt, student.studentType, student.beltSize);
-  const rankField = document.createElement('label'); rankField.textContent = 'Current rank'; rankField.append(rank);
-  const beltField = document.createElement('label'); beltField.className = 'student-info-belt-field'; beltField.append(document.createTextNode('Belt size'), belt, makeButton('Save belt size', 'save student-info-save-belt', async () => { unified.updateBeltSize(student, belt.value); const synced = await unified.flushStudentUpdates(); student.beltSize = belt.value; setStatus(synced ? `${student.firstName} ${student.lastName} belt size synced` : 'Belt size saved locally; cloud sync failed.'); const summary = detail.querySelector('.student-info-belt-summary'); if (summary) summary.textContent = `Belt size: ${student.beltSize || 'Not set'}`; }));
+  belt.id = `student-info-belt-${student.studentType}-${student.sourceId}`;
+  const beltField = document.createElement('div'); beltField.className = 'student-info-belt-field';
+  const beltLabel = document.createElement('label'); beltLabel.htmlFor = belt.id; beltLabel.textContent = 'Belt size';
+  const saveBelt = makeButton('Save belt size', 'save student-info-save-belt', async () => { unified.updateBeltSize(student, belt.value); const synced = await unified.flushStudentUpdates(); student.beltSize = belt.value; setStatus(synced ? `${student.firstName} ${student.lastName} belt size synced` : 'Belt size saved locally; cloud sync failed.'); });
+  beltField.append(beltLabel, belt, saveBelt);
   fields.append(rankField, beltField);
   const waiverRow = document.createElement('div'); waiverRow.className = 'student-info-waiver';
   const waiverText = document.createElement('span'); waiverText.textContent = waiver ? `Signed ${formatDate(waiver.signedAt)}` : 'Missing'; waiverText.className = waiver ? 'status-present' : 'status-absent';
@@ -167,7 +201,7 @@ function detailsFor(student, row) {
   history.appendChild(addArea); attendanceHistory(student, history);
   const actions = document.createElement('div'); actions.className = 'detail-actions';
   actions.append(makeButton('Edit name', 'student-edit-action', () => { fields.replaceChildren(); const first = Object.assign(document.createElement('input'), { value: student.firstName, 'aria-label': 'First name' }); const last = Object.assign(document.createElement('input'), { value: student.lastName, 'aria-label': 'Last name' }); const save = makeButton('Save name', 'save', async () => { if (!first.value.trim() || !last.value.trim()) return; unified.updateStudent(student, { firstName: first.value, lastName: last.value }); const synced = await unified.flushStudentUpdates(); setStatus(synced ? 'Student name synced.' : 'Name changed locally; cloud sync failed.'); expanded.add(key(student)); render(); }); fields.append(first, last, save); }));
-  detail.append(info, activeLabel, fields, waiverRow, notes, historyTitle, history, actions);
+  detail.append(info, fields, waiverRow, notes, historyTitle, history, actions);
   detail.classList.add('student-info-expanded-details');
   row.appendChild(detail);
 }
