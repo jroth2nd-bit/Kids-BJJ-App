@@ -1,6 +1,6 @@
 import * as unified from './unified-students.js?v=4';
-import * as kidsStudents from './students.js?v=5';
-import * as adultStudents from './adult-students.js?v=3';
+import * as kidsStudents from './students.js?v=6';
+import * as adultStudents from './adult-students.js?v=4';
 import * as kidsAttendance from './attendance.js?v=6';
 import * as adultAttendance from './adult-attendance.js?v=5';
 import * as beltSizes from './shared-belt-sizes.js?v=1';

@@ -1,5 +1,5 @@
-import * as kidsStudents from './students.js?v=5';
-import * as adultStudents from './adult-students.js?v=3';
+import * as kidsStudents from './students.js?v=6';
+import * as adultStudents from './adult-students.js?v=4';
 import * as waiverStore from './waiver-store.js?v=1';
 
 const fields = ['participantName', 'dateOfBirth', 'phone', 'email', 'emergencyName', 'emergencyRelationship', 'emergencyPhone', 'parentGuardianName'];

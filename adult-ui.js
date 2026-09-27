@@ -1,4 +1,4 @@
-import * as students from './adult-students.js?v=3';
+import * as students from './adult-students.js?v=4';
 import * as attendance from './adult-attendance.js?v=5';
 
 const datePicker = document.getElementById('adultDatePicker');

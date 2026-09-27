@@ -70,8 +70,14 @@ export function setActiveStatus(id, active) {
   const list = loadStudents();
   const student = list.find((item) => item.id === Number(id));
   if (!student) return false;
-  student.active = Boolean(active);
+  const nextActive = Boolean(active);
+  student.active = nextActive;
   saveStudents(list);
+  void supabase.from('students').update({ active: nextActive })
+    .eq('program', 'adult')
+    .eq('legacy_id', Number(id))
+    .then(({ error }) => { if (error) throw error; })
+    .catch((error) => console.error('Adult student status sync failed', error));
   return true;
 }
 
