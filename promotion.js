@@ -65,14 +65,14 @@ function renderHistory() {
   });
 }
 
-async function stagePromotion(student, target, belt, notes) {
+async function stagePromotion(student, target, notes) {
   if (!target) { setStatus('Choose a target rank before staging.'); return; }
   const store = readPromotions(student.studentType);
   let record = store.find((item) => Number(item.studentId) === Number(student.sourceId) && item.staged === true);
   if (record) {
-    record.legacyKey ||= newPromotionKey(student); record.oldRank = student.rank || 'White'; record.newRank = target; record.beltSize = belt || student.beltSize || ''; record.notes = notes || ''; record.confirmed = false;
+    record.legacyKey ||= newPromotionKey(student); record.oldRank = student.rank || 'White'; record.newRank = target; record.notes = notes || ''; record.confirmed = false;
   } else {
-    record = { studentId: Number(student.sourceId), oldRank: student.rank || 'White', newRank: target, beltSize: belt || student.beltSize || '', inStock: false, confirmed: false, staged: true, notes: notes || '', createdAt: today(), promotionDate: today(), legacyKey: newPromotionKey(student) };
+    record = { studentId: Number(student.sourceId), oldRank: student.rank || 'White', newRank: target, beltSize: student.beltSize || '', inStock: false, confirmed: false, staged: true, notes: notes || '', createdAt: today(), promotionDate: today(), legacyKey: newPromotionKey(student) };
     store.push(record);
   }
   const synced = await savePromotions(student.studentType, store); pendingTargets.delete(key(student)); expanded.add(key(student)); if (synced) setStatus(`${student.firstName} ${student.lastName} promotion staged and synced.`); render();
@@ -96,8 +96,8 @@ async function applyPromotion(student, stage, renderAfter = true, askFirst = fal
   if (!record) { setStatus('This staged promotion could not be found. Refresh and try again.'); return false; }
   record.legacyKey ||= newPromotionKey(student);
   const appliedAt = today();
-  record.oldRank = student.rank || record.oldRank || 'White'; record.confirmed = true; record.staged = false; record.promotionDate = appliedAt; record.createdAt = appliedAt;
-  if (!unified.updateStudent(student, { rank: record.newRank, beltSize: record.beltSize || student.beltSize || '' })) { setStatus('Promotion could not update the student record.'); return false; }
+  record.oldRank = student.rank || record.oldRank || 'White'; record.beltSize = student.beltSize || record.beltSize || ''; record.confirmed = true; record.staged = false; record.promotionDate = appliedAt; record.createdAt = appliedAt;
+  if (!unified.updateRank(student, record.newRank)) { setStatus('Promotion could not update the student record.'); return false; }
   const studentSynced = await unified.flushStudentUpdates();
   const promotionSynced = await savePromotions(student.studentType, store);
   pendingTargets.delete(key(student)); expanded.add(key(student));
@@ -115,17 +115,19 @@ function renderStudent(student) {
   const current = Object.assign(document.createElement('span'), { className: 'promotion-current-rank', textContent: student.rank || 'White' });
   const target = selectRank(student, savedTarget); target.className = 'promotion-target-select'; target.addEventListener('change', () => { pendingTargets.set(key(student), target.value); render(); });
   const state = Object.assign(document.createElement('span'), { className: `promotion-stage-state ${staged ? 'is-staged' : ''}`, textContent: staged ? 'Staged' : 'Not staged' });
-  const stage = makeButton(staged ? 'Apply' : 'Stage', 'save', () => { if (staged) void applyPromotion(student, staged); else void stagePromotion(student, target.value || pendingTargets.get(key(student)), student.beltSize, ''); });
+  const stage = makeButton(staged ? 'Apply' : 'Stage', 'save', () => { if (staged) void applyPromotion(student, staged); else void stagePromotion(student, target.value || pendingTargets.get(key(student)), ''); });
   main.append(name, current, target, state, stage);
   const detail = document.createElement('div'); detail.className = 'student-details'; detail.hidden = !expanded.has(key(student));
   const studentStats = stats(student); const lastPromotion = historyRecords(student)[0];
   const detailMeta = document.createElement('div'); detailMeta.className = 'student-detail-info';
   [student.studentType === 'child' ? 'Child' : 'Adult', `${studentStats.attended}/${studentStats.total} attended · ${studentStats.percent}%`, `Belt size: ${staged?.beltSize || student.beltSize || 'Not set'}`, `Last promoted: ${formatDate(lastPromotion?.promotionDate || lastPromotion?.createdAt)}`].forEach((value) => detailMeta.appendChild(Object.assign(document.createElement('span'), { textContent: value })));
-  const belt = selectBelt(student, staged?.beltSize || student.beltSize || ''); belt.setAttribute('aria-label', 'Promotion belt size');
-  const beltField = document.createElement('label'); beltField.className = 'promotion-belt-field'; beltField.append(document.createTextNode('Belt size'), belt);
+  const belt = selectBelt(student, student.beltSize || ''); belt.id = `promotion-belt-${student.studentType}-${student.sourceId}`; belt.setAttribute('aria-label', 'Belt size');
+  const beltField = document.createElement('div'); beltField.className = 'promotion-belt-field'; const beltLabel = document.createElement('label'); beltLabel.htmlFor = belt.id; beltLabel.textContent = 'Belt size';
+  const saveBelt = makeButton('Save belt size', 'save-belt-size', async () => { unified.updateBeltSize(student, belt.value); const synced = await unified.flushStudentUpdates(); setStatus(synced ? `${student.firstName} belt size saved.` : 'Belt size saved locally; cloud sync failed.'); expanded.add(key(student)); render(); });
+  beltField.append(beltLabel, belt, saveBelt);
   const notes = document.createElement('textarea'); notes.className = 'promotion-notes-field'; notes.rows = 3; notes.placeholder = 'Promotion notes'; notes.value = staged?.notes || ''; notes.setAttribute('aria-label', 'Promotion notes');
   const controlsRow = document.createElement('div'); controlsRow.className = 'detail-actions';
-  controlsRow.append(makeButton(staged ? 'Update staged promotion' : 'Stage promotion', 'save', () => void stagePromotion(student, target.value || staged?.newRank, belt.value, notes.value)), staged ? makeButton('Clear stage', 'cancel', () => void clearStagedPromotion(student, staged)) : document.createElement('span'));
+  controlsRow.append(makeButton(staged ? 'Update staged promotion' : 'Stage promotion', 'save', () => void stagePromotion(student, target.value || staged?.newRank, notes.value)), staged ? makeButton('Clear stage', 'cancel', () => void clearStagedPromotion(student, staged)) : document.createElement('span'));
   const recentHistory = document.createElement('div'); recentHistory.className = 'promotion-card-history';
   const title = document.createElement('strong'); title.textContent = 'Promotion history'; recentHistory.appendChild(title);
   const prior = historyRecords(student).slice(0, 3);
