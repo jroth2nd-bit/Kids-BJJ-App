@@ -1,5 +1,6 @@
 import * as students from './students.js?v=6';
 import * as attendance from './attendance.js?v=6';
+import * as unified from './unified-students.js?v=5';
 
 const datePicker = document.getElementById('datePicker');
 const studentsList = document.getElementById('studentsList');
@@ -14,6 +15,11 @@ function formatDate(date) { return date ? new Date(`${date}T00:00:00`).toLocaleD
 function beltClass(rank) { return `belt-${String(rank || 'white').toLowerCase().replace(/[^a-z0-9]+/g, '-')}`; }
 function summary(student) { return `${attendance.getTotalAttended(student.id)}/${attendance.getTotalClasses(student.id)} attended`; }
 function makeButton(text, className, handler) { const button = document.createElement('button'); button.type = 'button'; button.className = `btn ${className}`; button.textContent = text; button.addEventListener('click', handler); return button; }
+async function syncActiveStatus(student, active) {
+  unified.updateStudent({ studentType: 'child', sourceId: student.id }, { active, inactiveSince: active ? '' : new Date().toISOString().slice(0, 10) });
+  await unified.flushStudentUpdates();
+  render();
+}
 
 function render() {
   const date = datePicker.value || todayISO();
@@ -57,12 +63,12 @@ function buildDetails(row, student) {
   const info = document.createElement('div'); info.className = 'student-detail-info';
   info.append(Object.assign(document.createElement('span'), { textContent: 'Child' }), Object.assign(document.createElement('span'), { textContent: summary(student) }), Object.assign(document.createElement('span'), { textContent: `Last: ${formatDate(attendance.getLastAttended(student.id))}` }));
   const activeLabel = document.createElement('label'); activeLabel.className = 'active-toggle'; activeLabel.textContent = 'Active';
-  const active = Object.assign(document.createElement('input'), { type: 'checkbox', checked: Boolean(student.active) }); active.addEventListener('change', () => { students.setActiveStatus(student.id, active.checked); render(); }); activeLabel.prepend(active);
+  const active = Object.assign(document.createElement('input'), { type: 'checkbox', checked: Boolean(student.active) }); active.addEventListener('change', () => { void syncActiveStatus(student, active.checked); }); activeLabel.prepend(active);
   const historyTitle = document.createElement('div'); historyTitle.className = 'detail-heading'; historyTitle.innerHTML = '<h3>Attendance History</h3>';
   const history = document.createElement('div'); history.className = 'attendance-history'; renderHistory(history, student);
   const addArea = document.createElement('div'); addArea.className = 'attendance-add-area';
   const actions = document.createElement('div'); actions.className = 'detail-actions';
-  const markInactive = () => { if (confirm(`Mark ${student.firstName} ${student.lastName} inactive?`)) { students.setActiveStatus(student.id, false); render(); } };
+  const markInactive = () => { if (confirm(`Mark ${student.firstName} ${student.lastName} inactive?`)) void syncActiveStatus(student, false); };
   const historyButton = makeButton('View Full History', 'history-full', () => {
     const showingFullHistory = history.classList.toggle('history-expanded');
     historyButton.textContent = showingFullHistory ? 'Hide History' : 'View Full History';
@@ -96,7 +102,7 @@ function renderActiveStudents(date) {
     const record = attendance.getAttendance(student.id, date);
     const present = document.createElement('button'); present.type = 'button'; present.className = `attendance-toggle ${record?.present ? 'is-present' : ''}`; present.textContent = record?.present ? 'Present' : 'Absent'; present.title = attendance.isScheduledClassDate(date) ? 'Toggle attendance' : 'Attendance is recorded on Tuesdays and Thursdays';
     present.addEventListener('click', () => { expandedStudentId = student.id; attendance.markAttendance(student.id, date, !present.classList.contains('is-present')); render(); });
-    const markInactive = () => { if (confirm(`Mark ${student.firstName} ${student.lastName} inactive?`)) { students.setActiveStatus(student.id, false); render(); } };
+    const markInactive = () => { if (confirm(`Mark ${student.firstName} ${student.lastName} inactive?`)) void syncActiveStatus(student, false); };
     main.append(name, present, makeButton('Edit', 'edit', () => enterStudentEdit(row, student)), makeButton('Mark inactive', 'inactive', markInactive));
     row.append(main); buildDetails(row, student);
     row.addEventListener('click', (event) => {
@@ -111,7 +117,7 @@ function renderInactiveStudents() {
   inactiveList.replaceChildren();
   const list = students.getStudents().filter((student) => !student.active);
   if (!list.length) { inactiveList.appendChild(Object.assign(document.createElement('li'), { className: 'muted', textContent: 'No inactive students' })); return; }
-  list.forEach((student) => { const row = document.createElement('li'); row.className = 'inactive-row'; const name = document.createElement('span'); name.textContent = `${student.firstName} ${student.lastName}`; row.append(name, makeButton('Activate', 'save', () => { students.setActiveStatus(student.id, true); render(); })); inactiveList.appendChild(row); });
+  list.forEach((student) => { const row = document.createElement('li'); row.className = 'inactive-row'; const name = document.createElement('span'); name.textContent = `${student.firstName} ${student.lastName}`; row.append(name, makeButton('Activate', 'save', () => { void syncActiveStatus(student, true); })); inactiveList.appendChild(row); });
 }
 
 addStudentToggle.addEventListener('click', () => { addStudentForm.hidden = !addStudentForm.hidden; if (!addStudentForm.hidden) document.getElementById('firstName').focus(); });
