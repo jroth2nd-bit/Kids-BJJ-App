@@ -4,7 +4,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1" />
     <title>Waivers - Black Lotus BJJ</title>
-    <link rel="stylesheet" href="styles.css?v=81" />
+    <link rel="stylesheet" href="styles.css?v=82" />
   </head>
   <body class="waiver-page">
     <main class="container">
@@ -21,11 +21,11 @@
             <label>Participant name<input id="participantName" required /></label>
             <label>Student record<select id="studentRecord"><option value="">Create or select a record</option></select></label>
             <label>Date of birth<input id="dateOfBirth" type="text" inputmode="numeric" autocomplete="bday" placeholder="MM/DD/YYYY" maxlength="10" pattern="(?:0?[1-9]|1[0-2])[/\\-](?:0?[1-9]|[12]\\d|3[01])[/\\-]\\d{4}|\\d{4}[/\\-](?:0?[1-9]|1[0-2])[/\\-](?:0?[1-9]|[12]\\d|3[01])|\\d{8}" required /></label>
-            <label>Phone<input id="phone" type="tel" required /></label>
+            <label>Phone<input id="phone" type="tel" inputmode="tel" autocomplete="tel" placeholder="(222) 333-4444" required /></label>
             <label>Email<input id="email" type="email" required /></label>
             <label>Emergency contact name<input id="emergencyName" required /></label>
             <label>Emergency relationship<input id="emergencyRelationship" required /></label>
-            <label>Emergency phone<input id="emergencyPhone" type="tel" required /></label>
+            <label>Emergency phone<input id="emergencyPhone" type="tel" inputmode="tel" autocomplete="tel" placeholder="(222) 333-4444" required /></label>
           </div>
           <div id="guardianFields" class="waiver-form-grid"><label>Parent/Guardian printed name<input id="parentGuardianName" /></label></div>
           <article class="waiver-document" aria-label="Waiver of liability">
@@ -49,13 +49,13 @@
             <div id="guardianSignatureFields"><label>Parent/Guardian typed signature<input id="guardianTypedSignature" /></label><canvas id="guardianSignature" class="signature-pad" width="500" height="140"></canvas><button type="button" class="btn" data-clear-canvas="guardianSignature">Clear signature</button></div>
           </div>
           <label class="waiver-agreement"><input id="agreement" type="checkbox" required /> I have read and agree to the waiver of liability above.</label>
-          <div class="waiver-actions"><button id="saveWaiver" class="btn save">Save Signed Waiver</button><span id="waiverStatus" class="muted">Ready</span></div>
+          <div class="waiver-actions"><button id="saveWaiver" class="btn save" type="button">Save Signed Waiver</button><span id="waiverStatus" class="muted">Ready</span></div>
         </section>
         <aside class="waiver-records-card"><div class="waiver-section-heading"><h2>Signed Waivers</h2><button id="printRecord" class="btn" disabled>Print selected</button></div><input id="waiverSearch" class="waiver-search" type="search" placeholder="Search name, phone, or email" /><div id="waiverRecords"></div></aside>
       </section>
     </main>
     <script type="module" src="auth-guard.js"></script>
     <script type="module" src="nav.js?v=20"></script>
-    <script type="module" src="waiver.js?v=4"></script>
+    <script type="module" src="waiver.js?v=5"></script>
   </body>
 </html>

@@ -968,6 +968,11 @@ button,input,select,.btn{min-height:38px}
   .nav-toggle{display:none}
 }
 .waiver-document-brand img{width:135px;height:auto}
+.waiver-field-error>input,.waiver-field-error>select,.waiver-field-error input,.waiver-field-error select{border-color:#f87171!important;box-shadow:0 0 0 2px rgba(248,113,113,.18)!important}
+.waiver-field-error{color:#fecaca!important}
+.waiver-validation-message{display:block;margin-top:4px;color:#fca5a5;font-size:.76rem;font-weight:600;line-height:1.25}
+.waiver-signature-field.waiver-field-error .signature-pad{border:2px solid #f87171;box-shadow:0 0 0 2px rgba(248,113,113,.18)}
+.waiver-agreement.waiver-field-error{padding:8px;border:1px solid #f87171;border-radius:6px;background:rgba(248,113,113,.08)}
 
 @media (max-width:760px){
   .student-info-row{display:flex!important;flex-direction:column;align-items:stretch;gap:0;min-width:0;padding:10px}
