@@ -1,464 +1,184 @@
-import * as students from './students.js?v=3';
-import * as attendance from './attendance.js?v=5';
-import * as beltSizes from './belt-sizes.js?v=1';
-import * as waiverStore from './waiver-store.js?v=1';
-import { syncFromCloud, syncLocalPromotions } from './promotion-cloud.js';
+import * as unified from './unified-students.js?v=4';
+import * as kidsStudents from './students.js?v=5';
+import * as adultStudents from './adult-students.js?v=3';
+import * as kidsAttendance from './attendance.js?v=6';
+import * as adultAttendance from './adult-attendance.js?v=4';
+import * as beltSizes from './shared-belt-sizes.js?v=1';
+import * as kidsBeltSizes from './belt-sizes.js?v=1';
+import * as adultBeltSizes from './adult-belt-sizes.js?v=1';
+import { syncFromCloud, syncLocalPromotions, deleteStagedPromotion } from './promotion-cloud.js?v=3';
 
-const RANKS = [
-  'White', 'White 1', 'White 2', 'White 3', 'White 4',
-  'Grey/White', 'Grey/White 1','Grey/White 2','Grey/White 3','Grey/White 4',
-  'Grey','Grey 1','Grey 2','Grey 3','Grey 4',
-  'Grey/Black','Grey/Black 1','Grey/Black 2','Grey/Black 3','Grey/Black 4',
-  'Yellow/White','Yellow/White 1','Yellow/White 2','Yellow/White 3','Yellow/White 4',
-  'Yellow','Yellow 1','Yellow 2','Yellow 3','Yellow 4',
-  'Yellow/Black','Yellow/Black 1','Yellow/Black 2','Yellow/Black 3','Yellow/Black 4',
-  'Orange/White','Orange/White 1','Orange/White 2','Orange/White 3','Orange/White 4',
-  'Orange','Orange 1','Orange 2','Orange 3','Orange 4',
-  'Orange/Black','Orange/Black 1','Orange/Black 2','Orange/Black 3','Orange/Black 4',
-  'Green/White','Green/White 1','Green/White 2','Green/White 3','Green/White 4',
-  'Green','Green 1','Green 2','Green 3','Green 4',
-  'Green/Black','Green/Black 1','Green/Black 2','Green/Black 3','Green/Black 4'
-];
-
-const promoList = document.getElementById('promoList');
-const rankFilter = document.getElementById('rankFilter');
-const exportJsonBtn = document.getElementById('exportJson');
-const exportCsvBtn = document.getElementById('exportCsv');
-const printBtn = document.getElementById('printBtn');
-const promotionHistory = document.getElementById('promotionHistory');
-
-const promoMobileMql = window.matchMedia('(max-width: 640px)');
-
-function syncPromoResponsiveMode() {
-  document.body.classList.toggle('promo-mobile', promoMobileMql.matches);
-}
-
-if (typeof promoMobileMql.addEventListener === 'function') {
-  promoMobileMql.addEventListener('change', syncPromoResponsiveMode);
-} else if (typeof promoMobileMql.addListener === 'function') {
-  promoMobileMql.addListener(syncPromoResponsiveMode);
-}
-
-syncPromoResponsiveMode();
-
-const PROMO_KEY = 'bjj_promotions';
-const PROMO_GRID_COLS = 'minmax(150px, 1.1fr) minmax(110px,.8fr) minmax(190px,1.3fr) minmax(70px,.5fr) minmax(160px,1.1fr) minmax(60px,.45fr) minmax(70px,.5fr) minmax(150px,1fr)';
-
-// Prevent browser from restoring horizontal scroll position
-try{ if ('scrollRestoration' in history) history.scrollRestoration = 'manual'; }catch(e){}
-try{ document.documentElement.style.overflowX = 'hidden'; document.body.style.overflowX = 'hidden'; }catch(e){}
-window.addEventListener('pageshow', ()=>{ try{ window.scrollTo(0,0); }catch(e){} });
-
-function loadPromotions(){
-  try{ return JSON.parse(localStorage.getItem(PROMO_KEY)) || []; }catch(e){return []}
-}
-function savePromotions(list){ localStorage.setItem(PROMO_KEY, JSON.stringify(list)); void syncLocalPromotions('kids', list).catch((error) => console.error('Cloud kids promotion save failed', error)); }
-function addPromotion(rec){ const list = loadPromotions(); list.push(rec); savePromotions(list); }
-
-function populateRankFilter(){
-  RANKS.forEach(r => {
-    const opt = document.createElement('option'); opt.value = r; opt.textContent = r; rankFilter.appendChild(opt);
-  });
-}
-
-function enforceGridLayout(){
-  if (promoMobileMql.matches) return;
-  const hdr = document.querySelector('.promo-row.header');
-  if (hdr) {
-    hdr.style.display = 'grid';
-    hdr.style.gridTemplateColumns = PROMO_GRID_COLS;
-    hdr.style.boxSizing = 'border-box';
-    // ensure header contrast in case CSS rules are overridden
-    hdr.style.background = 'linear-gradient(90deg,var(--brand-bg), #071026)';
-    hdr.style.color = getComputedStyle(document.documentElement).getPropertyValue('--text') || '#e6eef8';
+const KIDS_RANKS = ['White', 'White 1', 'White 2', 'White 3', 'White 4', 'Grey/White', 'Grey/White 1', 'Grey/White 2', 'Grey/White 3', 'Grey/White 4', 'Grey', 'Grey 1', 'Grey 2', 'Grey 3', 'Grey 4', 'Grey/Black', 'Grey/Black 1', 'Grey/Black 2', 'Grey/Black 3', 'Grey/Black 4', 'Yellow/White', 'Yellow/White 1', 'Yellow/White 2', 'Yellow/White 3', 'Yellow/White 4', 'Yellow', 'Yellow 1', 'Yellow 2', 'Yellow 3', 'Yellow 4', 'Yellow/Black', 'Yellow/Black 1', 'Yellow/Black 2', 'Yellow/Black 3', 'Yellow/Black 4', 'Orange/White', 'Orange/White 1', 'Orange/White 2', 'Orange/White 3', 'Orange/White 4', 'Orange', 'Orange 1', 'Orange 2', 'Orange 3', 'Orange 4', 'Orange/Black', 'Orange/Black 1', 'Orange/Black 2', 'Orange/Black 3', 'Orange/Black 4', 'Green/White', 'Green/White 1', 'Green/White 2', 'Green/White 3', 'Green/White 4', 'Green', 'Green 1', 'Green 2', 'Green 3', 'Green 4', 'Green/Black', 'Green/Black 1', 'Green/Black 2', 'Green/Black 3', 'Green/Black 4'];
+const ADULT_RANKS = ['White', 'White 1', 'White 2', 'White 3', 'White 4', 'Blue', 'Blue 1', 'Blue 2', 'Blue 3', 'Blue 4', 'Purple', 'Purple 1', 'Purple 2', 'Purple 3', 'Purple 4', 'Brown', 'Brown 1', 'Brown 2', 'Brown 3', 'Brown 4', 'Black', 'Black 1', 'Black 2', 'Black 3', 'Black 4'];
+const list = document.getElementById('promotionWorkflowList');
+const history = document.getElementById('promotionHistory');
+const controls = {
+  search: document.getElementById('promotionSearch'), type: document.getElementById('promotionType'), rank: document.getElementById('promotionRank'), attendance: document.getElementById('promotionAttendance'), staged: document.getElementById('promotionStaged'), sort: document.getElementById('promotionSort'),
+};
+const status = document.getElementById('promotionStatus');
+const expanded = new Set();
+const pendingTargets = new Map();
+const key = (student) => `${student.studentType}:${student.sourceId}`;
+const storageKey = (student) => student.studentType === 'adult' ? 'bjj_adult_promotions' : 'bjj_promotions';
+const program = (student) => student.studentType === 'adult' ? 'adult' : 'kids';
+const attendanceApi = (student) => student.studentType === 'adult' ? adultAttendance : kidsAttendance;
+const ranksFor = (student) => student.studentType === 'adult' ? ADULT_RANKS : KIDS_RANKS;
+const rankFilterValue = (student) => `${student.studentType}:${student.rank || 'White'}`;
+const today = () => new Date().toISOString();
+const newPromotionKey = (student) => `promotion:${program(student)}:${student.sourceId}:${Date.now()}:${Math.random().toString(36).slice(2, 9)}`;
+const formatDate = (value) => value ? new Date(`${String(value).slice(0, 10)}T00:00:00`).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' }) : '—';
+const setStatus = (message) => { status.textContent = message; };
+function readPromotions(studentType) { try { const value = JSON.parse(localStorage.getItem(studentType === 'adult' ? 'bjj_adult_promotions' : 'bjj_promotions') || '[]'); return Array.isArray(value) ? value : []; } catch { return []; } }
+function savePromotions(studentType, records) { const store = studentType === 'adult' ? 'bjj_adult_promotions' : 'bjj_promotions'; localStorage.setItem(store, JSON.stringify(records)); return syncLocalPromotions(studentType === 'adult' ? 'adult' : 'kids', records).then(() => true).catch((error) => { console.error('Promotion sync failed', error); setStatus('Promotion saved locally; cloud sync failed.'); return false; }); }
+function stagedRecord(student) { return readPromotions(student.studentType).find((record) => Number(record.studentId) === Number(student.sourceId) && record.staged === true) || null; }
+function matchesStage(record, stage) { if (!record || !stage || Number(record.studentId) !== Number(stage.studentId) || record.staged !== true) return false; if (record.legacyKey && stage.legacyKey) return record.legacyKey === stage.legacyKey; return String(record.createdAt || record.promotionDate || '') === String(stage.createdAt || stage.promotionDate || ''); }
+function historyRecords(student) { return readPromotions(student.studentType).filter((record) => Number(record.studentId) === Number(student.sourceId) && !record.staged).sort((a, b) => String(b.promotionDate || b.createdAt || '').localeCompare(String(a.promotionDate || a.createdAt || ''))); }
+function stats(student) { const api = attendanceApi(student); const total = student.studentType === 'adult' ? api.getTotalClasses() : api.getTotalClasses(student.sourceId); const attended = api.getTotalAttended(student.sourceId); return { attended, total, percent: total ? Math.round(attended * 100 / total) : 0 }; }
+function makeButton(label, className, handler) { const button = document.createElement('button'); button.type = 'button'; button.className = `btn ${className}`; button.textContent = label; button.addEventListener('click', handler); return button; }
+function selectRank(student, initial = '') { const select = document.createElement('select'); select.appendChild(new Option('Select target rank', '')); ranksFor(student).forEach((rank) => select.appendChild(new Option(rank, rank))); select.value = initial; return select; }
+function selectBelt(student, initial = student.beltSize || '') { const select = document.createElement('select'); select.className = 'promotion-belt-select'; select.appendChild(new Option('Select belt size', '')); const type = student.studentType === 'adult' ? 'adult' : 'kids'; const shared = beltSizes.getSizesForType(type); const options = shared.length ? shared : (type === 'adult' ? adultBeltSizes.getBeltSizes() : kidsBeltSizes.getBeltSizes()); options.forEach((size) => select.appendChild(new Option(size, size, false, size === initial))); if (initial && !options.includes(initial)) select.appendChild(new Option(`${initial} (current)`, initial, true, true)); return select; }
+function sortStudents(a, b) {
+  const direction = window.promotionSortDirection || 1; const field = controls.sort.value;
+  if (field === 'current' || field === 'target') {
+    const rankA = field === 'current' ? a.rank : (pendingTargets.get(key(a)) || stagedRecord(a)?.newRank || '');
+    const rankB = field === 'current' ? b.rank : (pendingTargets.get(key(b)) || stagedRecord(b)?.newRank || '');
+    const orderA = ranksFor(a).indexOf(rankA); const orderB = ranksFor(b).indexOf(rankB);
+    if (orderA !== orderB) return ((orderA < 0 ? Infinity : orderA) - (orderB < 0 ? Infinity : orderB)) * direction;
+    return String(rankA).localeCompare(String(rankB)) * direction;
   }
-  const rows = document.querySelectorAll('.promo-row');
-  rows.forEach(r => {
-    // remove any leftover complete checkbox from older renders inside each row
-    const stray = r.querySelectorAll('.col.complete');
-    stray.forEach(s => s.remove());
-    r.style.display = 'grid';
-    r.style.gridTemplateColumns = PROMO_GRID_COLS;
-    r.style.boxSizing = 'border-box';
+  if (field === 'date') { const dateA = historyRecords(a)[0]?.promotionDate || ''; const dateB = historyRecords(b)[0]?.promotionDate || ''; return String(dateA).localeCompare(String(dateB)) * direction; }
+  return `${a.lastName} ${a.firstName}`.localeCompare(`${b.lastName} ${b.firstName}`) * direction;
+}
+
+function renderHistory() {
+  history.replaceChildren();
+  const records = unified.getStudents().flatMap((student) => historyRecords(student).map((record) => ({ student, record }))).sort((a, b) => String(b.record.promotionDate || b.record.createdAt || '').localeCompare(String(a.record.promotionDate || a.record.createdAt || '')));
+  if (!records.length) { history.appendChild(Object.assign(document.createElement('p'), { className: 'muted', textContent: 'No promotions recorded yet.' })); return; }
+  records.forEach(({ student, record }) => {
+    const item = document.createElement('article'); item.className = 'promotion-history-item';
+    const summary = document.createElement('div'); summary.className = 'promotion-history-summary';
+    const name = document.createElement('strong'); name.textContent = `${student.firstName} ${student.lastName}`;
+    const detail = document.createElement('span'); detail.textContent = `${record.oldRank || 'White'} → ${record.newRank} · ${formatDate(record.promotionDate || record.createdAt)}${record.beltSize ? ` · ${record.beltSize}` : ''}`;
+    const notes = document.createElement('span'); notes.textContent = record.notes || '';
+    summary.append(name, detail, notes); item.appendChild(summary); history.appendChild(item);
   });
 }
 
-// Sorting state for promotions list
-let promoSortField = 'attendance'; // name, current, attendance, belt
-let promoSortDir = -1;
-const expandedStudents = new Set();
-function appendStudentNotes(detail, student) {
-  const section = document.createElement('div'); section.className = 'student-notes-section'; const title = document.createElement('strong'); title.textContent = 'Student Notes'; const preview = document.createElement('div'); preview.className = 'promotion-notes-preview'; preview.innerHTML = student.notes || '<span class="muted">No student notes</span>'; const edit = document.createElement('button'); edit.className = 'btn edit'; edit.textContent = 'Edit Notes';
-  edit.addEventListener('click', () => { const editor = document.createElement('div'); editor.className = 'promotion-notes-editor'; editor.contentEditable = 'true'; editor.innerHTML = student.notes || '<p></p>'; const toolbar = document.createElement('div'); toolbar.className = 'promotion-notes-toolbar'; [['bold','B'],['italic','I'],['underline','U'],['insertUnorderedList','Bullets'],['insertOrderedList','Numbered']].forEach(([command,label]) => { const button=document.createElement('button'); button.type='button'; button.className='btn'; button.textContent=label; button.addEventListener('mousedown',(event)=>event.preventDefault()); button.addEventListener('click',()=>{ editor.focus(); document.execCommand(command); }); toolbar.appendChild(button); }); const format=document.createElement('select'); format.className='promotion-block-format'; format.append(new Option('Paragraph','p'),new Option('H3','h3')); format.addEventListener('change',()=>{ editor.focus(); document.execCommand('formatBlock',false,format.value); }); toolbar.appendChild(format); const save=document.createElement('button'); save.className='btn save'; save.textContent='Save Notes'; save.addEventListener('click',()=>{ students.setNotes(student.id,editor.innerHTML); expandedStudents.add(student.id); render(); }); const cancel=document.createElement('button'); cancel.className='btn cancel'; cancel.textContent='Cancel'; cancel.addEventListener('click',()=>render()); section.replaceChildren(title,toolbar,editor,save,cancel); });
-  section.append(title, preview, edit); detail.appendChild(section);
-}
-function appendWaiverSummary(detail, student) {
-  const waiver = waiverStore.getLatestWaiverForStudent('kids', student.id);
-  const section = document.createElement('div'); section.className = 'student-notes-section';
-  const title = document.createElement('strong'); title.textContent = 'Waiver';
-  const summary = document.createElement('span'); summary.className = waiver ? 'promotion-status confirmed' : 'promotion-status unconfirmed';
-  if (waiver) {
-    const contact = waiver.contact || {};
-    summary.textContent = `Signed ${String(waiver.signedAt || '').slice(0, 10)}`;
-    const phone = document.createElement('span'); phone.className = 'waiver-contact-summary'; phone.textContent = `Phone: ${formatPhone(contact.phone)}`;
-    const emergency = document.createElement('span'); emergency.className = 'waiver-contact-summary'; emergency.textContent = `Emergency: ${contact.emergencyName || '—'} · ${formatPhone(contact.emergencyPhone)}`;
-    section.append(title, summary, phone, emergency);
+async function stagePromotion(student, target, notes) {
+  if (!target) { setStatus('Choose a target rank before staging.'); return; }
+  const store = readPromotions(student.studentType);
+  let record = store.find((item) => Number(item.studentId) === Number(student.sourceId) && item.staged === true);
+  if (record) {
+    record.legacyKey ||= newPromotionKey(student); record.oldRank = student.rank || 'White'; record.newRank = target; record.notes = notes || ''; record.confirmed = false;
   } else {
-    summary.textContent = 'Not signed';
-    section.append(title, summary);
+    record = { studentId: Number(student.sourceId), oldRank: student.rank || 'White', newRank: target, beltSize: student.beltSize || '', inStock: false, confirmed: false, staged: true, notes: notes || '', createdAt: today(), promotionDate: today(), legacyKey: newPromotionKey(student) };
+    store.push(record);
   }
-  const link = document.createElement('a'); link.className = 'btn'; link.href = `waiver.html?studentType=kids&studentId=${student.id}`; link.textContent = waiver ? 'View / Edit details' : 'Create waiver';
-  section.append(link); detail.appendChild(section);
+  const synced = await savePromotions(student.studentType, store); pendingTargets.delete(key(student)); expanded.add(key(student)); if (synced) setStatus(`${student.firstName} ${student.lastName} promotion staged and synced.`); render();
 }
 
-function formatPhone(value) {
-  const digits = String(value || '').replace(/\D/g, '');
-  if (digits.length === 10) return `(${digits.slice(0, 3)}) ${digits.slice(3, 6)}-${digits.slice(6)}`;
-  return value || '—';
-}
-function setPromoSort(field){
-  if (promoSortField === field) promoSortDir = -promoSortDir; else { promoSortField = field; promoSortDir = 1; }
-  render();
-  updatePromoHeaderIndicators();
-}
-
-function ensureTargetsFull(){
-  const filterElem = document.getElementById('rankFilter');
-  if (!filterElem) return;
-  const template = Array.from(filterElem.options).map(o => ({v:o.value,t:o.textContent})).filter(x=>x.v);
-  document.querySelectorAll('.promo-row').forEach(r=>{
-    const sel = r.querySelector('select.col.target');
-    if (!sel) return;
-    // if already complete, skip
-    if (sel.options.length >= template.length) return;
-    const cur = sel.value;
-    sel.innerHTML = '';
-    const empty = document.createElement('option'); empty.value=''; empty.textContent='Select rank'; sel.appendChild(empty);
-    template.forEach(o=>{ const opt = document.createElement('option'); opt.value = o.v; opt.textContent = o.t; sel.appendChild(opt); });
-    sel.value = cur || '';
-  });
+async function clearStagedPromotion(student, stage, renderAfter = true) {
+  const store = readPromotions(student.studentType).filter((record) => !matchesStage(record, stage));
+  const saved = await savePromotions(student.studentType, store);
+  try { await deleteStagedPromotion(program(student), student.sourceId, stage.promotionDate); }
+  catch (error) { console.error('Staged promotion deletion failed', error); setStatus('Stage cleared locally; cloud deletion failed.'); }
+  if (saved) setStatus(`${student.firstName} ${student.lastName} staged promotion cleared.`);
+  if (renderAfter) render();
+  return saved;
 }
 
-function makeBeltSizeSelect(value){
-  const sel = document.createElement('select');
-  sel.className = 'belt-size';
-  const options = beltSizes.getBeltSizes();
-  const empty = document.createElement('option'); empty.value=''; empty.textContent=''; sel.appendChild(empty);
-  options.forEach(s => {
-    // derive short code (e.g., 'Y0' from 'Y0 / 000 / ...')
-    const codeMatch = String(s).trim().match(/^(Y\d+)/i);
-    const code = codeMatch ? codeMatch[1] : (String(s).split(' ')[0] || s);
-    const o = document.createElement('option');
-    o.value = s; // store full label in value for export
-    o.textContent = code; // show short code in collapsed select
-    o.title = s; // full label on hover
-    if (s === value) o.selected = true;
-    sel.appendChild(o);
-  });
-  if (value && !options.includes(value)) {
-    const custom = document.createElement('option');
-    custom.value = value;
-    custom.textContent = 'Custom';
-    custom.title = value;
-    custom.selected = true;
-    sel.appendChild(custom);
-  }
-  // set select title to selected full label
-  sel.addEventListener('change', () => {
-    const opt = sel.options[sel.selectedIndex];
-    sel.title = opt ? opt.title : '';
-  });
-  return sel;
+async function applyPromotion(student, stage, renderAfter = true, askFirst = false) {
+  if (!stage) return false;
+  if (askFirst && !confirm(`Apply ${student.firstName} ${student.lastName}'s promotion to ${stage.newRank}?`)) return false;
+  const store = readPromotions(student.studentType);
+  const record = store.find((item) => matchesStage(item, stage));
+  if (!record) { setStatus('This staged promotion could not be found. Refresh and try again.'); return false; }
+  record.legacyKey ||= newPromotionKey(student);
+  const appliedAt = today();
+  record.oldRank = student.rank || record.oldRank || 'White'; record.beltSize = student.beltSize || record.beltSize || ''; record.confirmed = true; record.staged = false; record.promotionDate = appliedAt; record.createdAt = appliedAt;
+  if (!unified.updateRank(student, record.newRank)) { setStatus('Promotion could not update the student record.'); return false; }
+  const studentSynced = await unified.flushStudentUpdates();
+  const promotionSynced = await savePromotions(student.studentType, store);
+  pendingTargets.delete(key(student)); expanded.add(key(student));
+  setStatus(studentSynced && promotionSynced ? `${student.firstName} promoted to ${record.newRank}.` : `${student.firstName} promoted locally; cloud sync failed.`);
+  if (renderAfter) render();
+  return studentSynced && promotionSynced;
 }
 
-function render(){
-  promoList.innerHTML = '';
-  const filter = rankFilter.value;
-  const studentsList = students.getStudents().slice();
-
-  // sort according to state
-  studentsList.sort((a,b)=>{
-    if (promoSortField === 'name') return (a.firstName.localeCompare(b.firstName) || a.lastName.localeCompare(b.lastName)) * promoSortDir;
-    if (promoSortField === 'current') {
-      const ia = RANKS.indexOf((a.rank||'').toString())
-      const ib = RANKS.indexOf((b.rank||'').toString())
-      const na = ia === -1 ? Number.POSITIVE_INFINITY : ia;
-      const nb = ib === -1 ? Number.POSITIVE_INFINITY : ib;
-      if (na === nb) return (String(a.rank||'').localeCompare(String(b.rank||''))) * promoSortDir;
-      return (na - nb) * promoSortDir;
-    }
-    if (promoSortField === 'attendance') {
-      const pa = attendance.getLastAttended(a.id) || ''; const pb = attendance.getLastAttended(b.id) || '';
-      if (pa === pb) return a.firstName.localeCompare(b.firstName) || a.lastName.localeCompare(b.lastName);
-      return pa.localeCompare(pb) * promoSortDir;
-    }
-    if (promoSortField === 'belt') {
-      const options = beltSizes.getBeltSizes();
-      const ia = options.indexOf((a.beltSize||'').toString());
-      const ib = options.indexOf((b.beltSize||'').toString());
-      const na = ia === -1 ? Number.POSITIVE_INFINITY : ia;
-      const nb = ib === -1 ? Number.POSITIVE_INFINITY : ib;
-      if (na === nb) return (String(a.beltSize||'').localeCompare(String(b.beltSize||''))) * promoSortDir;
-      return (na - nb) * promoSortDir;
-    }
-    return (a.lastName.localeCompare(b.lastName) || a.firstName.localeCompare(b.firstName)) * promoSortDir;
-  });
-
-  studentsList.forEach(s => {
-    if (filter && s.rank !== filter) return;
-    const row = document.createElement('div'); row.className = 'promo-row';
-
-    const name = document.createElement('div'); name.className='col name'; name.textContent = `${s.firstName} ${s.lastName}`;
-    const curr = document.createElement('div'); curr.className='col current'; curr.textContent = s.rank || 'White';
-
-    const attended = attendance.getTotalAttended(s.id);
-    const total = attendance.getTotalClasses(s.id);
-    const pct = attendance.getPercent(s.id);
-    const stats = document.createElement('div'); stats.className='col stats'; stats.textContent = `${attended}/${total} (${pct}%)`;
-
-    const beltSel = makeBeltSizeSelect(s.beltSize);
-    beltSel.addEventListener('change', ()=> { students.setBeltSize(s.id, beltSel.value); });
-    // show only short code in the collapsed select and keep it narrow
-    beltSel.style.width = '64px';
-    beltSel.style.maxWidth = '64px';
-    const beltWrap = document.createElement('div'); beltWrap.className='col belt'; beltWrap.appendChild(beltSel);
-
-    // target rank selector: show all ranks (allow corrections to lower ranks)
-    const target = document.createElement('select'); target.className='col target';
-    const defaultOpt = document.createElement('option'); defaultOpt.value=''; defaultOpt.textContent='Select rank'; target.appendChild(defaultOpt);
-    // clone options from the header rankFilter to ensure consistent ordering
-    const filterElem = document.getElementById('rankFilter');
-    if (filterElem) {
-      Array.from(filterElem.options).forEach(opt => {
-        if (!opt.value) return; // skip empty
-        const o = document.createElement('option'); o.value = opt.value; o.textContent = opt.textContent; target.appendChild(o);
-      });
-    } else {
-      // fallback to RANKS array
-      RANKS.forEach(rk => { const o = document.createElement('option'); o.value = rk; o.textContent = rk; target.appendChild(o); });
-    }
-    // restore previously selected target for this student, if any
-    const savedKey = `bjj_promo_target_${s.id}`;
-    const saved = localStorage.getItem(savedKey);
-    if (saved) target.value = saved;
-    target.addEventListener('change', () => {
-      localStorage.setItem(savedKey, target.value);
-      // update row tint immediately
-      const hr = (target.value||'').trim() || (curr.textContent||'').trim();
-      const c = getBeltColor(hr);
-      if (c) { if (c.grad) row.style.backgroundImage = c.grad; if (c.base) row.style.backgroundColor = c.base; }
-      else { row.style.backgroundImage = ''; row.style.backgroundColor = ''; }
-    });
-
-    const inStock = document.createElement('input'); inStock.type='checkbox'; inStock.className='col stock';
-    const confirmed = document.createElement('input'); confirmed.type='checkbox'; confirmed.className='col confirmed';
-    confirmed.addEventListener('change', () => { if (!confirmed.checked) return; const newRank = target.value; if (!newRank) { confirmed.checked = false; return alert('Choose a target rank before confirming'); } addPromotion({ studentId: s.id, oldRank: s.rank || 'White', newRank, beltSize: beltSel.value || '', inStock: !!inStock.checked, notes: '', createdAt: new Date().toISOString(), promotionDate: new Date().toISOString(), confirmed: true }); students.setRank(s.id, newRank); localStorage.removeItem(savedKey); render(); });
-
-    row.appendChild(name);
-    row.appendChild(curr);
-    row.appendChild(stats);
-    row.appendChild(beltWrap);
-    const targetWrap = document.createElement('div'); targetWrap.className = 'col target'; targetWrap.appendChild(target);
-    row.appendChild(targetWrap);
-    const stockWrap = document.createElement('div'); stockWrap.className = 'col stock'; stockWrap.appendChild(inStock);
-    row.appendChild(stockWrap);
-    const confirmedWrap = document.createElement('div'); confirmedWrap.className = 'col confirmed'; confirmedWrap.appendChild(confirmed);
-    const actionWrap = document.createElement('div'); actionWrap.className = 'col action'; actionWrap.textContent = 'Check Confirmed to Apply';
-    row.appendChild(confirmedWrap);
-    row.appendChild(actionWrap);
-
-    name.dataset.label = 'Name';
-    curr.dataset.label = 'Current Rank';
-    stats.dataset.label = 'Attendance';
-    beltWrap.dataset.label = 'Belt Size';
-    targetWrap.dataset.label = 'Target Rank';
-    stockWrap.dataset.label = 'In Stock';
-    confirmedWrap.dataset.label = 'Confirmed';
-    actionWrap.dataset.label = 'Action';
-
-    // remove any leftover complete checkbox from older renders
-    const stray = row.querySelector('.col.complete'); if (stray) stray.remove();
-    appendStudentHistory(row, s);
-    promoList.appendChild(row);
-    // ensure this row uses the grid layout on desktop even if CSS is overridden
-    if (!promoMobileMql.matches) {
-      row.style.display = 'grid';
-      row.style.gridTemplateColumns = PROMO_GRID_COLS;
-    } else {
-      row.style.display = 'flex';
-      row.style.flexDirection = 'column';
-      row.style.alignItems = 'stretch';
-      row.style.gap = '0';
-    }
-
-    // highlight row subtly based on selected target or current rank
-    const highlightRank = (target.value || '').trim() || (curr.textContent || '').trim();
-    try{ row.dataset._rank = highlightRank; }catch(e){}
-    const color = getBeltColor(highlightRank);
-    if (color) {
-      if (color.grad) row.style.backgroundImage = color.grad;
-      if (color.base) row.style.backgroundColor = color.base;
-      try{ row.dataset._tint = JSON.stringify(color); }catch(e){}
-    }
-  });
-  renderPromotionHistory();
-}
-function appendStudentHistory(row, student) {
-  const records = loadPromotions().filter((promotion) => promotion.studentId === student.id).sort((a, b) => String(b.promotionDate || b.createdAt).localeCompare(String(a.promotionDate || a.createdAt)));
-  const waiver = waiverStore.getLatestWaiverForStudent('kids', student.id);
-  const toggle = document.createElement('button'); toggle.type = 'button'; toggle.className = 'promotion-expand'; toggle.textContent = '>'; const nameCell = row.querySelector('.name'); nameCell.prepend(toggle);
-  const detail = document.createElement('div'); detail.className = 'promotion-inline-history'; detail.hidden = true; detail.style.gridColumn = '1 / -1'; const heading = document.createElement('strong'); heading.textContent = `Promotion history · ${records.length} record${records.length === 1 ? '' : 's'}`; if (records.length) detail.appendChild(heading);
-  toggle.addEventListener('click', (event) => { event.stopPropagation(); detail.hidden = !detail.hidden; if (detail.hidden) expandedStudents.delete(student.id); else expandedStudents.add(student.id); toggle.textContent = detail.hidden ? '>' : 'v'; });
-  if (expandedStudents.has(student.id)) { detail.hidden = false; toggle.textContent = 'v'; }
-  appendStudentNotes(detail, student);
-  appendWaiverSummary(detail, student);
-    records.forEach((promotion) => { const item = document.createElement('div'); item.className = 'promotion-inline-item'; const text = document.createElement('span'); text.textContent = `${promotion.oldRank || 'White'} → ${promotion.newRank || 'Unknown'} · ${String(promotion.promotionDate || promotion.createdAt || '').slice(0, 10)}`; const status = document.createElement('span'); status.className = `promotion-status ${promotion.confirmed ? 'confirmed' : 'unconfirmed'}`; status.textContent = promotion.confirmed ? 'Confirmed' : 'Unconfirmed'; const edit = document.createElement('button'); edit.className = 'btn edit'; edit.textContent = 'Edit'; edit.addEventListener('click', () => { const oldInput = document.createElement('input'); oldInput.value = promotion.oldRank || 'White'; const newSelect = document.createElement('select'); RANKS.forEach((rank) => newSelect.appendChild(new Option(rank, rank, false, rank === promotion.newRank))); const dateInput = document.createElement('input'); dateInput.type = 'date'; dateInput.value = String(promotion.promotionDate || promotion.createdAt || '').slice(0, 10); const save = document.createElement('button'); save.className = 'btn save'; save.textContent = 'Save'; save.addEventListener('click', () => { const data = loadPromotions(); const target = data.find((record) => record.studentId === promotion.studentId && record.promotionDate === promotion.promotionDate); if (!target) return; target.oldRank = oldInput.value.trim() || target.oldRank; target.newRank = newSelect.value; if (dateInput.value) target.promotionDate = `${dateInput.value}T12:00:00.000Z`; savePromotions(data); render(); }); item.replaceChildren(oldInput, newSelect, dateInput, save); }); const confirm = document.createElement('button'); confirm.className = 'btn save'; confirm.textContent = promotion.confirmed ? 'Confirmed' : 'Confirm'; confirm.disabled = promotion.confirmed; confirm.addEventListener('click', () => { const data = loadPromotions(); const target = data.find((record) => record.studentId === promotion.studentId && record.promotionDate === promotion.promotionDate); if (target) { target.confirmed = true; savePromotions(data); render(); } }); const remove = document.createElement('button'); remove.className = 'btn cancel'; remove.textContent = 'Delete'; remove.addEventListener('click', () => { savePromotions(loadPromotions().filter((record) => !(record.studentId === promotion.studentId && record.promotionDate === promotion.promotionDate))); render(); }); const notePreview = document.createElement('div'); notePreview.className = 'promotion-notes-preview'; notePreview.innerHTML = promotion.notes || '<span class="muted">No promotion notes</span>'; item.append(text, status, notePreview, edit, confirm, remove); detail.appendChild(item); });
-  row.appendChild(detail);
+function renderStudent(student) {
+  const staged = stagedRecord(student); const savedTarget = pendingTargets.get(key(student)) || staged?.newRank || '';
+  const row = document.createElement('article'); row.className = `student-row promotion-student-card belt-${String(student.rank || 'white').toLowerCase().replace(/[^a-z0-9]+/g, '-')}`;
+  const main = document.createElement('div'); main.className = 'student-main promotion-student-main';
+  const name = document.createElement('button'); name.type = 'button'; name.className = 'student-name-button';
+  const stripe = document.createElement('span'); stripe.className = 'belt-stripe'; const nameLabel = document.createElement('span'); nameLabel.innerHTML = `<strong>${student.firstName} ${student.lastName}</strong><small>${student.studentType === 'child' ? 'Child' : 'Adult'} · ${student.rank || 'White'}</small>`; name.append(stripe, nameLabel);
+  const current = Object.assign(document.createElement('span'), { className: 'promotion-current-rank', textContent: student.rank || 'White' });
+  const target = selectRank(student, savedTarget); target.className = 'promotion-target-select'; target.addEventListener('change', () => { pendingTargets.set(key(student), target.value); render(); });
+  const state = Object.assign(document.createElement('span'), { className: `promotion-stage-state ${staged ? 'is-staged' : ''}`, textContent: staged ? 'Staged' : 'Not staged' });
+  const stage = makeButton(staged ? 'Apply' : 'Stage', 'save', () => { if (staged) void applyPromotion(student, staged); else void stagePromotion(student, target.value || pendingTargets.get(key(student)), ''); });
+  main.append(name, current, target, state, stage);
+  const detail = document.createElement('div'); detail.className = 'student-details'; detail.hidden = !expanded.has(key(student));
+  const studentStats = stats(student); const lastPromotion = historyRecords(student)[0];
+  const detailMeta = document.createElement('div'); detailMeta.className = 'student-detail-info';
+  [student.studentType === 'child' ? 'Child' : 'Adult', `${studentStats.attended}/${studentStats.total} attended · ${studentStats.percent}%`, `Belt size: ${student.beltSize || 'Not set'}`, `Last promoted: ${formatDate(lastPromotion?.promotionDate || lastPromotion?.createdAt)}`].forEach((value) => detailMeta.appendChild(Object.assign(document.createElement('span'), { textContent: value })));
+  const belt = selectBelt(student, student.beltSize || ''); belt.id = `promotion-belt-${student.studentType}-${student.sourceId}`; belt.setAttribute('aria-label', 'Belt size');
+  const beltField = document.createElement('div'); beltField.className = 'promotion-belt-field'; const beltLabel = document.createElement('label'); beltLabel.htmlFor = belt.id; beltLabel.textContent = 'Belt size';
+  const saveBelt = makeButton('Save belt size', 'save-belt-size', async () => { unified.updateBeltSize(student, belt.value); const synced = await unified.flushStudentUpdates(); setStatus(synced ? `${student.firstName} belt size saved.` : 'Belt size saved locally; cloud sync failed.'); expanded.add(key(student)); render(); });
+  beltField.append(beltLabel, belt, saveBelt);
+  const notes = document.createElement('textarea'); notes.className = 'promotion-notes-field'; notes.rows = 3; notes.placeholder = 'Promotion notes'; notes.value = staged?.notes || ''; notes.setAttribute('aria-label', 'Promotion notes');
+  const controlsRow = document.createElement('div'); controlsRow.className = 'detail-actions';
+  controlsRow.append(makeButton(staged ? 'Update staged promotion' : 'Stage promotion', 'save', () => void stagePromotion(student, target.value || staged?.newRank, notes.value)), staged ? makeButton('Clear stage', 'cancel', () => void clearStagedPromotion(student, staged)) : document.createElement('span'));
+  const recentHistory = document.createElement('div'); recentHistory.className = 'promotion-card-history';
+  const title = document.createElement('strong'); title.textContent = 'Promotion history'; recentHistory.appendChild(title);
+  const prior = historyRecords(student).slice(0, 3);
+  if (!prior.length) recentHistory.appendChild(Object.assign(document.createElement('p'), { className: 'muted', textContent: 'No previous promotions.' }));
+  prior.forEach((record) => { const line = document.createElement('p'); line.textContent = `${record.oldRank || 'White'} → ${record.newRank} · ${formatDate(record.promotionDate || record.createdAt)}`; recentHistory.appendChild(line); });
+  detail.append(detailMeta, beltField, notes, controlsRow, recentHistory); row.append(main, detail);
+  name.addEventListener('click', () => { if (expanded.has(key(student))) expanded.delete(key(student)); else expanded.add(key(student)); render(); });
+  row.addEventListener('click', (event) => { if (event.target.closest('button,input,select,textarea,a,.student-details')) return; if (expanded.has(key(student))) expanded.delete(key(student)); else expanded.add(key(student)); render(); });
+  return row;
 }
 
-function renderPromotionHistory() {
-  if (!promotionHistory) return;
-  promotionHistory.innerHTML = '';
-  const groups = new Map();
-  loadPromotions().sort((a, b) => String(b.promotionDate || b.createdAt).localeCompare(String(a.promotionDate || a.createdAt))).forEach((promotion) => {
-    if (!groups.has(promotion.studentId)) groups.set(promotion.studentId, []);
-    groups.get(promotion.studentId).push(promotion);
-  });
-  groups.forEach((promotions, studentId) => {
-    const student = students.getStudentById(studentId); const group = document.createElement('section'); group.className = 'promotion-student-group';
-    const groupTitle = document.createElement('h3'); groupTitle.textContent = `${student ? `${student.firstName} ${student.lastName}` : 'Unknown student'} · ${promotions.length} promotion${promotions.length === 1 ? '' : 's'}`; group.appendChild(groupTitle);
-    promotions.forEach((promotion) => {
-      const card = document.createElement('article'); card.className = 'promotion-history-item';
-      const summary = document.createElement('div'); summary.className = 'promotion-history-summary';
-      const details = document.createElement('span'); details.textContent = `${promotion.oldRank || 'White'} → ${promotion.newRank || 'Unknown'} · ${String(promotion.promotionDate || promotion.createdAt || '').slice(0, 10)}${promotion.beltSize ? ` · ${promotion.beltSize}` : ''}`;
-      const badge = document.createElement('span'); badge.className = `promotion-status ${promotion.confirmed ? 'confirmed' : 'unconfirmed'}`; badge.textContent = promotion.confirmed ? 'Confirmed' : 'Unconfirmed';
-      const actions = document.createElement('div'); actions.className = 'promotion-history-actions';
-    const editor = document.createElement('div'); editor.className = 'promotion-history-editor'; editor.hidden = true;
-    const oldRank = document.createElement('input'); oldRank.value = promotion.oldRank || 'White'; oldRank.setAttribute('aria-label', 'Old rank');
-    const nextRank = document.createElement('select'); nextRank.setAttribute('aria-label', 'New rank'); RANKS.forEach((rank) => nextRank.appendChild(new Option(rank, rank, false, rank === promotion.newRank)));
-    const date = document.createElement('input'); date.type = 'date'; date.value = String(promotion.promotionDate || promotion.createdAt || '').slice(0, 10); date.setAttribute('aria-label', 'Promotion date');
-    const confirmed = document.createElement('input'); confirmed.type = 'checkbox'; confirmed.checked = Boolean(promotion.confirmed); const confirmedLabel = document.createElement('label'); confirmedLabel.append(confirmed, document.createTextNode(' Confirmed'));
-    const matches = (item) => item.studentId === promotion.studentId && item.promotionDate === promotion.promotionDate && item.createdAt === promotion.createdAt;
-    const edit = document.createElement('button'); edit.className = 'btn edit'; edit.textContent = 'Edit'; edit.addEventListener('click', () => { editor.hidden = !editor.hidden; });
-    const confirmButton = document.createElement('button'); confirmButton.className = 'btn save'; confirmButton.textContent = promotion.confirmed ? 'Confirmed' : 'Confirm'; confirmButton.addEventListener('click', () => { const data = loadPromotions(); const item = data.find(matches); if (!item) return; item.confirmed = true; savePromotions(data); render(); });
-    const save = document.createElement('button'); save.className = 'btn save'; save.textContent = 'Save Changes'; save.addEventListener('click', () => { const data = loadPromotions(); const item = data.find(matches); if (!item) return; item.oldRank = oldRank.value.trim() || item.oldRank; item.newRank = nextRank.value; item.promotionDate = date.value ? `${date.value}T12:00:00.000Z` : item.promotionDate; item.confirmed = confirmed.checked; savePromotions(data); render(); });
-    const cancel = document.createElement('button'); cancel.className = 'btn cancel'; cancel.textContent = 'Cancel'; cancel.addEventListener('click', () => { editor.hidden = true; });
-    const remove = document.createElement('button'); remove.className = 'btn cancel'; remove.textContent = 'Delete'; remove.addEventListener('click', () => { savePromotions(loadPromotions().filter((item) => !matches(item))); render(); });
-      summary.append(details, badge); actions.append(edit); if (!promotion.confirmed) actions.append(confirmButton); actions.append(remove); editor.append(oldRank, nextRank, date, confirmedLabel, save, cancel); card.append(summary, actions, editor); group.appendChild(card);
-    });
-    promotionHistory.appendChild(group);
-  });
+function render() {
+  const query = controls.search.value.trim().toLowerCase(); const type = controls.type.value; const rank = controls.rank.value; const attendanceFilter = controls.attendance.value; const stagedFilter = controls.staged.value;
+  const students = unified.getStudents().filter((student) => student.active !== false).filter((student) => {
+    const name = `${student.firstName} ${student.lastName}`.toLowerCase(); const studentStats = stats(student); const staged = Boolean(stagedRecord(student));
+    if (query && !name.includes(query)) return false;
+    if (type !== 'all' && student.studentType !== type) return false;
+    if (rank && rank !== rankFilterValue(student)) return false;
+    if (attendanceFilter === 'none' && studentStats.attended > 0) return false;
+    if (attendanceFilter === 'high' && studentStats.percent < 75) return false;
+    if (attendanceFilter === 'low' && studentStats.percent >= 50) return false;
+    if (stagedFilter === 'staged' && !staged) return false;
+    if (stagedFilter === 'unstaged' && staged) return false;
+    return true;
+  }).sort(sortStudents);
+  list.replaceChildren();
+  students.forEach((student) => list.appendChild(renderStudent(student)));
+  renderHistory();
 }
 
-function getBeltColor(rank){
-  if (!rank) return '';
-  const r = String(rank).toLowerCase();
-  if (r.includes('yellow')) return {grad:'linear-gradient(90deg, rgba(250,204,21,0.06), transparent)', base:'rgba(250,204,21,0.04)'};
-  if (r.includes('orange')) return {grad:'linear-gradient(90deg, rgba(249,115,22,0.06), transparent)', base:'rgba(249,115,22,0.04)'};
-  if (r.includes('green')) return {grad:'linear-gradient(90deg, rgba(34,197,94,0.06), transparent)', base:'rgba(34,197,94,0.03)'};
-  if (r.includes('grey')) return {grad:'linear-gradient(90deg, rgba(107,114,128,0.06), transparent)', base:'rgba(107,114,128,0.03)'};
-  if (r.includes('white')) return {grad:'linear-gradient(90deg, rgba(255,255,255,0.02), transparent)', base:'rgba(255,255,255,0.01)'};
-  return '';
-}
-
-// attach header click handlers to allow sorting
-function attachPromoHeaderSorting(){
-  const hdr = document.querySelector('.promo-row.header');
-  if (!hdr) return;
-  const nameCol = hdr.querySelector('.col.name');
-  const currCol = hdr.querySelector('.col.current');
-  const statsCol = hdr.querySelector('.col.stats');
-  const beltCol = hdr.querySelector('.col.belt');
-  if (nameCol) { nameCol.style.cursor = 'pointer'; nameCol.addEventListener('click', ()=> setPromoSort('name')); }
-  if (currCol) { currCol.style.cursor = 'pointer'; currCol.addEventListener('click', ()=> setPromoSort('current')); }
-  if (statsCol) { statsCol.style.cursor = 'pointer'; statsCol.addEventListener('click', ()=> setPromoSort('attendance')); }
-  if (beltCol) { beltCol.style.cursor = 'pointer'; beltCol.addEventListener('click', ()=> setPromoSort('belt')); }
-}
-
-function updatePromoHeaderIndicators(){
-  const hdr = document.querySelector('.promo-row.header');
-  if (!hdr) return;
-  ['name','current','attendance','belt'].forEach(key => {
-    const col = hdr.querySelector(`.col.${key==='attendance'?'stats': key}`);
-    if (!col) return;
-    let ind = col.querySelector('.sort-indicator');
-    if (!ind){ ind = document.createElement('span'); ind.className = 'sort-indicator'; col.appendChild(ind); }
-    if (promoSortField === (key==='attendance'?'attendance': key)) {
-      ind.textContent = promoSortDir === 1 ? '▲' : '▼';
-      ind.style.opacity = '0.95';
-    } else {
-      ind.textContent = '';
-      ind.style.opacity = '0.3';
-    }
-  });
-}
-
-function exportJson(){
-  const data = loadPromotions();
-  const blob = new Blob([JSON.stringify(data, null, 2)], {type:'application/json'});
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a'); a.href = url; a.download = 'promotions.json'; a.click();
-  URL.revokeObjectURL(url);
-}
-
-function exportCsv(){
-  const data = loadPromotions();
-  const hdr = ['studentId','oldRank','newRank','beltSize','inStock','promotionDate','createdAt','notes'];
-  const rows = [hdr.join(',')];
-  data.forEach(r=>{
-    const vals = hdr.map(k=> '"'+String(r[k]||'').replace(/"/g,'""')+'"');
-    rows.push(vals.join(','));
-  });
-  const blob = new Blob([rows.join('\n')], {type:'text/csv'});
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a'); a.href = url; a.download = 'promotions.csv'; a.click();
-  URL.revokeObjectURL(url);
-}
-
-exportJsonBtn.addEventListener('click', exportJson);
-exportCsvBtn.addEventListener('click', exportCsv);
-printBtn.addEventListener('click', ()=> window.print());
-rankFilter.addEventListener('change', render);
-
-populateRankFilter();
-function attachPromotionNotesEditor(item, studentId, promotionDate) {
-  if (item.querySelector('.promotion-notes-editor')) return;
-  const notes = document.createElement('div'); notes.className = 'promotion-notes-editor'; notes.contentEditable = 'true';
-  const toolbar = document.createElement('div'); toolbar.className = 'promotion-notes-toolbar';
-  [['bold', 'B'], ['italic', 'I'], ['underline', 'U'], ['insertUnorderedList', 'Bullets'], ['insertOrderedList', 'Numbered']].forEach(([command, label]) => { const button = document.createElement('button'); button.type = 'button'; button.className = 'btn'; button.textContent = label; button.addEventListener('mousedown', (event) => event.preventDefault()); button.addEventListener('click', () => { notes.focus(); document.execCommand(command); }); toolbar.appendChild(button); });
-  const format = document.createElement('select'); format.className = 'promotion-block-format'; format.append(new Option('Paragraph', 'p'), new Option('H3', 'h3')); format.addEventListener('change', () => { notes.focus(); document.execCommand('formatBlock', false, format.value); }); toolbar.appendChild(format);
-  const data = loadPromotions().find((record) => record.studentId === studentId && record.promotionDate === promotionDate); notes.innerHTML = data?.notes || '<p></p>';
-  const save = item.querySelector('.btn.save'); if (save) save.addEventListener('click', () => { const records = loadPromotions(); const record = records.find((entry) => entry.studentId === studentId && entry.promotionDate === promotionDate); if (record) { record.notes = notes.innerHTML; savePromotions(records); } });
-  item.append(toolbar, notes);
-}
-
-document.addEventListener('click', (event) => {
-  const edit = event.target.closest('.promotion-inline-item .btn.edit');
-  if (!edit) return;
-  setTimeout(() => { const item = edit.closest('.promotion-inline-item'); const row = edit.closest('.promo-row'); const name = row?.querySelector('.name')?.textContent.replace(/^>\s*/, '').trim(); const student = students.getStudents().find((entry) => `${entry.firstName} ${entry.lastName}` === name); const date = item?.querySelector('input[type="date"]')?.value; if (item && student && date) attachPromotionNotesEditor(item, student.id, `${date}T12:00:00.000Z`); }, 0);
+const rankOptions = new Map();
+[['child', KIDS_RANKS], ['adult', ADULT_RANKS]].forEach(([type, ranks]) => ranks.forEach((rank) => { const value = `${type}:${rank}`; rankOptions.set(value, `${type === 'child' ? 'Child' : 'Adult'} · ${rank}`); }));
+rankOptions.forEach((label, value) => controls.rank.appendChild(new Option(label, value)));
+Object.values(controls).forEach((control) => control.addEventListener('input', render));
+controls.sort.addEventListener('change', render);
+document.getElementById('clearStaged').addEventListener('click', async () => {
+  const staged = unified.getStudents().filter((student) => stagedRecord(student));
+  if (!staged.length || !confirm(`Clear all ${staged.length} staged promotions?`)) return;
+  for (const student of staged) { const record = stagedRecord(student); if (record) await clearStagedPromotion(student, record, false); }
+  setStatus('All staged promotions cleared.'); render();
 });
 
-await syncFromCloud('kids', PROMO_KEY);
+await Promise.allSettled([
+  kidsStudents.syncFromCloud(), adultStudents.syncFromCloud(), kidsAttendance.syncFromCloud(), adultAttendance.syncFromCloud(),
+  syncFromCloud('kids', 'bjj_promotions'), syncFromCloud('adult', 'bjj_adult_promotions'),
+]);
 render();
-attachPromoHeaderSorting();
-updatePromoHeaderIndicators();
-// enforce layout after initial render
-enforceGridLayout();
-// ensure target selects contain full rank lists
-ensureTargetsFull();
-// try again shortly to handle load ordering and allow inline styles to take effect
-setTimeout(enforceGridLayout, 100);
-setTimeout(ensureTargetsFull, 150);
-window.addEventListener('resize', enforceGridLayout);
-
-// reset horizontal scroll after initial layout passes
-setTimeout(()=>{ try{ window.scrollTo(0,0); }catch(e){} }, 200);
-const _clearScroll = setInterval(()=>{ try{ window.scrollTo(0,0); }catch(e){} }, 50);
-setTimeout(()=>{ clearInterval(_clearScroll); }, 1200);
-
-// final pass to ensure overflow is hidden after other scripts/layout settle
-setTimeout(()=>{ try{ document.documentElement.style.overflowX='hidden'; document.body.style.overflowX='hidden'; window.scrollTo(0,0);}catch(e){} }, 500);
-// also ensure the main container clips horizontal overflow
-setTimeout(()=>{ try{ const c=document.querySelector('main.container'); if(c) c.style.overflowX='hidden'; }catch(e){} }, 600);
-
-export default { render };
+window.addEventListener('storage', (event) => { if (['bjj_students', 'bjj_adult_students', 'bjj_promotions', 'bjj_adult_promotions'].includes(event.key)) render(); });
+window.addEventListener('focus', async () => {
+  await Promise.allSettled([
+    kidsStudents.syncFromCloud(), adultStudents.syncFromCloud(), kidsAttendance.syncFromCloud(), adultAttendance.syncFromCloud(),
+    syncFromCloud('kids', 'bjj_promotions'), syncFromCloud('adult', 'bjj_adult_promotions'),
+  ]);
+  render();
+});

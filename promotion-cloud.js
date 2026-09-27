@@ -7,7 +7,7 @@ function keyFor(program, record, index) {
 export async function syncFromCloud(program, storageKey) {
   const { data, error } = await supabase
     .from('promotions')
-    .select('promotion_date, previous_rank, new_rank, belt_size, in_stock, confirmed, notes, legacy_key, students!inner(legacy_id, program)')
+    .select('id, promotion_date, previous_rank, new_rank, belt_size, in_stock, confirmed, notes, legacy_key, students!inner(legacy_id, program)')
     .eq('students.program', program)
     .order('promotion_date');
   if (error) throw error;
@@ -18,12 +18,14 @@ export async function syncFromCloud(program, storageKey) {
     beltSize: record.belt_size,
     inStock: record.in_stock,
     confirmed: record.confirmed,
+    staged: !record.confirmed,
     notes: record.notes,
     promotionDate: `${record.promotion_date}T12:00:00.000Z`,
     createdAt: record.promotion_date,
-    legacyKey: record.legacy_key,
+    legacyKey: record.legacy_key || `${program}:${record.students.legacy_id}:cloud-${record.id}`,
   }));
   localStorage.setItem(storageKey, JSON.stringify(records));
+  if (data.some((record) => !record.legacy_key)) await syncLocalPromotions(program, records);
   return records;
 }
 
@@ -44,5 +46,23 @@ export async function syncLocalPromotions(program, records) {
   })).filter((row) => row.student_id);
   if (!rows.length) return;
   const { error } = await supabase.from('promotions').upsert(rows, { onConflict: 'legacy_key' });
+  if (error) throw error;
+}
+
+export async function deleteStagedPromotion(program, legacyStudentId, promotionDate) {
+  const { data: student, error: studentError } = await supabase
+    .from('students')
+    .select('id')
+    .eq('program', program)
+    .eq('legacy_id', Number(legacyStudentId))
+    .maybeSingle();
+  if (studentError) throw studentError;
+  if (!student) return;
+  const { error } = await supabase
+    .from('promotions')
+    .delete()
+    .eq('student_id', student.id)
+    .eq('promotion_date', String(promotionDate || '').slice(0, 10))
+    .eq('confirmed', false);
   if (error) throw error;
 }

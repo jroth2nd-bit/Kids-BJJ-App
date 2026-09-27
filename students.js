@@ -91,6 +91,13 @@ export function addStudent(firstName, lastName) {
   return student;
 }
 
+export async function addStudentAndSync(firstName, lastName) {
+  const student = addStudent(firstName, lastName);
+  const { error } = await supabase.from('students').insert({ program: 'kids', legacy_id: student.id, first_name: student.firstName, last_name: student.lastName, active: true, rank: student.rank, belt_size: student.beltSize, notes: student.notes });
+  if (error) { removeStudent(student.id); throw error; }
+  return student;
+}
+
 export function removeStudent(id) {
   const list = loadStudents().filter(s => s.id !== Number(id));
   saveStudents(list);
@@ -150,6 +157,7 @@ export default {
   getActiveStudents,
   getStudentById,
   addStudent,
+  addStudentAndSync,
   removeStudent,
   setActiveStatus,
   updateStudent,

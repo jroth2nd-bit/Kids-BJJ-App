@@ -1,9 +1,13 @@
+import { supabase } from './supabase-client.js';
+
 const KIDS_KEY = 'bjj_students';
 const ADULT_KEY = 'bjj_adult_students';
 const KIDS_ATTENDANCE_KEY = 'bjj_attendance';
 const ADULT_ATTENDANCE_KEY = 'bjj_adult_attendance';
 const KIDS_PROMO_KEY = 'bjj_promotions';
 const ADULT_PROMO_KEY = 'bjj_adult_promotions';
+let pendingStudentSync = Promise.resolve();
+let studentSyncFailed = false;
 
 function read(key, fallback = []) { try { const value = JSON.parse(localStorage.getItem(key) || JSON.stringify(fallback)); return value; } catch (e) { return fallback; } }
 function write(key, value) { localStorage.setItem(key, JSON.stringify(value)); }
@@ -25,6 +29,21 @@ export function updateStudent(student, patch) {
   if (index === -1) return false;
   list[index] = { ...list[index], ...patch };
   write(key, list);
+  const cloudPatch = {};
+  if ('firstName' in patch) cloudPatch.first_name = String(patch.firstName).trim();
+  if ('lastName' in patch) cloudPatch.last_name = String(patch.lastName).trim();
+  if ('active' in patch) cloudPatch.active = Boolean(patch.active);
+  if ('rank' in patch) cloudPatch.rank = String(patch.rank || 'White');
+  if ('beltSize' in patch) cloudPatch.belt_size = String(patch.beltSize || '');
+  if ('notes' in patch) cloudPatch.notes = String(patch.notes || '');
+  if (Object.keys(cloudPatch).length) {
+    pendingStudentSync = pendingStudentSync.then(async () => {
+      const { error } = await supabase.from('students').update(cloudPatch)
+        .eq('program', student.studentType === 'child' ? 'kids' : 'adult')
+        .eq('legacy_id', Number(student.sourceId));
+      if (error) { console.error('Student update sync failed', error); throw error; }
+    }).catch((error) => { studentSyncFailed = true; console.error('Student update sync failed', error); });
+  }
   return true;
 }
 
@@ -70,4 +89,5 @@ export function changeStudentType(student, targetType) {
 export function updateBeltSize(student, beltSize) { return updateStudent(student, { beltSize }); }
 export function updateRank(student, rank) { return updateStudent(student, { rank }); }
 export function updateNotes(student, notes) { return updateStudent(student, { notes }); }
-export default { getStudents, getStudent, updateStudent, changeStudentType, updateBeltSize, updateRank, updateNotes };
+export async function flushStudentUpdates() { await pendingStudentSync; const succeeded = !studentSyncFailed; studentSyncFailed = false; return succeeded; }
+export default { getStudents, getStudent, updateStudent, changeStudentType, updateBeltSize, updateRank, updateNotes, flushStudentUpdates };

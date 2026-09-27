@@ -3,46 +3,33 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1" />
-    <title>Kids Promotions — BJJ Attendance</title>
-    <link rel="stylesheet" href="styles.css?v=21">
+    <title>Promotions — Black Lotus BJJ</title>
+    <link rel="stylesheet" href="styles.css?v=46" />
   </head>
-  <body class="promotion-page">
+  <body class="attendance-page promotion-workflow-page">
     <main class="container">
-      <header class="header">
-        <h1>Kids Promotions</h1>
-        <p class="sub">Schedule and record belt promotions</p>
+      <header class="attendance-header">
+        <div class="attendance-brand"><img src="assets/Copilot_20260913_133023.png" alt="Black Lotus BJJ" /><h1>Promotions</h1></div>
         <div id="global-nav"></div>
       </header>
-
-      <section class="controls">
-        <label>Filter Rank
-          <select id="rankFilter">
-            <option value="">All ranks</option>
-          </select>
-        </label>
-        <button id="exportJson" class="btn">Export JSON</button>
-        <button id="exportCsv" class="btn">Export CSV</button>
-        <button id="printBtn" class="btn">Print</button>
+      <section class="student-info-controls promotion-filters" aria-label="Promotion filters">
+        <label>Search<input id="promotionSearch" type="search" placeholder="Student name" /></label>
+        <label>Type<select id="promotionType"><option value="all">All types</option><option value="child">Child</option><option value="adult">Adult</option></select></label>
+        <label>Rank<select id="promotionRank"><option value="">All ranks</option></select></label>
+        <label>Attendance<select id="promotionAttendance"><option value="all">All attendance</option><option value="none">No attendance</option><option value="high">75% or higher</option><option value="low">Below 50%</option></select></label>
+        <label>Staged<select id="promotionStaged"><option value="all">All students</option><option value="staged">Staged</option><option value="unstaged">Not staged</option></select></label>
+        <label>Sort<select id="promotionSort"><option value="name">Name</option><option value="current">Current rank</option><option value="target">Target rank</option><option value="date">Last promoted</option></select></label>
+        <button id="clearStaged" class="btn cancel" type="button">Clear all staged</button>
       </section>
-
-      <div class="promo-row header">
-        <div class="col name">Name</div>
-        <div class="col current">Current Rank</div>
-        <div class="col stats">Attendance</div>
-        <div class="col belt">Belt Size</div>
-        <div class="col target">Target Rank</div>
-        <div class="col stock">In Stock</div>
-        <div class="col confirmed">Confirmed</div>
-        <div class="col action">Action</div>
-      </div>
-      <section id="promoList"></section>
-
-      <div class="note muted">Tip: choose a target rank, set belt size and mark "In Stock" before applying.</div>
-
+      <div id="promotionStatus" class="muted" role="status">Ready</div>
+      <section class="promotion-workflow-list" aria-label="Student promotions">
+        <div class="promotion-workflow-header"><span>Name</span><span>Current rank</span><span>Target rank</span><span>Status</span><span>Stage</span></div>
+        <div id="promotionWorkflowList"></div>
+      </section>
+      <section class="promotion-history-section"><h2>Promotion history</h2><div id="promotionHistory"></div></section>
     </main>
-
     <script type="module" src="auth-guard.js"></script>
-    <script type="module" src="nav.js?v=12"></script>
-      <script type="module" src="promotion.js?v=20"></script>
+    <script type="module" src="nav.js?v=17"></script>
+    <script type="module" src="promotion.js?v=43"></script>
   </body>
 </html>

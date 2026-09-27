@@ -1,4 +1,4 @@
-import * as students from './students.js?v=4';
+import * as students from './students.js?v=5';
 import * as attendance from './attendance.js?v=6';
 
 const datePicker = document.getElementById('datePicker');
@@ -117,7 +117,7 @@ function renderInactiveStudents() {
 }
 
 addStudentToggle.addEventListener('click', () => { addStudentForm.hidden = !addStudentForm.hidden; if (!addStudentForm.hidden) document.getElementById('firstName').focus(); });
-addStudentForm.addEventListener('submit', (event) => { event.preventDefault(); students.addStudent(document.getElementById('firstName').value, document.getElementById('lastName').value); addStudentForm.reset(); addStudentForm.hidden = true; render(); });
+addStudentForm.addEventListener('submit', async (event) => { event.preventDefault(); const button = addStudentForm.querySelector('button[type="submit"]'); button.disabled = true; try { await students.addStudentAndSync(document.getElementById('firstName').value, document.getElementById('lastName').value); addStudentForm.reset(); addStudentForm.hidden = true; render(); } catch (error) { console.error('Student create sync failed', error); alert(`Student could not be saved: ${error.message}`); } finally { button.disabled = false; } });
 datePicker.addEventListener('change', render);
 document.getElementById('exportJson').addEventListener('click', () => download('bjj-data.json', JSON.stringify({ students: students.getStudents(), attendance: attendance.getAllAttendance(), classStartDate: attendance.getClassStartDate(), exportedAt: new Date().toISOString() }, null, 2)));
 document.getElementById('exportCsv').addEventListener('click', () => { const rows = [['studentId', 'date', 'present'], ...attendance.getAllAttendance().map((record) => [record.studentId, record.date, record.present])]; download('attendance.csv', rows.map((row) => row.map(csvCell).join(',')).join('\n'), 'text/csv'); });
@@ -125,6 +125,8 @@ document.getElementById('exportCsv').addEventListener('click', () => { const row
 if (!datePicker.value) datePicker.value = todayISO();
 await Promise.all([students.syncFromCloud(), attendance.syncFromCloud()]);
 render();
+window.addEventListener('storage', (event) => { if (event.key === 'bjj_students' || event.key === 'bjj_attendance') render(); });
+window.addEventListener('focus', async () => { await Promise.allSettled([students.syncFromCloud(), attendance.syncFromCloud()]); render(); });
 
 export function refresh() { render(); }
 export default { refresh };
