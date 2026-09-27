@@ -126,6 +126,7 @@ function detailsFor(student, row) {
   const actions = document.createElement('div'); actions.className = 'detail-actions';
   actions.append(makeButton('Edit name', 'student-edit-action', () => { fields.replaceChildren(); const first = Object.assign(document.createElement('input'), { value: student.firstName, 'aria-label': 'First name' }); const last = Object.assign(document.createElement('input'), { value: student.lastName, 'aria-label': 'Last name' }); const save = makeButton('Save name', 'save', async () => { if (!first.value.trim() || !last.value.trim()) return; unified.updateStudent(student, { firstName: first.value, lastName: last.value }); const synced = await unified.flushStudentUpdates(); setStatus(synced ? 'Student name synced.' : 'Name changed locally; cloud sync failed.'); expanded.add(key(student)); render(); }); fields.append(first, last, save); }), makeButton('Add attendance', 'attendance-add', () => addAttendance(student, addArea)));
   detail.append(info, activeLabel, fields, waiverRow, notes, historyTitle, history, actions, addArea);
+  detail.classList.add('student-info-expanded-details');
   row.appendChild(detail);
 }
 
