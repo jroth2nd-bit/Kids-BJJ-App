@@ -20,7 +20,7 @@
             <label>Participant type<select id="participantType"><option value="adult">Adult</option><option value="child">Child</option></select></label>
             <label>Participant name<input id="participantName" required /></label>
             <label>Student record<select id="studentRecord"><option value="">Create or select a record</option></select></label>
-            <label>Date of birth<input id="dateOfBirth" type="text" inputmode="numeric" autocomplete="bday" placeholder="MM/DD/YYYY" pattern="(?:0?[1-9]|1[0-2])[/\\-](?:0?[1-9]|[12]\\d|3[01])[/\\-]\\d{4}|\\d{4}[/\\-](?:0?[1-9]|1[0-2])[/\\-](?:0?[1-9]|[12]\\d|3[01])" required /></label>
+            <label>Date of birth<input id="dateOfBirth" type="text" inputmode="numeric" autocomplete="bday" placeholder="MM/DD/YYYY" maxlength="10" pattern="(?:0?[1-9]|1[0-2])[/\\-](?:0?[1-9]|[12]\\d|3[01])[/\\-]\\d{4}|\\d{4}[/\\-](?:0?[1-9]|1[0-2])[/\\-](?:0?[1-9]|[12]\\d|3[01])|\\d{8}" required /></label>
             <label>Phone<input id="phone" type="tel" required /></label>
             <label>Email<input id="email" type="email" required /></label>
             <label>Emergency contact name<input id="emergencyName" required /></label>
@@ -56,6 +56,6 @@
     </main>
     <script type="module" src="auth-guard.js"></script>
     <script type="module" src="nav.js?v=20"></script>
-    <script type="module" src="waiver.js?v=3"></script>
+    <script type="module" src="waiver.js?v=4"></script>
   </body>
 </html>
