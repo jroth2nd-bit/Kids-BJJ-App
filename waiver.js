@@ -27,6 +27,15 @@ function normalizeDate(value) {
   if (date.getFullYear() !== Number(year) || date.getMonth() !== Number(month) - 1 || date.getDate() !== Number(day)) return '';
   return `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
 }
+function formatDateInput(value) {
+  const digits = String(value || '').replace(/\D/g, '').slice(0, 8);
+  if (digits.length >= 5 && Number(digits.slice(0, 4)) >= 1900) {
+    const year = digits.slice(0, 4); const month = digits.slice(4, 6); const day = digits.slice(6, 8);
+    return `${month}${month.length === 2 ? '/' : ''}${day}${day.length === 2 ? '/' : ''}${year}`;
+  }
+  const month = digits.slice(0, 2); const day = digits.slice(2, 4); const year = digits.slice(4, 8);
+  return `${month}${month.length === 2 && digits.length > 2 ? '/' : ''}${day}${day.length === 2 && digits.length > 4 ? '/' : ''}${year}`;
+}
 function displayDate(value) {
   const normalized = normalizeDate(value);
   if (!normalized) return String(value || '');
@@ -207,6 +216,7 @@ function printFullRecord(record) {
 }
 
 fields.forEach((field) => el(field)?.addEventListener('input', updatePreview));
+el('dateOfBirth').addEventListener('input', (event) => { event.target.value = formatDateInput(event.target.value); updatePreview(); });
 participantType.addEventListener('change', syncType);
 studentRecord.addEventListener('change', loadSelectedStudent);
 el('saveWaiver').addEventListener('click', saveWaiver);
