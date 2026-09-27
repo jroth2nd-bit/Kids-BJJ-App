@@ -4,6 +4,8 @@ import * as adultStudents from './adult-students.js?v=3';
 import * as kidsAttendance from './attendance.js?v=6';
 import * as adultAttendance from './adult-attendance.js?v=4';
 import * as beltSizes from './shared-belt-sizes.js?v=1';
+import * as kidsBeltSizes from './belt-sizes.js?v=1';
+import * as adultBeltSizes from './adult-belt-sizes.js?v=1';
 import { syncFromCloud, syncLocalPromotions, deleteStagedPromotion } from './promotion-cloud.js?v=3';
 
 const KIDS_RANKS = ['White', 'White 1', 'White 2', 'White 3', 'White 4', 'Grey/White', 'Grey/White 1', 'Grey/White 2', 'Grey/White 3', 'Grey/White 4', 'Grey', 'Grey 1', 'Grey 2', 'Grey 3', 'Grey 4', 'Grey/Black', 'Grey/Black 1', 'Grey/Black 2', 'Grey/Black 3', 'Grey/Black 4', 'Yellow/White', 'Yellow/White 1', 'Yellow/White 2', 'Yellow/White 3', 'Yellow/White 4', 'Yellow', 'Yellow 1', 'Yellow 2', 'Yellow 3', 'Yellow 4', 'Yellow/Black', 'Yellow/Black 1', 'Yellow/Black 2', 'Yellow/Black 3', 'Yellow/Black 4', 'Orange/White', 'Orange/White 1', 'Orange/White 2', 'Orange/White 3', 'Orange/White 4', 'Orange', 'Orange 1', 'Orange 2', 'Orange 3', 'Orange 4', 'Orange/Black', 'Orange/Black 1', 'Orange/Black 2', 'Orange/Black 3', 'Orange/Black 4', 'Green/White', 'Green/White 1', 'Green/White 2', 'Green/White 3', 'Green/White 4', 'Green', 'Green 1', 'Green 2', 'Green 3', 'Green 4', 'Green/Black', 'Green/Black 1', 'Green/Black 2', 'Green/Black 3', 'Green/Black 4'];
@@ -35,7 +37,7 @@ function historyRecords(student) { return readPromotions(student.studentType).fi
 function stats(student) { const api = attendanceApi(student); const total = student.studentType === 'adult' ? api.getTotalClasses() : api.getTotalClasses(student.sourceId); const attended = api.getTotalAttended(student.sourceId); return { attended, total, percent: total ? Math.round(attended * 100 / total) : 0 }; }
 function makeButton(label, className, handler) { const button = document.createElement('button'); button.type = 'button'; button.className = `btn ${className}`; button.textContent = label; button.addEventListener('click', handler); return button; }
 function selectRank(student, initial = '') { const select = document.createElement('select'); select.appendChild(new Option('Select target rank', '')); ranksFor(student).forEach((rank) => select.appendChild(new Option(rank, rank))); select.value = initial; return select; }
-function selectBelt(student, initial = student.beltSize || '') { const select = document.createElement('select'); select.appendChild(new Option('Select belt size', '')); beltSizes.getSizesForType(student.studentType === 'adult' ? 'adult' : 'kids').forEach((size) => select.appendChild(new Option(size, size, false, size === initial))); return select; }
+function selectBelt(student, initial = student.beltSize || '') { const select = document.createElement('select'); select.className = 'promotion-belt-select'; select.appendChild(new Option('Select belt size', '')); const type = student.studentType === 'adult' ? 'adult' : 'kids'; const shared = beltSizes.getSizesForType(type); const options = shared.length ? shared : (type === 'adult' ? adultBeltSizes.getBeltSizes() : kidsBeltSizes.getBeltSizes()); options.forEach((size) => select.appendChild(new Option(size, size, false, size === initial))); if (initial && !options.includes(initial)) select.appendChild(new Option(`${initial} (current)`, initial, true, true)); return select; }
 function sortStudents(a, b) {
   const direction = window.promotionSortDirection || 1; const field = controls.sort.value;
   if (field === 'current' || field === 'target') {
@@ -120,7 +122,8 @@ function renderStudent(student) {
   const detailMeta = document.createElement('div'); detailMeta.className = 'student-detail-info';
   [student.studentType === 'child' ? 'Child' : 'Adult', `${studentStats.attended}/${studentStats.total} attended · ${studentStats.percent}%`, `Belt size: ${staged?.beltSize || student.beltSize || 'Not set'}`, `Last promoted: ${formatDate(lastPromotion?.promotionDate || lastPromotion?.createdAt)}`].forEach((value) => detailMeta.appendChild(Object.assign(document.createElement('span'), { textContent: value })));
   const belt = selectBelt(student, staged?.beltSize || student.beltSize || ''); belt.setAttribute('aria-label', 'Promotion belt size');
-  const notes = document.createElement('textarea'); notes.rows = 3; notes.placeholder = 'Promotion notes'; notes.value = staged?.notes || '';
+  const beltField = document.createElement('label'); beltField.className = 'promotion-belt-field'; beltField.append(document.createTextNode('Belt size'), belt);
+  const notes = document.createElement('textarea'); notes.className = 'promotion-notes-field'; notes.rows = 3; notes.placeholder = 'Promotion notes'; notes.value = staged?.notes || ''; notes.setAttribute('aria-label', 'Promotion notes');
   const controlsRow = document.createElement('div'); controlsRow.className = 'detail-actions';
   controlsRow.append(makeButton(staged ? 'Update staged promotion' : 'Stage promotion', 'save', () => void stagePromotion(student, target.value || staged?.newRank, belt.value, notes.value)), staged ? makeButton('Clear stage', 'cancel', () => void clearStagedPromotion(student, staged)) : document.createElement('span'));
   const recentHistory = document.createElement('div'); recentHistory.className = 'promotion-card-history';
@@ -128,7 +131,7 @@ function renderStudent(student) {
   const prior = historyRecords(student).slice(0, 3);
   if (!prior.length) recentHistory.appendChild(Object.assign(document.createElement('p'), { className: 'muted', textContent: 'No previous promotions.' }));
   prior.forEach((record) => { const line = document.createElement('p'); line.textContent = `${record.oldRank || 'White'} → ${record.newRank} · ${formatDate(record.promotionDate || record.createdAt)}`; recentHistory.appendChild(line); });
-  detail.append(detailMeta, belt, notes, controlsRow, recentHistory); row.append(main, detail);
+  detail.append(detailMeta, beltField, notes, controlsRow, recentHistory); row.append(main, detail);
   name.addEventListener('click', () => { if (expanded.has(key(student))) expanded.delete(key(student)); else expanded.add(key(student)); render(); });
   row.addEventListener('click', (event) => { if (event.target.closest('button,input,select,textarea,a,.student-details')) return; if (expanded.has(key(student))) expanded.delete(key(student)); else expanded.add(key(student)); render(); });
   return row;

@@ -1531,7 +1531,15 @@ button,input,select,.btn{min-height:38px}
 .promotion-workflow-page .promotion-target-select{width:100%;min-width:0;min-height:38px;padding:6px 8px;border:1px solid rgba(255,255,255,.14);border-radius:6px;background:#151719;color:var(--text);font:inherit}
 .promotion-workflow-page .promotion-stage-state{font-size:.8rem;color:var(--muted)}
 .promotion-workflow-page .promotion-stage-state.is-staged{color:#86efac;font-weight:700}
-.promotion-workflow-page .promotion-card-history{display:grid;gap:4px;padding:8px 0;border-top:1px solid rgba(255,255,255,.08)}
+.promotion-workflow-page .student-details{grid-template-columns:minmax(170px,.85fr) minmax(280px,1.45fr) minmax(210px,.9fr)!important;grid-template-areas:"meta meta meta" "belt notes actions" "history history history";align-items:start;column-gap:16px!important;row-gap:10px!important}
+.promotion-workflow-page .student-detail-info{grid-area:meta}
+.promotion-workflow-page .promotion-belt-field{grid-area:belt;display:grid;align-content:start;gap:6px;min-width:0;color:var(--muted);font-size:.8rem;font-weight:700}
+.promotion-workflow-page .promotion-belt-select{display:block;width:100%;min-width:0;min-height:40px;padding:8px 10px;border:1px solid rgba(255,255,255,.16);border-radius:6px;background:#151719;color:var(--text);font:inherit}
+.promotion-workflow-page .promotion-notes-field{grid-area:notes;min-width:0;min-height:84px!important;max-height:150px}
+.promotion-workflow-page .student-details .detail-actions{grid-area:actions;display:flex;flex-direction:column;align-items:stretch;gap:7px;min-width:0}
+.promotion-workflow-page .student-details .detail-actions .btn{width:100%;min-height:38px}
+.promotion-workflow-page .promotion-card-history{grid-area:history;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:4px 14px;padding:8px 0 0;border-top:1px solid rgba(255,255,255,.08)}
+.promotion-workflow-page .promotion-card-history>strong{grid-column:1 / -1}
 .promotion-workflow-page .promotion-card-history p{margin:0;color:var(--muted);font-size:.84rem}
 .promotion-workflow-page .promotion-history-section{margin-top:26px}
 .promotion-workflow-page .promotion-history-item{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:10px;padding:10px;border-bottom:1px solid rgba(255,255,255,.08)}
@@ -1554,9 +1562,14 @@ button,input,select,.btn{min-height:38px}
   .promotion-workflow-page .promotion-target-select{grid-column:1;grid-row:2}
   .promotion-workflow-page .promotion-stage-state{grid-column:1;grid-row:3}
   .promotion-workflow-page .promotion-student-main>.btn{grid-column:2;grid-row:2 / span 2}
+  .promotion-workflow-page .student-details{grid-template-columns:minmax(0,1fr)!important;grid-template-areas:"meta" "belt" "notes" "actions" "history";gap:9px!important}
+  .promotion-workflow-page .promotion-belt-field{width:100%}
+  .promotion-workflow-page .promotion-card-history{grid-template-columns:minmax(0,1fr)}
+  .promotion-workflow-page .promotion-card-history>strong{grid-column:1}
   .promotion-workflow-page .promotion-history-item{grid-template-columns:1fr}
   .promotion-workflow-page .attendance-page-kicker{display:none}
 }
+@media (min-width:761px) and (max-width:980px){.promotion-workflow-page .student-details{grid-template-columns:repeat(2,minmax(0,1fr))!important;grid-template-areas:"meta meta" "belt notes" "actions actions" "history history"}.promotion-workflow-page .student-details .detail-actions{flex-direction:row}.promotion-workflow-page .student-details .detail-actions .btn{width:auto;flex:0 1 220px}}
 
 /* UX follow-up: keep sticky layers stacked, preserve mobile navigation, and size filters to their content. */
 .student-info-page .student-info-header{top:calc(var(--student-info-controls-height, 76px) + 6px)!important}
