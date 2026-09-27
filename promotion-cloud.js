@@ -7,7 +7,7 @@ function keyFor(program, record, index) {
 export async function syncFromCloud(program, storageKey) {
   const { data, error } = await supabase
     .from('promotions')
-    .select('promotion_date, previous_rank, new_rank, belt_size, in_stock, confirmed, notes, legacy_key, students!inner(legacy_id, program)')
+    .select('id, promotion_date, previous_rank, new_rank, belt_size, in_stock, confirmed, notes, legacy_key, students!inner(legacy_id, program)')
     .eq('students.program', program)
     .order('promotion_date');
   if (error) throw error;
@@ -22,9 +22,10 @@ export async function syncFromCloud(program, storageKey) {
     notes: record.notes,
     promotionDate: `${record.promotion_date}T12:00:00.000Z`,
     createdAt: record.promotion_date,
-    legacyKey: record.legacy_key,
+    legacyKey: record.legacy_key || `${program}:${record.students.legacy_id}:cloud-${record.id}`,
   }));
   localStorage.setItem(storageKey, JSON.stringify(records));
+  if (data.some((record) => !record.legacy_key)) await syncLocalPromotions(program, records);
   return records;
 }
 

@@ -4,7 +4,7 @@ import * as adultStudents from './adult-students.js?v=3';
 import * as kidsAttendance from './attendance.js?v=6';
 import * as adultAttendance from './adult-attendance.js?v=4';
 import * as beltSizes from './shared-belt-sizes.js?v=1';
-import { syncFromCloud, syncLocalPromotions, deleteStagedPromotion } from './promotion-cloud.js?v=2';
+import { syncFromCloud, syncLocalPromotions, deleteStagedPromotion } from './promotion-cloud.js?v=3';
 
 const KIDS_RANKS = ['White', 'White 1', 'White 2', 'White 3', 'White 4', 'Grey/White', 'Grey/White 1', 'Grey/White 2', 'Grey/White 3', 'Grey/White 4', 'Grey', 'Grey 1', 'Grey 2', 'Grey 3', 'Grey 4', 'Grey/Black', 'Grey/Black 1', 'Grey/Black 2', 'Grey/Black 3', 'Grey/Black 4', 'Yellow/White', 'Yellow/White 1', 'Yellow/White 2', 'Yellow/White 3', 'Yellow/White 4', 'Yellow', 'Yellow 1', 'Yellow 2', 'Yellow 3', 'Yellow 4', 'Yellow/Black', 'Yellow/Black 1', 'Yellow/Black 2', 'Yellow/Black 3', 'Yellow/Black 4', 'Orange/White', 'Orange/White 1', 'Orange/White 2', 'Orange/White 3', 'Orange/White 4', 'Orange', 'Orange 1', 'Orange 2', 'Orange 3', 'Orange 4', 'Orange/Black', 'Orange/Black 1', 'Orange/Black 2', 'Orange/Black 3', 'Orange/Black 4', 'Green/White', 'Green/White 1', 'Green/White 2', 'Green/White 3', 'Green/White 4', 'Green', 'Green 1', 'Green 2', 'Green 3', 'Green 4', 'Green/Black', 'Green/Black 1', 'Green/Black 2', 'Green/Black 3', 'Green/Black 4'];
 const ADULT_RANKS = ['White', 'White 1', 'White 2', 'White 3', 'White 4', 'Blue', 'Blue 1', 'Blue 2', 'Blue 3', 'Blue 4', 'Purple', 'Purple 1', 'Purple 2', 'Purple 3', 'Purple 4', 'Brown', 'Brown 1', 'Brown 2', 'Brown 3', 'Brown 4', 'Black', 'Black 1', 'Black 2', 'Black 3', 'Black 4'];
@@ -24,6 +24,7 @@ const attendanceApi = (student) => student.studentType === 'adult' ? adultAttend
 const ranksFor = (student) => student.studentType === 'adult' ? ADULT_RANKS : KIDS_RANKS;
 const rankFilterValue = (student) => `${student.studentType}:${student.rank || 'White'}`;
 const today = () => new Date().toISOString();
+const newPromotionKey = (student) => `promotion:${program(student)}:${student.sourceId}:${Date.now()}:${Math.random().toString(36).slice(2, 9)}`;
 const formatDate = (value) => value ? new Date(`${String(value).slice(0, 10)}T00:00:00`).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' }) : '—';
 const setStatus = (message) => { status.textContent = message; };
 function readPromotions(studentType) { try { const value = JSON.parse(localStorage.getItem(studentType === 'adult' ? 'bjj_adult_promotions' : 'bjj_promotions') || '[]'); return Array.isArray(value) ? value : []; } catch { return []; } }
@@ -67,9 +68,9 @@ async function stagePromotion(student, target, belt, notes) {
   const store = readPromotions(student.studentType);
   let record = store.find((item) => Number(item.studentId) === Number(student.sourceId) && item.staged === true);
   if (record) {
-    record.oldRank = student.rank || 'White'; record.newRank = target; record.beltSize = belt || student.beltSize || ''; record.notes = notes || ''; record.confirmed = false;
+    record.legacyKey ||= newPromotionKey(student); record.oldRank = student.rank || 'White'; record.newRank = target; record.beltSize = belt || student.beltSize || ''; record.notes = notes || ''; record.confirmed = false;
   } else {
-    record = { studentId: Number(student.sourceId), oldRank: student.rank || 'White', newRank: target, beltSize: belt || student.beltSize || '', inStock: false, confirmed: false, staged: true, notes: notes || '', createdAt: today(), promotionDate: today() };
+    record = { studentId: Number(student.sourceId), oldRank: student.rank || 'White', newRank: target, beltSize: belt || student.beltSize || '', inStock: false, confirmed: false, staged: true, notes: notes || '', createdAt: today(), promotionDate: today(), legacyKey: newPromotionKey(student) };
     store.push(record);
   }
   const synced = await savePromotions(student.studentType, store); pendingTargets.delete(key(student)); expanded.add(key(student)); if (synced) setStatus(`${student.firstName} ${student.lastName} promotion staged and synced.`); render();
@@ -85,12 +86,13 @@ async function clearStagedPromotion(student, stage, renderAfter = true) {
   return saved;
 }
 
-async function applyPromotion(student, stage, renderAfter = true, askFirst = true) {
+async function applyPromotion(student, stage, renderAfter = true, askFirst = false) {
   if (!stage) return false;
   if (askFirst && !confirm(`Apply ${student.firstName} ${student.lastName}'s promotion to ${stage.newRank}?`)) return false;
   const store = readPromotions(student.studentType);
   const record = store.find((item) => matchesStage(item, stage));
   if (!record) { setStatus('This staged promotion could not be found. Refresh and try again.'); return false; }
+  record.legacyKey ||= newPromotionKey(student);
   const appliedAt = today();
   record.oldRank = student.rank || record.oldRank || 'White'; record.confirmed = true; record.staged = false; record.promotionDate = appliedAt; record.createdAt = appliedAt;
   if (!unified.updateStudent(student, { rank: record.newRank, beltSize: record.beltSize || student.beltSize || '' })) { setStatus('Promotion could not update the student record.'); return false; }
