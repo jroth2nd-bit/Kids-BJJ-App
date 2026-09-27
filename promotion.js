@@ -29,6 +29,7 @@ const setStatus = (message) => { status.textContent = message; };
 function readPromotions(studentType) { try { const value = JSON.parse(localStorage.getItem(studentType === 'adult' ? 'bjj_adult_promotions' : 'bjj_promotions') || '[]'); return Array.isArray(value) ? value : []; } catch { return []; } }
 function savePromotions(studentType, records) { const store = studentType === 'adult' ? 'bjj_adult_promotions' : 'bjj_promotions'; localStorage.setItem(store, JSON.stringify(records)); return syncLocalPromotions(studentType === 'adult' ? 'adult' : 'kids', records).then(() => true).catch((error) => { console.error('Promotion sync failed', error); setStatus('Promotion saved locally; cloud sync failed.'); return false; }); }
 function stagedRecord(student) { return readPromotions(student.studentType).find((record) => Number(record.studentId) === Number(student.sourceId) && record.staged === true) || null; }
+function matchesStage(record, stage) { if (!record || !stage || Number(record.studentId) !== Number(stage.studentId) || record.staged !== true) return false; if (record.legacyKey && stage.legacyKey) return record.legacyKey === stage.legacyKey; return String(record.createdAt || record.promotionDate || '') === String(stage.createdAt || stage.promotionDate || ''); }
 function historyRecords(student) { return readPromotions(student.studentType).filter((record) => Number(record.studentId) === Number(student.sourceId) && !record.staged).sort((a, b) => String(b.promotionDate || b.createdAt || '').localeCompare(String(a.promotionDate || a.createdAt || ''))); }
 function stats(student) { const api = attendanceApi(student); const total = student.studentType === 'adult' ? api.getTotalClasses() : api.getTotalClasses(student.sourceId); const attended = api.getTotalAttended(student.sourceId); return { attended, total, percent: total ? Math.round(attended * 100 / total) : 0 }; }
 function makeButton(label, className, handler) { const button = document.createElement('button'); button.type = 'button'; button.className = `btn ${className}`; button.textContent = label; button.addEventListener('click', handler); return button; }
@@ -37,8 +38,8 @@ function selectBelt(student, initial = student.beltSize || '') { const select = 
 function sortStudents(a, b) {
   const direction = window.promotionSortDirection || 1; const field = controls.sort.value;
   if (field === 'current' || field === 'target') {
-    const rankA = field === 'current' ? a.rank : (stagedRecord(a)?.newRank || pendingTargets.get(key(a)) || '');
-    const rankB = field === 'current' ? b.rank : (stagedRecord(b)?.newRank || pendingTargets.get(key(b)) || '');
+    const rankA = field === 'current' ? a.rank : (pendingTargets.get(key(a)) || stagedRecord(a)?.newRank || '');
+    const rankB = field === 'current' ? b.rank : (pendingTargets.get(key(b)) || stagedRecord(b)?.newRank || '');
     const orderA = ranksFor(a).indexOf(rankA); const orderB = ranksFor(b).indexOf(rankB);
     if (orderA !== orderB) return ((orderA < 0 ? Infinity : orderA) - (orderB < 0 ? Infinity : orderB)) * direction;
     return String(rankA).localeCompare(String(rankB)) * direction;
@@ -63,15 +64,46 @@ function renderHistory() {
 
 async function stagePromotion(student, target, belt, notes) {
   if (!target) { setStatus('Choose a target rank before staging.'); return; }
-  const existing = stagedRecord(student);
-  if (existing) await deleteStagedPromotion(program(student), student.sourceId, existing.promotionDate).catch((error) => console.error('Staged promotion cleanup failed', error));
-  const store = readPromotions(student.studentType).filter((record) => !(Number(record.studentId) === Number(student.sourceId) && record.staged));
-  store.push({ studentId: Number(student.sourceId), oldRank: student.rank || 'White', newRank: target, beltSize: belt || student.beltSize || '', inStock: false, confirmed: false, staged: true, notes: notes || '', createdAt: today(), promotionDate: today() });
+  const store = readPromotions(student.studentType);
+  let record = store.find((item) => Number(item.studentId) === Number(student.sourceId) && item.staged === true);
+  if (record) {
+    record.oldRank = student.rank || 'White'; record.newRank = target; record.beltSize = belt || student.beltSize || ''; record.notes = notes || ''; record.confirmed = false;
+  } else {
+    record = { studentId: Number(student.sourceId), oldRank: student.rank || 'White', newRank: target, beltSize: belt || student.beltSize || '', inStock: false, confirmed: false, staged: true, notes: notes || '', createdAt: today(), promotionDate: today() };
+    store.push(record);
+  }
   const synced = await savePromotions(student.studentType, store); pendingTargets.delete(key(student)); expanded.add(key(student)); if (synced) setStatus(`${student.firstName} ${student.lastName} promotion staged and synced.`); render();
 }
 
+async function clearStagedPromotion(student, stage, renderAfter = true) {
+  const store = readPromotions(student.studentType).filter((record) => !matchesStage(record, stage));
+  const saved = await savePromotions(student.studentType, store);
+  try { await deleteStagedPromotion(program(student), student.sourceId, stage.promotionDate); }
+  catch (error) { console.error('Staged promotion deletion failed', error); setStatus('Stage cleared locally; cloud deletion failed.'); }
+  if (saved) setStatus(`${student.firstName} ${student.lastName} staged promotion cleared.`);
+  if (renderAfter) render();
+  return saved;
+}
+
+async function applyPromotion(student, stage, renderAfter = true, askFirst = true) {
+  if (!stage) return false;
+  if (askFirst && !confirm(`Apply ${student.firstName} ${student.lastName}'s promotion to ${stage.newRank}?`)) return false;
+  const store = readPromotions(student.studentType);
+  const record = store.find((item) => matchesStage(item, stage));
+  if (!record) { setStatus('This staged promotion could not be found. Refresh and try again.'); return false; }
+  const appliedAt = today();
+  record.oldRank = student.rank || record.oldRank || 'White'; record.confirmed = true; record.staged = false; record.promotionDate = appliedAt; record.createdAt = appliedAt;
+  if (!unified.updateStudent(student, { rank: record.newRank, beltSize: record.beltSize || student.beltSize || '' })) { setStatus('Promotion could not update the student record.'); return false; }
+  const studentSynced = await unified.flushStudentUpdates();
+  const promotionSynced = await savePromotions(student.studentType, store);
+  pendingTargets.delete(key(student)); expanded.add(key(student));
+  setStatus(studentSynced && promotionSynced ? `${student.firstName} promoted to ${record.newRank}.` : `${student.firstName} promoted locally; cloud sync failed.`);
+  if (renderAfter) render();
+  return studentSynced && promotionSynced;
+}
+
 function renderStudent(student) {
-  const staged = stagedRecord(student); const savedTarget = staged?.newRank || pendingTargets.get(key(student)) || '';
+  const staged = stagedRecord(student); const savedTarget = pendingTargets.get(key(student)) || staged?.newRank || '';
   const row = document.createElement('article'); row.className = `student-row promotion-student-card belt-${String(student.rank || 'white').toLowerCase().replace(/[^a-z0-9]+/g, '-')}`;
   const main = document.createElement('div'); main.className = 'student-main promotion-student-main';
   const name = document.createElement('button'); name.type = 'button'; name.className = 'student-name-button';
@@ -79,8 +111,7 @@ function renderStudent(student) {
   const current = Object.assign(document.createElement('span'), { className: 'promotion-current-rank', textContent: student.rank || 'White' });
   const target = selectRank(student, savedTarget); target.className = 'promotion-target-select'; target.addEventListener('change', () => { pendingTargets.set(key(student), target.value); render(); });
   const state = Object.assign(document.createElement('span'), { className: `promotion-stage-state ${staged ? 'is-staged' : ''}`, textContent: staged ? 'Staged' : 'Not staged' });
-  const clearStage = async () => { await savePromotions(student.studentType, readPromotions(student.studentType).filter((record) => record !== staged)); await deleteStagedPromotion(program(student), student.sourceId, staged.promotionDate).catch((error) => console.error('Staged promotion deletion failed', error)); setStatus('Staged promotion cleared.'); render(); };
-  const stage = makeButton(staged ? 'Unstage' : 'Stage', staged ? 'cancel' : 'save', () => { if (staged) clearStage(); else void stagePromotion(student, target.value || pendingTargets.get(key(student)), student.beltSize, ''); });
+  const stage = makeButton(staged ? 'Apply' : 'Stage', 'save', () => { if (staged) void applyPromotion(student, staged); else void stagePromotion(student, target.value || pendingTargets.get(key(student)), student.beltSize, ''); });
   main.append(name, current, target, state, stage);
   const detail = document.createElement('div'); detail.className = 'student-details'; detail.hidden = !expanded.has(key(student));
   const studentStats = stats(student); const lastPromotion = historyRecords(student)[0];
@@ -89,7 +120,7 @@ function renderStudent(student) {
   const belt = selectBelt(student, staged?.beltSize || student.beltSize || ''); belt.setAttribute('aria-label', 'Promotion belt size');
   const notes = document.createElement('textarea'); notes.rows = 3; notes.placeholder = 'Promotion notes'; notes.value = staged?.notes || '';
   const controlsRow = document.createElement('div'); controlsRow.className = 'detail-actions';
-  controlsRow.append(makeButton(staged ? 'Update staged promotion' : 'Stage promotion', 'save', () => void stagePromotion(student, target.value || staged?.newRank, belt.value, notes.value)), staged ? makeButton('Clear stage', 'cancel', clearStage) : document.createElement('span'));
+  controlsRow.append(makeButton(staged ? 'Update staged promotion' : 'Stage promotion', 'save', () => void stagePromotion(student, target.value || staged?.newRank, belt.value, notes.value)), staged ? makeButton('Clear stage', 'cancel', () => void clearStagedPromotion(student, staged)) : document.createElement('span'));
   const recentHistory = document.createElement('div'); recentHistory.className = 'promotion-card-history';
   const title = document.createElement('strong'); title.textContent = 'Promotion history'; recentHistory.appendChild(title);
   const prior = historyRecords(student).slice(0, 3);
@@ -128,18 +159,7 @@ async function applyStaged() {
   if (!confirm(`Apply ${queue.length} staged promotion${queue.length === 1 ? '' : 's'}?`)) return;
   applyButton.disabled = true; setStatus('Applying staged promotions...');
   const failed = [];
-  for (const { student, stage } of queue) {
-    const store = readPromotions(student.studentType);
-    const record = store.find((entry) => entry === stage);
-    if (!record) continue;
-    const date = today();
-    record.oldRank = student.rank || 'White'; record.confirmed = true; record.staged = false; record.promotionDate = date; record.createdAt = record.createdAt || date;
-    const localUpdate = unified.updateStudent(student, { rank: record.newRank, beltSize: record.beltSize || student.beltSize || '' });
-    if (!localUpdate) { failed.push(`${student.firstName} ${student.lastName}`); continue; }
-    const synced = await unified.flushStudentUpdates();
-    const promotionSynced = await savePromotions(student.studentType, store);
-    if (!synced || !promotionSynced) failed.push(`${student.firstName} ${student.lastName}`);
-  }
+  for (const { student, stage } of queue) if (!await applyPromotion(student, stage, false, false)) failed.push(`${student.firstName} ${student.lastName}`);
   setStatus(failed.length ? `Applied with sync issues: ${failed.join(', ')}` : `Applied ${queue.length} promotion${queue.length === 1 ? '' : 's'}.`); render();
 }
 
@@ -152,7 +172,7 @@ applyButton.addEventListener('click', applyStaged);
 document.getElementById('clearStaged').addEventListener('click', async () => {
   const staged = unified.getStudents().filter((student) => stagedRecord(student));
   if (!staged.length || !confirm(`Clear all ${staged.length} staged promotions?`)) return;
-  for (const student of staged) { const record = stagedRecord(student); await savePromotions(student.studentType, readPromotions(student.studentType).filter((item) => !item.staged || Number(item.studentId) !== Number(student.sourceId))); if (record) await deleteStagedPromotion(program(student), student.sourceId, record.promotionDate).catch((error) => console.error('Staged promotion deletion failed', error)); }
+  for (const student of staged) { const record = stagedRecord(student); if (record) await clearStagedPromotion(student, record, false); }
   setStatus('All staged promotions cleared.'); render();
 });
 
