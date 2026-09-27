@@ -1491,6 +1491,7 @@ button,input,select,.btn{min-height:38px}
 }
 @media (min-width:761px){.attendance-page .student-details .student-edit-action,.attendance-page .student-details .student-inactive-action,.attendance-page .detail-actions .history-full,.attendance-page .detail-actions .attendance-add{text-align:center!important}}
 .attendance-page .student-main>.btn,.attendance-page .detail-actions>.btn,.attendance-page .history-actions>.btn,.attendance-page .attendance-add-row>.btn{display:inline-flex!important;align-items:center!important;justify-content:center!important;text-align:center!important;line-height:1.1!important}
+.attendance-page form[hidden]{display:none!important}
 .adult-session-bar{display:flex;align-items:center;gap:10px;margin:0 0 14px;padding:10px 12px;border:1px solid rgba(255,255,255,.1);border-radius:8px;background:#202326}.adult-session-bar label{color:var(--muted);font-size:.82rem;font-weight:700}.adult-session-bar select{min-width:250px;padding:8px 10px;border:1px solid rgba(255,255,255,.15);border-radius:6px;background:#151719;color:var(--text);font:inherit}.adult-attendance-add-row select{min-width:180px}
 @media (max-width:760px){
   .attendance-page .student-main{grid-template-columns:minmax(0,1fr) 70px 58px 98px!important;gap:6px!important;min-height:52px!important;padding:7px 8px!important}
@@ -1501,4 +1502,58 @@ button,input,select,.btn{min-height:38px}
   .attendance-page .student-name-button{min-width:0!important;overflow:hidden!important}
   .attendance-page .student-name-button strong{font-size:.86rem!important}
   .adult-session-bar{align-items:stretch;flex-direction:column;gap:6px}.adult-session-bar select{min-width:0;width:100%}.adult-attendance-add-row select{min-width:0}
+}
+
+/* Student Info and Promotions use the same mobile-first roster language as attendance. */
+.attendance-page.student-info-page .student-info-controls,.promotion-workflow-page .promotion-filters{position:sticky;top:0;z-index:5;display:flex;flex-wrap:wrap;align-items:end;gap:8px;padding:10px 0;background:#151719}
+.student-info-controls label,.promotion-filters label{display:grid;gap:4px;color:var(--muted);font-size:.76rem;font-weight:700}
+.student-info-controls input,.student-info-controls select,.promotion-filters input,.promotion-filters select,.student-info-edit-fields select,.student-info-edit-fields input,.student-info-waiver select{min-height:38px;max-width:100%;padding:7px 9px;border:1px solid rgba(255,255,255,.14);border-radius:6px;background:#202326;color:var(--text);font:inherit}
+.student-info-controls input[type=search],.promotion-filters input[type=search]{min-width:180px}
+.student-info-page .student-info-table{margin-top:8px}
+.student-info-page .student-info-header{position:sticky;top:61px;z-index:4;display:grid;grid-template-columns:minmax(220px,1.6fr) 90px minmax(130px,1fr) 150px 100px 90px;gap:10px;padding:9px 12px;background:#25292d;color:var(--muted);font-size:.75rem;font-weight:700;text-transform:uppercase}
+.student-info-page .student-info-header [data-sort]{cursor:pointer}
+.student-info-page #studentInfoList{display:grid;gap:6px}
+.student-info-page .student-info-row{display:block!important;padding:0!important;background:#202326!important;background-image:none!important;border:1px solid rgba(255,255,255,.1)!important;border-radius:8px!important;overflow:hidden}
+.student-info-page .student-main{grid-template-columns:minmax(220px,1.5fr) 75px minmax(120px,.8fr) minmax(150px,1fr) 85px 85px!important;gap:10px!important;padding:8px 12px!important}
+.student-info-page .student-main>*{min-width:0}
+.student-info-page .student-info-attendance{font-size:.85rem;color:var(--muted)}
+.student-info-page .student-info-edit-fields{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.student-info-page .student-info-edit-fields label,.student-info-page .student-notes-section{display:grid;gap:5px;color:var(--muted);font-size:.8rem;font-weight:700}
+.student-info-page .student-notes-section textarea,.promotion-workflow-page .student-details textarea{width:100%;padding:9px;border:1px solid rgba(255,255,255,.14);border-radius:6px;background:#151719;color:var(--text);font:inherit;resize:vertical}
+.student-info-page .student-info-waiver{display:flex;align-items:center;gap:10px}
+.student-info-page .student-info-waiver .btn{white-space:nowrap}
+.student-info-page .student-info-header span{padding:2px 0}
+.promotion-workflow-page .promotion-workflow-header{position:sticky;top:61px;z-index:4;display:grid;grid-template-columns:minmax(220px,1.5fr) minmax(120px,.7fr) minmax(190px,1fr) 110px 95px;gap:10px;padding:9px 12px;background:#25292d;color:var(--muted);font-size:.75rem;font-weight:700;text-transform:uppercase}
+.promotion-workflow-page #promotionWorkflowList{display:grid;gap:6px}
+.promotion-workflow-page .promotion-student-card{display:block!important;padding:0!important;margin:0!important;background:#202326!important;border:1px solid rgba(255,255,255,.1)!important;border-radius:8px!important;overflow:hidden}
+.promotion-workflow-page .promotion-student-main{grid-template-columns:minmax(220px,1.5fr) minmax(120px,.7fr) minmax(190px,1fr) 110px 95px!important;gap:10px!important;padding:8px 12px!important}
+.promotion-workflow-page .promotion-current-rank{color:var(--muted);font-size:.87rem}
+.promotion-workflow-page .promotion-target-select{width:100%;min-width:0;min-height:38px;padding:6px 8px;border:1px solid rgba(255,255,255,.14);border-radius:6px;background:#151719;color:var(--text);font:inherit}
+.promotion-workflow-page .promotion-stage-state{font-size:.8rem;color:var(--muted)}
+.promotion-workflow-page .promotion-stage-state.is-staged{color:#86efac;font-weight:700}
+.promotion-workflow-page .promotion-card-history{display:grid;gap:4px;padding:8px 0;border-top:1px solid rgba(255,255,255,.08)}
+.promotion-workflow-page .promotion-card-history p{margin:0;color:var(--muted);font-size:.84rem}
+.promotion-workflow-page .promotion-history-section{margin-top:26px}
+.promotion-workflow-page .promotion-history-item{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:10px;padding:10px;border-bottom:1px solid rgba(255,255,255,.08)}
+.promotion-workflow-page .promotion-history-summary{display:grid;gap:4px}
+.promotion-workflow-page .attendance-page-kicker{justify-self:center;color:var(--muted);font-size:.85rem}
+@media(max-width:760px){
+  .attendance-page.student-info-page .student-info-controls,.promotion-workflow-page .promotion-filters{position:relative;top:auto;display:grid;grid-template-columns:1fr 1fr;align-items:end;padding:8px 0}
+  .student-info-controls label,.promotion-filters label{min-width:0}
+  .student-info-controls input,.student-info-controls select,.promotion-filters input,.promotion-filters select{width:100%;min-width:0}
+  .student-info-page .student-info-header,.promotion-workflow-page .promotion-workflow-header{display:none}
+  .student-info-page .student-main{grid-template-columns:minmax(0,1fr) auto!important;gap:5px 8px!important;padding:8px 10px!important}
+  .student-info-page .student-main .student-info-type,.student-info-page .student-main .student-info-rank{display:none!important}
+  .student-info-page .student-main .student-info-attendance{grid-column:2;grid-row:1;text-align:right}
+  .student-info-page .student-main .student-info-waiver{grid-column:1;grid-row:2;font-size:.78rem}
+  .student-info-page .student-main .student-info-active{grid-column:2;grid-row:2;text-align:right;font-size:.78rem}
+  .student-info-page .student-info-edit-fields{grid-template-columns:1fr}
+  .student-info-page .student-info-waiver{flex-wrap:wrap}
+  .promotion-workflow-page .promotion-student-main{grid-template-columns:minmax(0,1fr) auto!important;gap:7px 10px!important;padding:8px 10px!important}
+  .promotion-workflow-page .promotion-current-rank{display:none}
+  .promotion-workflow-page .promotion-target-select{grid-column:1;grid-row:2}
+  .promotion-workflow-page .promotion-stage-state{grid-column:1;grid-row:3}
+  .promotion-workflow-page .promotion-student-main>.btn{grid-column:2;grid-row:2 / span 2}
+  .promotion-workflow-page .promotion-history-item{grid-template-columns:1fr}
+  .promotion-workflow-page .attendance-page-kicker{display:none}
 }

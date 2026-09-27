@@ -18,6 +18,7 @@ export async function syncFromCloud(program, storageKey) {
     beltSize: record.belt_size,
     inStock: record.in_stock,
     confirmed: record.confirmed,
+    staged: !record.confirmed,
     notes: record.notes,
     promotionDate: `${record.promotion_date}T12:00:00.000Z`,
     createdAt: record.promotion_date,
@@ -44,5 +45,23 @@ export async function syncLocalPromotions(program, records) {
   })).filter((row) => row.student_id);
   if (!rows.length) return;
   const { error } = await supabase.from('promotions').upsert(rows, { onConflict: 'legacy_key' });
+  if (error) throw error;
+}
+
+export async function deleteStagedPromotion(program, legacyStudentId, promotionDate) {
+  const { data: student, error: studentError } = await supabase
+    .from('students')
+    .select('id')
+    .eq('program', program)
+    .eq('legacy_id', Number(legacyStudentId))
+    .maybeSingle();
+  if (studentError) throw studentError;
+  if (!student) return;
+  const { error } = await supabase
+    .from('promotions')
+    .delete()
+    .eq('student_id', student.id)
+    .eq('promotion_date', String(promotionDate || '').slice(0, 10))
+    .eq('confirmed', false);
   if (error) throw error;
 }

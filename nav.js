@@ -33,7 +33,7 @@ function makeNav(){
   const a2 = document.createElement('a');
   a2.href = 'promotion.html';
   a2.className = 'nav-link';
-  a2.textContent = 'Kids Promotions';
+  a2.textContent = 'Promotions';
 
   const a3 = document.createElement('a');
   a3.href = 'class-notes.html';
@@ -105,6 +105,7 @@ function makeNav(){
 
   nav.appendChild(a6);
   nav.appendChild(a1);
+  nav.appendChild(a2);
   nav.appendChild(a11);
   nav.appendChild(a9);
   nav.appendChild(a10);

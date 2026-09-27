@@ -1,3 +1,5 @@
+import { supabase } from './supabase-client.js';
+
 const KIDS_KEY = 'bjj_students';
 const ADULT_KEY = 'bjj_adult_students';
 const KIDS_ATTENDANCE_KEY = 'bjj_attendance';
@@ -25,6 +27,19 @@ export function updateStudent(student, patch) {
   if (index === -1) return false;
   list[index] = { ...list[index], ...patch };
   write(key, list);
+  const cloudPatch = {};
+  if ('firstName' in patch) cloudPatch.first_name = String(patch.firstName).trim();
+  if ('lastName' in patch) cloudPatch.last_name = String(patch.lastName).trim();
+  if ('active' in patch) cloudPatch.active = Boolean(patch.active);
+  if ('rank' in patch) cloudPatch.rank = String(patch.rank || 'White');
+  if ('beltSize' in patch) cloudPatch.belt_size = String(patch.beltSize || '');
+  if ('notes' in patch) cloudPatch.notes = String(patch.notes || '');
+  if (Object.keys(cloudPatch).length) {
+    void supabase.from('students').update(cloudPatch)
+      .eq('program', student.studentType === 'child' ? 'kids' : 'adult')
+      .eq('legacy_id', Number(student.sourceId))
+      .then(({ error }) => { if (error) console.error('Student update sync failed', error); });
+  }
   return true;
 }
 
