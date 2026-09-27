@@ -1707,12 +1707,25 @@ button,input,select,.btn{min-height:38px}
   .student-info-page .student-details>.student-notes-section textarea{width:100%!important;min-width:0!important;max-width:100%!important}
   .student-info-page .student-details>.detail-heading{grid-area:history-title;min-width:0!important}
   .student-info-page .student-details>.attendance-history{grid-area:history;display:grid!important;grid-template-columns:minmax(0,1fr)!important;gap:4px!important;min-width:0!important;max-width:100%!important;max-height:260px!important;overflow:auto!important}
-  .student-info-page .attendance-history-row{display:grid!important;grid-template-columns:minmax(0,1fr) auto!important;gap:5px 8px!important;min-width:0!important;max-width:100%!important;padding:6px 8px!important}
+  .student-info-page .attendance-history-row{display:grid!important;grid-template-columns:minmax(0,1fr) auto auto!important;align-items:center!important;gap:5px 7px!important;min-width:0!important;max-width:100%!important;padding:6px 8px!important}
   .student-info-page .attendance-history-row>*{min-width:0!important;overflow-wrap:anywhere!important}
-  .student-info-page .attendance-history-row .history-actions{grid-column:1 / -1!important;display:flex!important;flex-wrap:wrap!important;gap:5px!important}
+  .student-info-page .attendance-history-row .history-actions{grid-column:auto!important;display:flex!important;flex-wrap:nowrap!important;gap:4px!important}
   .student-info-page .student-details>.detail-actions{grid-area:actions;display:flex!important;flex-wrap:wrap!important;align-items:flex-start!important;gap:6px!important;min-width:0!important}
   .student-info-page .student-details>.detail-actions .btn{flex:0 1 auto!important;width:auto!important;max-width:100%!important;white-space:normal!important}
   .student-info-page .student-details>.attendance-add-area{grid-area:add;min-width:0!important;max-width:100%!important}
+  .student-info-page .student-info-notes-heading{display:flex!important;align-items:center!important;min-height:22px!important}
+  .student-info-page .student-info-notes-heading h3{margin:0!important;font-size:1rem!important;line-height:1.25!important}
+  .student-info-page .student-info-history-actions .btn{min-height:30px!important;padding:3px 6px!important;font-size:.68rem!important;white-space:nowrap!important}
+  .student-info-page .student-details>.student-notes-section{display:grid!important;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:6px!important}
+  .student-info-page .student-info-notes-heading{grid-column:1 / -1}
+  .student-info-page .student-info-notes-toolbar{grid-column:1 / -1;display:flex;flex-wrap:wrap;gap:4px}
+  .student-info-page .student-info-notes-editor{grid-column:1 / -1;min-width:0!important;max-width:100%!important;min-height:84px;max-height:160px;overflow:auto;padding:8px;border:1px solid rgba(255,255,255,.14);border-radius:6px;background:#151719;color:var(--text);font:inherit}
+  .student-info-page .student-info-block-format{width:auto!important;min-width:0!important;min-height:34px!important;padding:4px 7px!important}
+  .student-info-page .student-info-save-notes{grid-column:2;justify-self:end;min-height:34px!important;padding:5px 10px!important}
+  .student-info-page .student-info-format-button{min-height:34px!important;padding:5px 8px!important}
+  .student-info-page .attendance-history-row,.student-info-page .student-details .attendance-history-row{grid-template-columns:minmax(0,1fr) auto auto!important;align-items:center!important;gap:5px 7px!important}
+  .student-info-page .student-info-history-actions,.student-info-page .attendance-history-row .history-actions{grid-column:auto!important;display:flex!important;flex-wrap:nowrap!important;gap:4px!important}
+  .student-info-page .student-info-history-actions .btn{min-height:32px!important;padding:4px 7px!important;font-size:.72rem!important;white-space:nowrap!important}
 }
 @media (min-width:601px) and (max-width:980px){
   .student-info-page .student-info-controls #printStudents{width:auto!important;min-width:0!important}
@@ -1724,11 +1737,12 @@ button,input,select,.btn{min-height:38px}
   .student-info-page .student-details>.student-info-edit-fields{grid-template-columns:repeat(2,minmax(0,1fr))!important}
   .student-info-page .student-details>.student-notes-section textarea{height:72px!important;min-height:64px!important;max-height:100px!important}
   .student-info-page .student-details>.attendance-history{max-height:180px!important}
+  .student-info-page .student-info-history-actions .btn{padding:4px 6px!important;font-size:.68rem!important}
 }
 
 /* Wide Student Info cards keep profile fields and attendance history side by side. */
 @media (min-width:981px){
-  .student-info-page .student-info-header{top:calc(var(--student-info-controls-height, 76px) + 6px)!important;z-index:21!important}
+  .student-info-page .student-info-header{position:sticky!important;top:calc(var(--student-info-controls-height, 76px) + 8px)!important;z-index:21!important;background:#25292d!important}
   .student-info-page .student-details{display:grid!important;grid-template-columns:repeat(4,minmax(0,1fr))!important;grid-template-areas:"meta meta meta meta" "active fields fields waiver" "notes notes history-title history-title" "notes notes history history" "actions actions history history" "add add add add";align-items:start!important;gap:9px 14px!important;width:100%!important;min-width:0!important;max-width:100%!important;padding:12px!important;overflow:hidden!important}
   .student-info-page .student-details>*{min-width:0!important;max-width:100%!important}
   .student-info-page .student-details>.student-detail-info{grid-area:meta;display:flex!important;flex-wrap:wrap!important;gap:5px 12px!important}
@@ -1742,10 +1756,20 @@ button,input,select,.btn{min-height:38px}
   .student-info-page .student-details>.student-notes-section textarea{width:100%!important;min-width:0!important;max-width:100%!important;height:84px!important;min-height:70px!important;max-height:120px!important}
   .student-info-page .student-details>.detail-heading{grid-area:history-title}
   .student-info-page .student-details>.attendance-history{grid-area:history;display:grid!important;grid-template-columns:minmax(0,1fr)!important;gap:4px!important;max-height:260px!important;overflow:auto!important}
-  .student-info-page .student-details .attendance-history-row{display:grid!important;grid-template-columns:minmax(0,1fr) auto!important;gap:5px 8px!important;min-width:0!important;padding:6px 8px!important}
+  .student-info-page .student-details .attendance-history-row{display:grid!important;grid-template-columns:minmax(0,1fr) auto auto!important;align-items:center!important;gap:5px 7px!important;min-width:0!important;padding:6px 8px!important}
   .student-info-page .student-details .attendance-history-row>*{min-width:0!important;overflow-wrap:anywhere!important}
-  .student-info-page .student-details .history-actions{grid-column:1 / -1!important;display:flex!important;flex-wrap:wrap!important;gap:5px!important}
+  .student-info-page .student-details .history-actions{grid-column:auto!important;display:flex!important;flex-wrap:nowrap!important;gap:4px!important}
   .student-info-page .student-details>.detail-actions{grid-area:actions;display:flex!important;flex-wrap:wrap!important;align-content:start!important;gap:6px!important}
   .student-info-page .student-details>.detail-actions .btn{width:auto!important;max-width:100%!important;flex:0 1 auto!important;white-space:normal!important}
   .student-info-page .student-details>.attendance-add-area{grid-area:add}
+  .student-info-page .student-info-expanded-details{scroll-margin-top:calc(var(--student-info-controls-height, 76px) + 52px)}
 }
+
+.student-info-page .student-info-notes-heading{grid-column:1 / -1!important;min-height:21px!important;display:flex!important;align-items:center!important}
+.student-info-page .student-info-notes-heading h3{margin:0!important;font-size:1rem!important;line-height:1.25!important}
+.student-info-page .student-details>.student-notes-section{padding:0!important;margin:0!important;border:0!important;align-self:start!important}
+.student-info-page .student-info-notes-toolbar{grid-column:1 / -1!important;display:flex!important;flex-wrap:wrap!important;gap:4px!important;min-width:0!important}
+.student-info-page .student-info-notes-editor{grid-column:1 / -1!important;min-width:0!important;max-width:100%!important;min-height:84px;max-height:150px;overflow:auto;padding:8px;border:1px solid rgba(255,255,255,.14);border-radius:6px;background:#151719;color:var(--text);font:inherit}
+.student-info-page .student-info-block-format{width:auto!important;min-width:0!important;min-height:34px!important;padding:4px 7px!important}
+.student-info-page .student-info-save-notes{grid-column:2!important;justify-self:end!important;min-height:34px!important;padding:5px 10px!important}
+.student-info-page .student-info-format-button{min-height:34px!important;padding:5px 8px!important}

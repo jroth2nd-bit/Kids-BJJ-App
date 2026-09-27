@@ -45,6 +45,20 @@ function stats(student) {
 function makeButton(label, className, onClick) { const button = document.createElement('button'); button.type = 'button'; button.className = `btn ${className}`; button.textContent = label; button.addEventListener('click', onClick); return button; }
 function fillRanks(select, type, selected) { select.replaceChildren(); ranks(type).forEach((rank) => select.appendChild(new Option(rank, rank, false, rank === selected))); }
 function fillBelts(select, type, selected) { select.replaceChildren(new Option('Select size', '')); beltSizes.getSizesForType(type === 'child' ? 'kids' : 'adult').forEach((size) => select.appendChild(new Option(size, size, false, size === selected))); }
+function sanitizeNotesMarkup(value) {
+  const parsed = new DOMParser().parseFromString(String(value || ''), 'text/html');
+  const allowed = new Set(['P', 'BR', 'STRONG', 'B', 'EM', 'I', 'U', 'UL', 'OL', 'LI', 'H3']);
+  const output = document.createElement('div');
+  const copy = (node, parent) => {
+    if (node.nodeType === Node.TEXT_NODE) { parent.append(document.createTextNode(node.nodeValue || '')); return; }
+    if (node.nodeType !== Node.ELEMENT_NODE) return;
+    if (!allowed.has(node.tagName)) { Array.from(node.childNodes).forEach((child) => copy(child, parent)); return; }
+    const element = document.createElement(node.tagName.toLowerCase()); parent.appendChild(element);
+    Array.from(node.childNodes).forEach((child) => copy(child, element));
+  };
+  Array.from(parsed.body.childNodes).forEach((node) => copy(node, output));
+  return output.innerHTML || '<p></p>';
+}
 function sessionSelect(date, current = '') { const select = document.createElement('select'); adultAttendance.getSessionsForDate(date).forEach((session) => select.appendChild(new Option(`${session.label} · ${session.slot}`, session.id, false, session.id === current))); return select; }
 
 function updateAttendanceRecord(student, record, item) {
@@ -68,10 +82,10 @@ function attendanceHistory(student, container) {
   const data = stats(student).history.slice().reverse();
   if (!data.length) { container.appendChild(Object.assign(document.createElement('p'), { className: 'muted', textContent: 'No attendance recorded.' })); return; }
   data.forEach((record) => {
-    const row = document.createElement('div'); row.className = 'attendance-history-row';
+    const row = document.createElement('div'); row.className = 'attendance-history-row student-info-attendance-row';
     const detail = document.createElement('span'); detail.textContent = `${formatDate(record.date)}${student.studentType === 'adult' ? ` · ${adultAttendance.getSessionById(record.sessionId)?.label || record.sessionId}` : ''}`;
     const present = document.createElement('strong'); present.className = record.present ? 'status-present' : 'status-absent'; present.textContent = record.present ? 'Present' : 'Absent';
-    const actions = document.createElement('span'); actions.className = 'history-actions';
+    const actions = document.createElement('span'); actions.className = 'history-actions student-info-history-actions';
     actions.append(makeButton('Edit', 'history-edit', () => updateAttendanceRecord(student, record, row)), makeButton('Delete', 'history-delete', () => {
       if (!confirm(`Delete attendance on ${record.date}?`)) return;
       if (student.studentType === 'adult') adultAttendance.deleteAttendance(student.sourceId, record.date, record.sessionId); else kidsAttendance.deleteAttendance(student.sourceId, record.date);
@@ -104,22 +118,28 @@ function detailsFor(student, row) {
   const studentStats = stats(student);
   const info = document.createElement('div'); info.className = 'student-detail-info';
   [typeLabel(student.studentType), `${studentStats.count}/${studentStats.total} attended · ${studentStats.percent}%`, `Last: ${formatDate(studentStats.last)}`].forEach((text) => info.appendChild(Object.assign(document.createElement('span'), { textContent: text })));
+  const beltSummary = document.createElement('span'); beltSummary.className = 'student-info-belt-summary'; beltSummary.textContent = `Belt size: ${student.beltSize || 'Not set'}`; info.appendChild(beltSummary);
   const activeLabel = document.createElement('label'); activeLabel.className = 'active-toggle'; activeLabel.appendChild(Object.assign(document.createElement('input'), { type: 'checkbox', checked: student.active !== false })); activeLabel.append(' Active');
   activeLabel.querySelector('input').addEventListener('change', async (event) => { unified.updateStudent(student, { active: event.target.checked, inactiveSince: event.target.checked ? '' : new Date().toISOString().slice(0, 10) }); const synced = await unified.flushStudentUpdates(); setStatus(synced ? 'Student status synced.' : 'Status changed locally; cloud sync failed.'); render(); });
   const fields = document.createElement('div'); fields.className = 'student-info-edit-fields';
   const rank = document.createElement('select'); fillRanks(rank, student.studentType, student.rank || 'White');
   rank.addEventListener('change', async () => { unified.updateRank(student, rank.value); const synced = await unified.flushStudentUpdates(); setStatus(synced ? `${student.firstName} ${student.lastName} rank synced` : 'Rank changed locally; cloud sync failed.'); render(); });
-  const belt = document.createElement('select'); fillBelts(belt, student.studentType, student.beltSize); belt.addEventListener('change', async () => { unified.updateBeltSize(student, belt.value); const synced = await unified.flushStudentUpdates(); setStatus(synced ? `${student.firstName} ${student.lastName} belt size synced` : 'Belt size changed locally; cloud sync failed.'); render(); });
+  const belt = document.createElement('select'); fillBelts(belt, student.studentType, student.beltSize);
   const rankField = document.createElement('label'); rankField.textContent = 'Current rank'; rankField.append(rank);
-  const beltField = document.createElement('label'); beltField.textContent = 'Belt size'; beltField.append(belt);
+  const beltField = document.createElement('label'); beltField.className = 'student-info-belt-field'; beltField.append(document.createTextNode('Belt size'), belt, makeButton('Save belt size', 'save student-info-save-belt', async () => { unified.updateBeltSize(student, belt.value); const synced = await unified.flushStudentUpdates(); student.beltSize = belt.value; setStatus(synced ? `${student.firstName} ${student.lastName} belt size synced` : 'Belt size saved locally; cloud sync failed.'); const summary = detail.querySelector('.student-info-belt-summary'); if (summary) summary.textContent = `Belt size: ${student.beltSize || 'Not set'}`; }));
   fields.append(rankField, beltField);
   const waiver = waiverStore.getLatestWaiverForStudent(student.studentType === 'child' ? 'kids' : 'adult', student.sourceId);
   const waiverRow = document.createElement('div'); waiverRow.className = 'student-info-waiver';
   const waiverText = document.createElement('span'); waiverText.textContent = waiver ? `Signed ${formatDate(waiver.signedAt)}` : 'Missing'; waiverText.className = waiver ? 'status-present' : 'status-absent';
   const waiverLink = document.createElement('a'); waiverLink.className = 'btn'; waiverLink.href = `waiver.html?studentType=${student.studentType === 'child' ? 'kids' : 'adult'}&studentId=${student.sourceId}`; waiverLink.textContent = waiver ? 'View waiver' : 'Create waiver'; waiverRow.append(waiverText, waiverLink);
-  const notes = document.createElement('label'); notes.className = 'student-notes-section'; notes.append('Notes');
-  const textarea = document.createElement('textarea'); textarea.value = student.notes || ''; textarea.rows = 3; textarea.setAttribute('aria-label', `Notes for ${student.firstName} ${student.lastName}`);
-  const saveNotes = makeButton('Save notes', 'save', async () => { unified.updateNotes(student, textarea.value.trim()); const synced = await unified.flushStudentUpdates(); setStatus(synced ? 'Student notes synced.' : 'Notes saved locally; cloud sync failed.'); }); notes.append(textarea, saveNotes);
+  const notes = document.createElement('section'); notes.className = 'student-notes-section';
+  const notesHeading = document.createElement('div'); notesHeading.className = 'student-info-notes-heading'; notesHeading.innerHTML = '<h3>Notes</h3>';
+  const toolbar = document.createElement('div'); toolbar.className = 'student-info-notes-toolbar'; toolbar.setAttribute('role', 'toolbar'); toolbar.setAttribute('aria-label', 'Notes formatting');
+  const editor = document.createElement('div'); editor.className = 'student-info-notes-editor'; editor.contentEditable = 'true'; editor.setAttribute('role', 'textbox'); editor.setAttribute('aria-multiline', 'true'); editor.setAttribute('aria-label', `Notes for ${student.firstName} ${student.lastName}`); editor.innerHTML = sanitizeNotesMarkup(student.notes || '<p></p>');
+  [['bold','B'],['italic','I'],['underline','U'],['insertUnorderedList','Bullets'],['insertOrderedList','Numbered']].forEach(([command,label]) => { const button = makeButton(label, 'student-info-format-button', () => { editor.focus(); document.execCommand(command); }); button.setAttribute('aria-label', label === 'B' ? 'Bold' : label === 'I' ? 'Italic' : label === 'U' ? 'Underline' : label); button.addEventListener('mousedown', (event) => event.preventDefault()); toolbar.appendChild(button); });
+  const format = document.createElement('select'); format.className = 'student-info-block-format'; format.setAttribute('aria-label', 'Paragraph style'); format.append(new Option('Paragraph','p'),new Option('Heading','h3')); format.addEventListener('change', () => { editor.focus(); document.execCommand('formatBlock', false, format.value); }); toolbar.appendChild(format);
+  const saveNotes = makeButton('Save notes', 'save student-info-save-notes', async () => { unified.updateNotes(student, sanitizeNotesMarkup(editor.innerHTML)); const synced = await unified.flushStudentUpdates(); setStatus(synced ? 'Student notes synced.' : 'Notes saved locally; cloud sync failed.'); });
+  notes.append(notesHeading, toolbar, editor, saveNotes);
   const historyTitle = document.createElement('div'); historyTitle.className = 'detail-heading'; historyTitle.innerHTML = '<h3>Attendance History</h3>';
   const history = document.createElement('div'); history.className = 'attendance-history'; attendanceHistory(student, history);
   const addArea = document.createElement('div'); addArea.className = 'attendance-add-area';
