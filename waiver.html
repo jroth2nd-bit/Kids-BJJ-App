@@ -4,7 +4,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1" />
     <title>Waivers - Black Lotus BJJ</title>
-    <link rel="stylesheet" href="styles.css?v=82" />
+    <link rel="stylesheet" href="styles.css?v=96" />
   </head>
   <body class="waiver-page">
     <main class="container">
@@ -51,11 +51,11 @@
           <label class="waiver-agreement"><input id="agreement" type="checkbox" required /> I have read and agree to the waiver of liability above.</label>
           <div class="waiver-actions"><button id="saveWaiver" class="btn save" type="button">Save Signed Waiver</button><span id="waiverStatus" class="muted">Ready</span></div>
         </section>
-        <aside class="waiver-records-card"><div class="waiver-section-heading"><h2>Signed Waivers</h2><button id="printRecord" class="btn" disabled>Print selected</button></div><input id="waiverSearch" class="waiver-search" type="search" placeholder="Search name, phone, or email" /><div id="waiverRecords"></div></aside>
+        <aside class="waiver-records-card"><div class="waiver-section-heading"><div class="waiver-records-heading"><button id="waiverRecordsToggle" class="waiver-records-toggle" type="button" aria-expanded="false" aria-controls="waiverRecordsPanel" aria-label="Show signed waivers" title="Show signed waivers"><span aria-hidden="true">&gt;</span></button><h2>Signed Waivers</h2></div><button id="printRecord" class="btn" disabled>Print selected</button></div><div id="waiverRecordsPanel" class="waiver-records-panel" hidden><input id="waiverSearch" class="waiver-search" type="search" placeholder="Search name, phone, or email" /><div id="waiverRecords"></div></div></aside>
       </section>
     </main>
     <script type="module" src="auth-guard.js"></script>
     <script type="module" src="nav.js?v=20"></script>
-    <script type="module" src="waiver.js?v=5"></script>
+    <script type="module" src="waiver.js?v=7"></script>
   </body>
 </html>
