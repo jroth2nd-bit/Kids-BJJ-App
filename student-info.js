@@ -25,7 +25,7 @@ const expanded = new Set();
 const expandedAttendanceHistory = new Set();
 const pendingRankChanges = new Map();
 const deepLinkParams = new URLSearchParams(window.location.search);
-let sortField = 'name';
+let sortField = 'lastName';
 let sortDirection = 1;
 
 function updateStickyOffset() { document.documentElement.style.setProperty('--student-info-controls-height', `${filterBar.offsetHeight}px`); }
@@ -119,7 +119,7 @@ function addAttendance(student, container) {
   container.appendChild(form);
 }
 
-function detailsFor(student, row) {
+function detailsFor(student, row, nameGroup) {
   const detail = document.createElement('div'); detail.className = 'student-details'; detail.hidden = !expanded.has(key(student));
   const studentStats = stats(student);
   const waiver = waiverStore.getLatestWaiverForStudent(student.studentType === 'child' ? 'kids' : 'adult', student.sourceId);
@@ -164,6 +164,25 @@ function detailsFor(student, row) {
   const saveBelt = makeButton('Save belt size', 'save student-info-save-belt', async () => { unified.updateBeltSize(student, belt.value); const synced = await unified.flushStudentUpdates(); student.beltSize = belt.value; setStatus(synced ? `${student.firstName} ${student.lastName} belt size synced` : 'Belt size saved locally; cloud sync failed.'); });
   beltField.append(beltLabel, belt, saveBelt);
   fields.append(rankField, beltField);
+  const editName = makeButton('', 'student-info-name-edit', () => {
+    fields.replaceChildren();
+    const first = Object.assign(document.createElement('input'), { value: student.firstName, 'aria-label': 'First name' });
+    const last = Object.assign(document.createElement('input'), { value: student.lastName, 'aria-label': 'Last name' });
+    const save = makeButton('Save name', 'save', async () => {
+      if (!first.value.trim() || !last.value.trim()) return;
+      unified.updateStudent(student, { firstName: first.value, lastName: last.value });
+      const synced = await unified.flushStudentUpdates();
+      setStatus(synced ? 'Student name synced.' : 'Name changed locally; cloud sync failed.');
+      expanded.add(key(student)); render();
+    });
+    fields.append(first, last, save);
+  });
+  editName.setAttribute('aria-label', 'Edit name');
+  editName.title = 'Edit name';
+  const editIcon = Object.assign(document.createElement('span'), { className: 'student-info-name-edit-icon', textContent: '\u270e' });
+  editIcon.setAttribute('aria-hidden', 'true');
+  editName.append(editIcon, Object.assign(document.createElement('span'), { className: 'student-info-name-edit-label', textContent: 'Edit name' }));
+  nameGroup.appendChild(editName);
   const waiverRow = document.createElement('div'); waiverRow.className = 'student-info-waiver';
   const waiverText = document.createElement('span'); waiverText.textContent = waiver ? `Signed ${formatDate(waiver.signedAt)}` : 'Missing'; waiverText.className = waiver ? 'status-present' : 'status-absent';
   const waiverLink = document.createElement('a'); waiverLink.className = 'btn'; waiverLink.href = `waiver.html?studentType=${student.studentType === 'child' ? 'kids' : 'adult'}&studentId=${student.sourceId}`; waiverLink.textContent = waiver ? 'View' : 'Create'; waiverRow.append(waiverText, waiverLink);
@@ -180,28 +199,31 @@ function detailsFor(student, row) {
   const historyTitle = document.createElement('div'); historyTitle.className = 'detail-heading';
   const historyHeading = Object.assign(document.createElement('h3'), { textContent: 'Attendance History' });
   const history = document.createElement('div'); history.className = 'attendance-history'; history.id = `attendance-history-${student.studentType}-${student.sourceId}`; history.hidden = !expandedAttendanceHistory.has(key(student));
-  const historyToggle = makeButton(history.hidden ? 'Show history' : 'Hide history', 'student-info-history-toggle', () => {
+  const historyToggle = makeButton('', 'student-info-history-toggle', () => {
     history.hidden = !history.hidden;
     if (history.hidden) expandedAttendanceHistory.delete(key(student)); else expandedAttendanceHistory.add(key(student));
-    historyToggle.textContent = history.hidden ? 'Show history' : 'Hide history';
+    historyToggle.setAttribute('aria-label', history.hidden ? 'Show attendance history' : 'Hide attendance history');
+    historyToggle.title = history.hidden ? 'Show attendance history' : 'Hide attendance history';
     historyToggle.setAttribute('aria-expanded', String(!history.hidden));
   });
+  historyToggle.appendChild(Object.assign(document.createElement('span'), { className: 'student-info-history-chevron', textContent: '>' }));
   historyToggle.setAttribute('aria-controls', history.id);
+  historyToggle.setAttribute('aria-label', history.hidden ? 'Show attendance history' : 'Hide attendance history');
+  historyToggle.title = history.hidden ? 'Show attendance history' : 'Hide attendance history';
   historyToggle.setAttribute('aria-expanded', String(!history.hidden));
   const addAttendanceButton = makeButton('Add attendance', 'attendance-add', () => {
     if (history.hidden) {
       history.hidden = false;
       expandedAttendanceHistory.add(key(student));
-      historyToggle.textContent = 'Hide history';
+      historyToggle.setAttribute('aria-label', 'Hide attendance history');
+      historyToggle.title = 'Hide attendance history';
       historyToggle.setAttribute('aria-expanded', 'true');
     }
     addAttendance(student, addArea);
   });
-  historyTitle.append(historyHeading, historyToggle, addAttendanceButton);
+  historyTitle.append(historyToggle, historyHeading, addAttendanceButton);
   history.appendChild(addArea); attendanceHistory(student, history);
-  const actions = document.createElement('div'); actions.className = 'detail-actions';
-  actions.append(makeButton('Edit name', 'student-edit-action', () => { fields.replaceChildren(); const first = Object.assign(document.createElement('input'), { value: student.firstName, 'aria-label': 'First name' }); const last = Object.assign(document.createElement('input'), { value: student.lastName, 'aria-label': 'Last name' }); const save = makeButton('Save name', 'save', async () => { if (!first.value.trim() || !last.value.trim()) return; unified.updateStudent(student, { firstName: first.value, lastName: last.value }); const synced = await unified.flushStudentUpdates(); setStatus(synced ? 'Student name synced.' : 'Name changed locally; cloud sync failed.'); expanded.add(key(student)); render(); }); fields.append(first, last, save); }));
-  detail.append(info, fields, waiverRow, notes, historyTitle, history, actions);
+  detail.append(info, fields, waiverRow, notes, historyTitle, history);
   detail.classList.add('student-info-expanded-details');
   row.appendChild(detail);
 }
@@ -224,23 +246,28 @@ function render() {
     if (sortField === 'attendance') { left = stats(a).count; right = stats(b).count; }
     else if (sortField === 'rank') { left = ranks(a.studentType).indexOf(a.rank); right = ranks(b.studentType).indexOf(b.rank); }
     else if (sortField === 'type') { left = a.studentType; right = b.studentType; }
-    else { left = `${a.lastName} ${a.firstName}`; right = `${b.lastName} ${b.firstName}`; }
-    return (typeof left === 'number' ? left - right : String(left).localeCompare(String(right))) * sortDirection;
+    else { left = sortField === 'firstName' ? a.firstName : a.lastName; right = sortField === 'firstName' ? b.firstName : b.lastName; }
+    const primary = typeof left === 'number' ? left - right : String(left).localeCompare(String(right));
+    if (primary) return primary * sortDirection;
+    if (sortField === 'firstName') return String(a.lastName).localeCompare(String(b.lastName)) * sortDirection;
+    return String(a.firstName).localeCompare(String(b.firstName)) * sortDirection;
   });
   list.replaceChildren();
   if (!result.length) { list.appendChild(Object.assign(document.createElement('p'), { className: 'muted', textContent: 'No students match these filters.' })); return; }
   result.forEach((student) => {
-    const row = document.createElement('article'); row.className = `student-info-row student-row belt-${String(student.rank || 'white').toLowerCase().replace(/[^a-z0-9]+/g, '-')}`; row.dataset.studentType = student.studentType; row.dataset.studentId = String(student.sourceId);
+    const row = document.createElement('article'); row.className = `student-info-row student-row belt-${String(student.rank || 'white').toLowerCase().replace(/[^a-z0-9]+/g, '-')}${expanded.has(key(student)) ? ' is-expanded' : ''}`; row.dataset.studentType = student.studentType; row.dataset.studentId = String(student.sourceId);
     const main = document.createElement('div'); main.className = 'student-main';
-    const name = document.createElement('button'); name.type = 'button'; name.className = 'student-name-button'; const stripe = document.createElement('span'); stripe.className = 'belt-stripe';
-    const nameText = document.createElement('span'); nameText.innerHTML = `<strong>${student.firstName} ${student.lastName}</strong><small>${typeLabel(student.studentType)} · ${student.rank || 'White'}</small>`; name.append(stripe, nameText);
+    const name = document.createElement('button'); name.type = 'button'; name.className = 'student-name-button'; name.setAttribute('aria-label', `${student.firstName} ${student.lastName}`); const stripe = document.createElement('span'); stripe.className = 'belt-stripe';
+    const nameText = document.createElement('span'); nameText.innerHTML = `<strong data-last-name="${student.lastName}">${student.firstName}</strong><small>${typeLabel(student.studentType)} · ${student.rank || 'White'}</small>`; name.append(stripe, nameText);
+    const nameGroup = document.createElement('div'); nameGroup.className = 'student-info-name-group'; nameGroup.appendChild(name);
     name.addEventListener('click', () => { if (expanded.has(key(student))) expanded.delete(key(student)); else expanded.add(key(student)); render(); });
     const stat = stats(student); const attendanceCell = Object.assign(document.createElement('span'), { className: 'student-info-attendance', textContent: `${stat.count}/${stat.total} · ${stat.percent}%` });
+    const lastNameCell = Object.assign(document.createElement('span'), { className: 'student-info-last-name-cell', textContent: student.lastName });
     const typeCell = Object.assign(document.createElement('span'), { className: 'student-info-type', textContent: typeLabel(student.studentType) });
     const rankCell = Object.assign(document.createElement('span'), { className: 'student-info-rank', textContent: student.rank || 'White' });
     const waiver = waiverStore.getLatestWaiverForStudent(student.studentType === 'child' ? 'kids' : 'adult', student.sourceId); const waiverCell = Object.assign(document.createElement('span'), { className: `student-info-waiver ${waiver ? 'status-present' : 'status-absent'}`, textContent: waiver ? 'Signed' : 'Missing' });
     const activeCell = Object.assign(document.createElement('span'), { className: 'student-info-active', textContent: student.active === false ? 'Inactive' : 'Active' });
-    main.append(name, typeCell, rankCell, attendanceCell, waiverCell, activeCell); row.appendChild(main); detailsFor(student, row);
+    main.append(nameGroup, lastNameCell, typeCell, rankCell, attendanceCell, waiverCell, activeCell); row.appendChild(main); detailsFor(student, row, nameGroup);
     row.addEventListener('click', (event) => { if (event.target.closest('button,input,select,textarea,a,label,.student-details')) return; if (expanded.has(key(student))) expanded.delete(key(student)); else expanded.add(key(student)); render(); });
     list.appendChild(row);
   });

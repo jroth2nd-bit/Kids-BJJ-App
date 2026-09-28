@@ -6,8 +6,18 @@ const fields = ['participantName', 'dateOfBirth', 'phone', 'email', 'emergencyNa
 const participantType = document.getElementById('participantType');
 const studentRecord = document.getElementById('studentRecord');
 const recordsEl = document.getElementById('waiverRecords');
+const recordsPanel = document.getElementById('waiverRecordsPanel');
+const recordsToggle = document.getElementById('waiverRecordsToggle');
 const statusEl = document.getElementById('waiverStatus');
-let selectedRecordId = null;
+
+recordsToggle.addEventListener('click', () => {
+  recordsPanel.hidden = !recordsPanel.hidden;
+  const label = recordsPanel.hidden ? 'Show signed waivers' : 'Hide signed waivers';
+  recordsToggle.setAttribute('aria-expanded', String(!recordsPanel.hidden));
+  recordsToggle.setAttribute('aria-label', label);
+  recordsToggle.title = label;
+  recordsToggle.querySelector('span').textContent = recordsPanel.hidden ? '>' : 'v';
+});
 
 function el(id) { return document.getElementById(id); }
 function setStatus(text) { if (statusEl) statusEl.textContent = text; }
@@ -201,8 +211,7 @@ async function saveWaiver() {
   let record;
   try { record = await buildRecord(); } catch (error) { setStatus(`Student could not be synced: ${error.message}`); return; }
   if (!record) { setStatus('Complete all fields, draw the required signature, and accept the waiver'); return; }
-  const saved = waiverStore.createWaiver(record);
-  selectedRecordId = saved.id;
+  waiverStore.createWaiver(record);
   setStatus('Saved and locked');
   renderRecords();
   resetForm('Saved and locked. Ready for a new waiver.');
@@ -219,8 +228,14 @@ function renderRecord(record) {
   const title = document.createElement('strong'); title.textContent = record.participantName;
   const date = document.createElement('span'); date.textContent = `Signed ${String(record.signedAt || '').slice(0, 10)}`;
   const toggle = document.createElement('button'); toggle.className = 'btn'; toggle.type = 'button'; toggle.textContent = 'View / Edit';
-  const body = document.createElement('div'); body.className = 'waiver-record-body'; body.hidden = selectedRecordId !== record.id;
-  toggle.addEventListener('click', () => { body.hidden = !body.hidden; });
+  const body = document.createElement('div'); body.className = 'waiver-record-body'; body.id = `waiver-record-body-${record.id}`; body.hidden = true;
+  toggle.setAttribute('aria-controls', body.id);
+  toggle.setAttribute('aria-expanded', 'false');
+  toggle.addEventListener('click', () => {
+    body.hidden = !body.hidden;
+    toggle.textContent = body.hidden ? 'View / Edit' : 'Hide details';
+    toggle.setAttribute('aria-expanded', String(!body.hidden));
+  });
   heading.append(title, date, toggle); card.appendChild(heading);
   const meta = document.createElement('p'); meta.className = 'muted'; meta.textContent = `${record.studentType === 'kids' ? 'Child' : 'Adult'} waiver · ${record.parentGuardianName ? `Parent/Guardian: ${record.parentGuardianName}` : 'Participant signer'}`; body.appendChild(meta);
   const grid = document.createElement('div'); grid.className = 'waiver-record-grid';
