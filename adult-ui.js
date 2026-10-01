@@ -7,12 +7,10 @@ const datePicker = document.getElementById('adultDatePicker');
 const studentsList = document.getElementById('adultStudentsList');
 const inactiveList = document.getElementById('adultInactiveList');
 const dayStatus = document.getElementById('adultDayStatus');
-let expandedStudentId = null;
 let sortField = 'lastName';
 let sortDirection = 1;
 
 function todayISO() { return new Date().toISOString().slice(0, 10); }
-function formatDate(date) { return date ? new Date(`${date}T00:00:00`).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' }) : '—'; }
 function beltClass(rank) { return `belt-${String(rank || 'white').toLowerCase().replace(/[^a-z0-9]+/g, '-')}`; }
 function makeButton(text, className, handler) { const button = document.createElement('button'); button.type = 'button'; button.className = `btn ${className}`; button.textContent = text; button.addEventListener('click', handler); return button; }
 function openStudentInfo(studentId) { const query = new URLSearchParams({ studentType: 'adult', studentId: String(studentId), expand: 'true' }); window.location.href = `student-info.html?${query}`; }
@@ -39,52 +37,6 @@ async function syncActiveStatus(student, active) {
   await unified.flushStudentUpdates();
   render();
 }
-function summary(student) { return `${attendance.getTotalAttended(student.id)} attended`; }
-
-function renderHistory(container, student) {
-  container.replaceChildren();
-  const records = attendance.getAllAttendanceForStudent(student.id).slice().reverse();
-  if (!records.length) { container.appendChild(Object.assign(document.createElement('p'), { className: 'muted', textContent: 'No attendance recorded yet.' })); return; }
-  records.forEach((record) => {
-    const row = document.createElement('div'); row.className = 'attendance-history-row';
-    const meta = document.createElement('span'); meta.innerHTML = `<strong>${formatDate(record.date)}</strong>`;
-    const state = document.createElement('strong'); state.className = record.present ? 'status-present' : 'status-absent'; state.textContent = record.present ? 'Present' : 'Absent';
-    const actions = document.createElement('span'); actions.className = 'history-actions';
-    actions.append(makeButton('Edit', 'history-edit', () => editHistory(row, student, record)), makeButton('Delete', 'history-delete', () => { if (confirm(`Delete attendance on ${record.date}?`)) { attendance.deleteAttendance(student.id, record.date); render(); } }));
-    row.append(meta, state, actions); container.appendChild(row);
-  });
-}
-
-function editHistory(row, student, record) {
-  row.replaceChildren(); row.classList.add('history-editing');
-  const date = Object.assign(document.createElement('input'), { type: 'date', value: record.date });
-  const present = document.createElement('select'); present.innerHTML = '<option value="true">Present</option><option value="false">Absent</option>'; present.value = String(record.present);
-  row.append(date, present, makeButton('Save', 'save', () => { if (date.value) { attendance.updateAttendance(student.id, record.date, date.value, present.value === 'true'); render(); } }), makeButton('Cancel', 'cancel', render));
-}
-
-function addAttendanceForm(container, student) {
-  if (container.childElementCount) return;
-  const form = document.createElement('form'); form.className = 'attendance-add-row adult-attendance-add-row';
-  const date = Object.assign(document.createElement('input'), { type: 'date', value: datePicker.value || todayISO(), required: true });
-  const state = document.createElement('select'); state.innerHTML = '<option value="true">Present</option><option value="false">Absent</option>';
-  const save = makeButton('Save attendance', 'attendance-add', () => { if (date.value) { attendance.markAttendance(student.id, date.value, state.value === 'true'); render(); } });
-  form.append(date, state, save, makeButton('Cancel', 'cancel', () => container.replaceChildren())); container.appendChild(form);
-}
-
-function buildDetails(row, student) {
-  const details = document.createElement('div'); details.className = 'student-details'; details.hidden = expandedStudentId !== student.id;
-  const info = document.createElement('div'); info.className = 'student-detail-info';
-  info.append(Object.assign(document.createElement('span'), { textContent: 'Adult' }), Object.assign(document.createElement('span'), { textContent: summary(student) }), Object.assign(document.createElement('span'), { textContent: `Last: ${formatDate(String(attendance.getLastClass(student.id)).slice(0, 10))}` }));
-  const activeLabel = document.createElement('label'); activeLabel.className = 'active-toggle'; activeLabel.textContent = 'Active'; const active = Object.assign(document.createElement('input'), { type: 'checkbox', checked: student.active !== false }); active.addEventListener('change', () => { void syncActiveStatus(student, active.checked); }); activeLabel.prepend(active);
-  const title = document.createElement('div'); title.className = 'detail-heading'; title.innerHTML = '<h3>Attendance History</h3>';
-  const history = document.createElement('div'); history.className = 'attendance-history'; renderHistory(history, student);
-  const addArea = document.createElement('div'); addArea.className = 'attendance-add-area';
-  const actions = document.createElement('div'); actions.className = 'detail-actions';
-  const historyButton = makeButton('View Full History', 'history-full', () => { const full = history.classList.toggle('history-expanded'); historyButton.textContent = full ? 'Hide History' : 'View Full History'; if (!full) requestAnimationFrame(() => row.scrollIntoView({ behavior: 'smooth', block: 'center' })); });
-  actions.append(historyButton, makeButton('Add Attendance', 'attendance-add', () => addAttendanceForm(addArea, student)));
-  details.append(info, activeLabel, title, history, actions, addArea); row.appendChild(details);
-}
-
 function render() {
   const date = datePicker.value || todayISO();
   dayStatus.textContent = attendance.isScheduledClassDate(date) ? 'Class day' : 'No scheduled class'; studentsList.replaceChildren();
@@ -94,10 +46,10 @@ function render() {
     const stage = stagedPromotion(student.id);
     const row = document.createElement('li'); row.className = `student-row ${beltClass(student.rank)}${stage ? ' has-staged-promotion' : ''}`; row.dataset.studentId = student.id;
     const main = document.createElement('div'); main.className = 'student-main';
-    const name = document.createElement('button'); name.type = 'button'; name.className = 'student-name-button'; name.setAttribute('aria-label', `${student.firstName} ${student.lastName}`); const stripe = document.createElement('span'); stripe.className = 'belt-stripe'; stripe.setAttribute('aria-hidden', 'true'); const nameText = document.createElement('span'); nameText.innerHTML = `<strong data-last-name="${student.lastName}">${student.firstName}</strong><small>${student.rank || 'White'} belt</small>`; name.append(stripe, nameText); const lastName = Object.assign(document.createElement('span'), { className: 'student-last-name', textContent: student.lastName }); if (stage) nameText.appendChild(Object.assign(document.createElement('small'), { className: 'promotion-notice', textContent: `Staged · ${stage.newRank || 'Target rank not set'}` })); name.addEventListener('click', () => { const details = row.querySelector('.student-details'); details.hidden = !details.hidden; expandedStudentId = details.hidden ? null : student.id; });
-    const record = attendance.getAttendance(student.id, date); const present = document.createElement('button'); present.type = 'button'; present.className = `attendance-toggle ${record?.present ? 'is-present' : ''}`; present.textContent = record?.present ? 'Present' : 'Absent'; present.disabled = !attendance.isScheduledClassDate(date); present.addEventListener('click', () => { if (!present.disabled) { expandedStudentId = student.id; attendance.markAttendance(student.id, date, !present.classList.contains('is-present')); render(); } });
+    const name = document.createElement('div'); name.className = 'student-name-button'; const stripe = document.createElement('span'); stripe.className = 'belt-stripe'; stripe.setAttribute('aria-hidden', 'true'); const nameText = document.createElement('span'); nameText.innerHTML = `<strong data-last-name="${student.lastName}">${student.firstName}</strong><small>${student.rank || 'White'} belt</small>`; name.append(stripe, nameText); const lastName = Object.assign(document.createElement('span'), { className: 'student-last-name', textContent: student.lastName }); if (stage) nameText.appendChild(Object.assign(document.createElement('small'), { className: 'promotion-notice', textContent: `Staged · ${stage.newRank || 'Target rank not set'}` }));
+    const record = attendance.getAttendance(student.id, date); const present = document.createElement('button'); present.type = 'button'; present.className = `attendance-toggle ${record?.present ? 'is-present' : ''}`; present.textContent = record?.present ? 'Present' : 'Absent'; present.disabled = !attendance.isScheduledClassDate(date); present.addEventListener('click', () => { if (!present.disabled) { attendance.markAttendance(student.id, date, !present.classList.contains('is-present')); render(); } });
     const deactivate = () => { if (confirm(`Deactivate ${student.firstName} ${student.lastName}?`)) void syncActiveStatus(student, false); };
-    main.append(name, lastName, present, makeButton('Edit', 'edit', () => openStudentInfo(student.id)), makeButton('Deactivate', 'inactive', deactivate)); row.append(main); buildDetails(row, student); row.addEventListener('click', (event) => { if (event.target.closest('.student-details, button, input, select, label, a')) return; const details = row.querySelector('.student-details'); details.hidden = !details.hidden; expandedStudentId = details.hidden ? null : student.id; }); studentsList.appendChild(row);
+    main.append(name, lastName, present, makeButton('Edit', 'edit', () => openStudentInfo(student.id)), makeButton('Deactivate', 'inactive', deactivate)); row.append(main); studentsList.appendChild(row);
   });
   updateSortIndicators();
   renderInactive();
