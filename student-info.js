@@ -104,19 +104,128 @@ function attendanceHistory(student, container) {
   });
 }
 
-function addAttendance(student, container) {
-  if (container.firstChild) return;
-  const form = document.createElement('form'); form.className = 'attendance-add-row';
-  const date = Object.assign(document.createElement('input'), { type: 'date', value: new Date().toISOString().slice(0, 10), required: true });
-  const present = document.createElement('select'); present.innerHTML = '<option value="true">Present</option><option value="false">Absent</option>';
-  form.append(date);
-  form.append(present, makeButton('Save attendance', 'attendance-add', () => {
-    if (!date.value) return;
-    if (student.studentType === 'adult') adultAttendance.markAttendance(student.sourceId, date.value, present.value === 'true');
-    else kidsAttendance.markAttendance(student.sourceId, date.value, present.value === 'true');
-    expanded.add(key(student)); render();
-  }), makeButton('Cancel', 'cancel', () => container.replaceChildren()));
-  container.appendChild(form);
+function addAttendance(student) {
+  if (document.querySelector('.student-info-attendance-dialog[open]')) return;
+  const api = attendanceApi(student);
+  const now = new Date();
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const todayValue = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+  const selectedDates = new Set();
+  let visibleMonth = new Date(today.getFullYear(), today.getMonth(), 1);
+  const dialog = document.createElement('dialog'); dialog.className = 'student-info-attendance-dialog';
+  const shell = document.createElement('div'); shell.className = 'student-info-attendance-dialog-shell';
+  const header = document.createElement('header'); header.className = 'student-info-attendance-dialog-header';
+  const heading = document.createElement('div');
+  heading.append(Object.assign(document.createElement('h2'), { textContent: 'Add attendance' }), Object.assign(document.createElement('p'), { textContent: `${student.firstName} ${student.lastName} · ${typeLabel(student.studentType)}` }));
+  const close = makeButton('Close', 'student-info-attendance-dialog-close', () => dialog.close());
+  header.append(heading, close);
+  const form = document.createElement('form'); form.className = 'student-info-bulk-attendance';
+  const body = document.createElement('div'); body.className = 'student-info-attendance-dialog-body';
+  const calendar = document.createElement('div'); calendar.className = 'student-info-attendance-calendar';
+  const calendarHeading = document.createElement('div'); calendarHeading.className = 'student-info-calendar-heading';
+  const previousMonth = makeButton('<', 'student-info-calendar-nav', () => {
+    visibleMonth = new Date(visibleMonth.getFullYear(), visibleMonth.getMonth() - 1, 1);
+    renderCalendar();
+  });
+  previousMonth.setAttribute('aria-label', 'Previous month');
+  const monthLabel = Object.assign(document.createElement('strong'), { className: 'student-info-calendar-month' });
+  const nextMonth = makeButton('>', 'student-info-calendar-nav', () => {
+    if (visibleMonth.getFullYear() === today.getFullYear() && visibleMonth.getMonth() === today.getMonth()) return;
+    visibleMonth = new Date(visibleMonth.getFullYear(), visibleMonth.getMonth() + 1, 1);
+    renderCalendar();
+  });
+  nextMonth.setAttribute('aria-label', 'Next month');
+  calendarHeading.append(previousMonth, monthLabel, nextMonth);
+  const weekdayHeading = document.createElement('div'); weekdayHeading.className = 'student-info-calendar-weekdays';
+  ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].forEach((day) => weekdayHeading.appendChild(Object.assign(document.createElement('span'), { textContent: day })));
+  const daysGrid = document.createElement('div'); daysGrid.className = 'student-info-calendar-days';
+  calendar.append(calendarHeading, weekdayHeading, daysGrid);
+  const selection = document.createElement('section'); selection.className = 'student-info-calendar-selection';
+  const selectionHeader = document.createElement('div'); selectionHeader.className = 'student-info-calendar-selection-header';
+  const selectionCount = Object.assign(document.createElement('strong'), { className: 'student-info-calendar-selection-count', role: 'status' });
+  const clearSelection = makeButton('Clear', 'student-info-calendar-clear', () => { selectedDates.clear(); error.hidden = true; renderCalendar(); });
+  selectionHeader.append(selectionCount, clearSelection);
+  const selectedChips = document.createElement('div'); selectedChips.className = 'student-info-calendar-selected-dates';
+  selection.append(selectionHeader, selectedChips);
+  const statusField = document.createElement('fieldset'); statusField.className = 'student-info-bulk-status';
+  statusField.appendChild(Object.assign(document.createElement('legend'), { textContent: 'Mark selected dates as' }));
+  const statusOptions = document.createElement('div'); statusOptions.className = 'student-info-bulk-status-options';
+  [['true', 'Present'], ['false', 'Absent']].forEach(([value, label], index) => {
+    const choice = document.createElement('label'); choice.className = 'student-info-bulk-status-choice';
+    const radio = Object.assign(document.createElement('input'), { type: 'radio', name: `attendance-status-${student.studentType}-${student.sourceId}`, value, checked: index === 0 });
+    choice.append(radio, document.createTextNode(label)); statusOptions.appendChild(choice);
+  });
+  statusField.appendChild(statusOptions);
+  const error = Object.assign(document.createElement('p'), { className: 'student-info-bulk-attendance-error', role: 'alert', hidden: true });
+  const footer = document.createElement('footer'); footer.className = 'student-info-attendance-dialog-footer';
+  const save = makeButton('Add attendance', 'attendance-add', () => {}); save.type = 'submit'; save.disabled = true;
+  const cancel = makeButton('Cancel', 'cancel', () => dialog.close());
+  footer.append(cancel, save);
+  const renderCalendar = () => {
+    const year = visibleMonth.getFullYear();
+    const month = visibleMonth.getMonth();
+    const monthName = visibleMonth.toLocaleDateString(undefined, { month: 'long', year: 'numeric' });
+    monthLabel.textContent = monthName;
+    nextMonth.disabled = year === today.getFullYear() && month === today.getMonth();
+    daysGrid.replaceChildren();
+    for (let offset = 0; offset < new Date(year, month, 1).getDay(); offset += 1) {
+      const blank = document.createElement('span'); blank.className = 'student-info-calendar-blank'; blank.setAttribute('aria-hidden', 'true'); daysGrid.appendChild(blank);
+    }
+    const dayCount = new Date(year, month + 1, 0).getDate();
+    for (let dayNumber = 1; dayNumber <= dayCount; dayNumber += 1) {
+      const dateValue = `${year}-${String(month + 1).padStart(2, '0')}-${String(dayNumber).padStart(2, '0')}`;
+      const date = new Date(year, month, dayNumber);
+      const existing = api.getAttendance(student.sourceId, dateValue);
+      const button = makeButton(String(dayNumber), 'student-info-calendar-day', () => {
+        if (date > today) return;
+        if (selectedDates.has(dateValue)) selectedDates.delete(dateValue);
+        else selectedDates.add(dateValue);
+        error.hidden = true;
+        renderCalendar();
+      });
+      button.dataset.date = dateValue;
+      button.disabled = date > today;
+      button.setAttribute('aria-pressed', String(selectedDates.has(dateValue)));
+      button.setAttribute('aria-label', `${monthName} ${dayNumber}${existing ? `, currently ${existing.present ? 'Present' : 'Absent'}` : ''}`);
+      button.title = existing ? `Currently ${existing.present ? 'Present' : 'Absent'}; adding this date updates it` : `${monthName} ${dayNumber}`;
+      if (selectedDates.has(dateValue)) button.classList.add('is-selected');
+      if (existing) button.classList.add('has-record');
+      daysGrid.appendChild(button);
+    }
+    const selected = [...selectedDates].sort();
+    selectionCount.textContent = `${selected.length} date${selected.length === 1 ? '' : 's'} selected`;
+    selectedChips.replaceChildren();
+    selected.forEach((date) => {
+      const chip = makeButton(formatDate(date), 'student-info-calendar-selected-date', () => { selectedDates.delete(date); renderCalendar(); });
+      chip.setAttribute('aria-label', `Remove ${formatDate(date)}`);
+      selectedChips.appendChild(chip);
+    });
+    clearSelection.disabled = selected.length === 0;
+    save.disabled = selected.length === 0;
+    save.textContent = selected.length ? `Add ${selected.length} date${selected.length === 1 ? '' : 's'}` : 'Add dates';
+  };
+  body.append(calendar, selection, statusField, error);
+  form.append(body, footer);
+  shell.append(header, form); dialog.appendChild(shell);
+  renderCalendar();
+  form.addEventListener('submit', (event) => {
+    event.preventDefault();
+    const dates = [...selectedDates].sort();
+    if (!dates.length) { error.textContent = 'Select one or more dates.'; error.hidden = false; return; }
+    if (dates.some((date) => date > todayValue)) { error.textContent = 'Attendance dates cannot be in the future.'; error.hidden = false; return; }
+    const updatedCount = dates.filter((date) => api.getAttendance(student.sourceId, date)).length;
+    const present = form.querySelector('input[name^="attendance-status-"]:checked').value === 'true';
+    dates.forEach((date) => api.markAttendance(student.sourceId, date, present));
+    expanded.add(key(student));
+    expandedAttendanceHistory.add(key(student));
+    setStatus(`Added attendance for ${dates.length} date${dates.length === 1 ? '' : 's'}${updatedCount ? `; updated ${updatedCount} existing record${updatedCount === 1 ? '' : 's'}` : ''}.`);
+    dialog.close();
+    render();
+  });
+  dialog.addEventListener('click', (event) => { if (event.target === dialog) dialog.close(); });
+  dialog.addEventListener('close', () => dialog.remove(), { once: true });
+  document.body.appendChild(dialog);
+  dialog.showModal();
 }
 
 function detailsFor(student, row, nameGroup) {
@@ -219,7 +328,7 @@ function detailsFor(student, row, nameGroup) {
       historyToggle.title = 'Hide attendance history';
       historyToggle.setAttribute('aria-expanded', 'true');
     }
-    addAttendance(student, addArea);
+    addAttendance(student);
   });
   historyTitle.append(historyToggle, historyHeading, addAttendanceButton);
   history.appendChild(addArea); attendanceHistory(student, history);
@@ -277,7 +386,6 @@ function render() {
 allRanks().forEach((rank) => filters.rank.appendChild(new Option(rank, rank)));
 document.querySelectorAll('.student-info-header [data-sort]').forEach((header) => header.addEventListener('click', () => { const field = header.dataset.sort; sortDirection = field === sortField ? -sortDirection : 1; sortField = field; render(); }));
 Object.values(filters).forEach((control) => control.addEventListener('input', render));
-document.getElementById('printStudents').addEventListener('click', () => window.print());
 document.getElementById('studentInfoAddToggle').addEventListener('click', () => { const form = document.getElementById('studentInfoAddForm'); form.hidden = !form.hidden; if (!form.hidden) document.getElementById('studentInfoFirstName').focus(); });
 document.getElementById('studentInfoAddForm').addEventListener('submit', async (event) => { event.preventDefault(); const form = event.currentTarget; const first = document.getElementById('studentInfoFirstName').value.trim(); const last = document.getElementById('studentInfoLastName').value.trim(); const type = document.getElementById('studentInfoNewType').value; if (!first || !last) return; try { await (type === 'child' ? kidsStudents : adultStudents).addStudentAndSync(first, last); form.reset(); form.hidden = true; setStatus('Student added and synced.'); render(); } catch (error) { setStatus(`Student could not be synced: ${error.message}`); } });
 await Promise.allSettled([kidsStudents.syncFromCloud(), adultStudents.syncFromCloud(), kidsAttendance.syncFromCloud(), adultAttendance.syncFromCloud(), waiverStore.syncFromCloud()]);

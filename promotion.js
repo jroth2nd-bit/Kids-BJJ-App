@@ -11,7 +11,6 @@ import { syncFromCloud, syncLocalPromotions, deleteStagedPromotion } from './pro
 const KIDS_RANKS = ['White', 'White 1', 'White 2', 'White 3', 'White 4', 'Grey/White', 'Grey/White 1', 'Grey/White 2', 'Grey/White 3', 'Grey/White 4', 'Grey', 'Grey 1', 'Grey 2', 'Grey 3', 'Grey 4', 'Grey/Black', 'Grey/Black 1', 'Grey/Black 2', 'Grey/Black 3', 'Grey/Black 4', 'Yellow/White', 'Yellow/White 1', 'Yellow/White 2', 'Yellow/White 3', 'Yellow/White 4', 'Yellow', 'Yellow 1', 'Yellow 2', 'Yellow 3', 'Yellow 4', 'Yellow/Black', 'Yellow/Black 1', 'Yellow/Black 2', 'Yellow/Black 3', 'Yellow/Black 4', 'Orange/White', 'Orange/White 1', 'Orange/White 2', 'Orange/White 3', 'Orange/White 4', 'Orange', 'Orange 1', 'Orange 2', 'Orange 3', 'Orange 4', 'Orange/Black', 'Orange/Black 1', 'Orange/Black 2', 'Orange/Black 3', 'Orange/Black 4', 'Green/White', 'Green/White 1', 'Green/White 2', 'Green/White 3', 'Green/White 4', 'Green', 'Green 1', 'Green 2', 'Green 3', 'Green 4', 'Green/Black', 'Green/Black 1', 'Green/Black 2', 'Green/Black 3', 'Green/Black 4'];
 const ADULT_RANKS = ['White', 'White 1', 'White 2', 'White 3', 'White 4', 'Blue', 'Blue 1', 'Blue 2', 'Blue 3', 'Blue 4', 'Purple', 'Purple 1', 'Purple 2', 'Purple 3', 'Purple 4', 'Brown', 'Brown 1', 'Brown 2', 'Brown 3', 'Brown 4', 'Black', 'Black 1', 'Black 2', 'Black 3', 'Black 4'];
 const list = document.getElementById('promotionWorkflowList');
-const history = document.getElementById('promotionHistory');
 const controls = {
   search: document.getElementById('promotionSearch'), type: document.getElementById('promotionType'), rank: document.getElementById('promotionRank'), attendance: document.getElementById('promotionAttendance'), staged: document.getElementById('promotionStaged'), sort: document.getElementById('promotionSort'),
 };
@@ -53,20 +52,6 @@ function sortStudents(a, b) {
   }
   if (field === 'date') { const dateA = historyRecords(a)[0]?.promotionDate || ''; const dateB = historyRecords(b)[0]?.promotionDate || ''; return String(dateA).localeCompare(String(dateB)) * direction; }
   return `${a.lastName} ${a.firstName}`.localeCompare(`${b.lastName} ${b.firstName}`) * direction;
-}
-
-function renderHistory() {
-  history.replaceChildren();
-  const records = unified.getStudents().flatMap((student) => historyRecords(student).map((record) => ({ student, record }))).sort((a, b) => String(b.record.promotionDate || b.record.createdAt || '').localeCompare(String(a.record.promotionDate || a.record.createdAt || '')));
-  if (!records.length) { history.appendChild(Object.assign(document.createElement('p'), { className: 'muted', textContent: 'No promotions recorded yet.' })); return; }
-  records.forEach(({ student, record }) => {
-    const item = document.createElement('article'); item.className = 'promotion-history-item';
-    const summary = document.createElement('div'); summary.className = 'promotion-history-summary';
-    const name = document.createElement('strong'); name.textContent = `${student.firstName} ${student.lastName}`;
-    const detail = document.createElement('span'); detail.textContent = `${record.oldRank || 'White'} → ${record.newRank} · ${formatDate(record.promotionDate || record.createdAt)}${record.beltSize ? ` · ${record.beltSize}` : ''}`;
-    const notes = document.createElement('span'); notes.textContent = record.notes || '';
-    summary.append(name, detail, notes); item.appendChild(summary); history.appendChild(item);
-  });
 }
 
 async function stagePromotion(student, target, notes) {
@@ -159,7 +144,6 @@ function render() {
   }).sort(sortStudents);
   list.replaceChildren();
   students.forEach((student) => list.appendChild(renderStudent(student)));
-  renderHistory();
 }
 
 const rankOptions = new Map();

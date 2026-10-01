@@ -1925,7 +1925,11 @@ button,input,select,.btn{min-height:38px}
 .attendance-page:not(.student-info-page):not(.promotion-workflow-page) .attendance-sort[data-direction="desc"]::after{content:" \2193";color:var(--accent)}
 .attendance-page:not(.student-info-page):not(.promotion-workflow-page) .students-list .student-main{grid-template-columns:minmax(0,1fr) minmax(0,1fr) 82px 62px 100px!important;grid-template-rows:minmax(40px,auto)!important;gap:8px!important}
 .attendance-page:not(.student-info-page):not(.promotion-workflow-page) .students-list .student-main>.student-name-button{grid-column:1!important;grid-row:1!important}
+.attendance-page:not(.student-info-page):not(.promotion-workflow-page) .student-name-button{cursor:default!important}
 .attendance-page:not(.student-info-page):not(.promotion-workflow-page) .students-list .student-main>.student-last-name{grid-column:2!important;grid-row:1!important;min-width:0!important;overflow:hidden!important;text-overflow:ellipsis!important;white-space:nowrap!important;color:var(--text)!important;font-size:.88rem!important}
+.attendance-page:not(.student-info-page):not(.promotion-workflow-page) .students-list .student-main>.attendance-toggle{grid-column:3!important;grid-row:1!important}
+.attendance-page:not(.student-info-page):not(.promotion-workflow-page) .students-list .student-main>.edit{grid-column:4!important;grid-row:1!important}
+.attendance-page:not(.student-info-page):not(.promotion-workflow-page) .students-list .student-main>.inactive{grid-column:5!important;grid-row:1!important}
 .attendance-page:not(.student-info-page):not(.promotion-workflow-page) .student-name-button strong[data-last-name]::after{content:none}
 @media (min-width:761px) and (max-width:980px){
   .attendance-page:not(.student-info-page):not(.promotion-workflow-page) .attendance-headers{grid-template-columns:minmax(0,1fr) minmax(0,1fr) 66px 48px 78px!important;gap:5px!important;padding:5px 7px!important}
@@ -2006,6 +2010,59 @@ button,input,select,.btn{min-height:38px}
 /* Preserve belt colors under automatic dark/forced-color adjustment. */
 .attendance-page .student-row .belt-stripe{color-scheme:only light!important;forced-color-adjust:none!important;box-sizing:border-box!important;border:1px solid rgba(255,255,255,.72)!important;outline:1px solid rgba(0,0,0,.72)!important;outline-offset:1px!important;box-shadow:0 0 0 1px rgba(255,255,255,.52),0 0 7px rgba(0,0,0,.48)!important}
 .waiver-page .waiver-signatures .signature-pad{color-scheme:only light!important;forced-color-adjust:none!important;background:#fff!important;color:#111827!important;filter:none!important;opacity:1!important;mix-blend-mode:normal!important}
+
+.student-info-attendance-dialog{width:min(620px,calc(100vw - 32px))!important;max-width:620px!important;max-height:calc(100dvh - 32px)!important;margin:auto!important;padding:0!important;overflow:hidden!important;border:1px solid rgba(255,255,255,.16)!important;border-radius:8px!important;background:#202326!important;color:var(--text)!important;box-shadow:0 24px 80px rgba(0,0,0,.5)!important}
+.student-info-attendance-dialog::backdrop{background:rgba(8,10,12,.72);backdrop-filter:blur(2px)}
+.student-info-attendance-dialog[open]{display:block!important}
+.student-info-attendance-dialog-shell{display:grid;grid-template-rows:auto minmax(0,1fr);max-height:calc(100dvh - 32px);overflow:hidden}
+.student-info-attendance-dialog-header{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;padding:18px 20px 14px;border-bottom:1px solid rgba(255,255,255,.1)}
+.student-info-attendance-dialog-header h2{margin:0;font-size:1.15rem}
+.student-info-attendance-dialog-header p{margin:4px 0 0;color:var(--muted);font-size:.86rem}
+.student-info-attendance-dialog-close{flex:0 0 auto;min-height:34px;padding:5px 9px}
+.student-info-bulk-attendance{display:grid;grid-template-rows:minmax(0,1fr) auto;min-height:0}
+.student-info-attendance-dialog-body{display:grid;gap:16px;min-height:0;padding:16px 20px;overflow:auto}
+.student-info-attendance-calendar{display:grid;gap:8px;min-width:0}
+.student-info-calendar-heading{display:grid;grid-template-columns:40px minmax(0,1fr) 40px;align-items:center;gap:8px}
+.student-info-calendar-heading>.student-info-calendar-nav{display:grid;place-items:center;width:40px;min-width:40px;height:38px;min-height:38px;padding:0}
+.student-info-calendar-month{text-align:center;font-size:1rem}
+.student-info-calendar-weekdays,.student-info-calendar-days{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:5px;min-width:0}
+.student-info-calendar-weekdays{text-align:center;color:var(--muted);font-size:.74rem;font-weight:700}
+.student-info-calendar-days{grid-auto-rows:44px}
+.student-info-calendar-blank{min-width:0}
+.student-info-calendar-days>.student-info-calendar-day{display:grid;place-items:center;width:100%;min-width:0;height:100%;min-height:40px;padding:0;border:1px solid rgba(255,255,255,.12);border-radius:5px;background:#151719;color:var(--text);font-size:.86rem}
+.student-info-calendar-days>.student-info-calendar-day.has-record{border-color:rgba(34,197,94,.7)}
+.student-info-calendar-days>.student-info-calendar-day.is-selected{border-color:#22c55e;background:#166534;color:#fff;font-weight:700}
+.student-info-calendar-days>.student-info-calendar-day.is-today{box-shadow:inset 0 0 0 1px #facc15}
+.student-info-calendar-days>.student-info-calendar-day:disabled{opacity:.35;cursor:not-allowed}
+.student-info-calendar-selection{display:grid;gap:8px;min-width:0}
+.student-info-calendar-selection-header{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.student-info-calendar-selection-count{font-size:.88rem}
+.student-info-calendar-clear{min-height:30px;padding:4px 8px;font-size:.78rem}
+.student-info-calendar-selected-dates{display:flex;flex-wrap:wrap;gap:5px;max-height:84px;overflow:auto}
+.student-info-calendar-selected-date{flex:0 0 auto;min-height:30px;padding:4px 8px;border:1px solid rgba(34,197,94,.5);background:rgba(34,197,94,.12);font-size:.76rem}
+.student-info-calendar-selected-date::after{content:" x";color:var(--muted)}
+.student-info-bulk-status{min-width:0;margin:0;padding:0;border:0}
+.student-info-bulk-status legend{margin-bottom:7px;color:var(--muted);font-size:.8rem;font-weight:700}
+.student-info-bulk-status-options{display:grid;grid-template-columns:1fr 1fr;gap:5px;padding:4px;border:1px solid rgba(255,255,255,.12);border-radius:7px;background:#151719}
+.student-info-bulk-status-choice{position:relative;display:flex;align-items:center;justify-content:center;min-height:38px;border-radius:5px;color:var(--muted);font-weight:700;cursor:pointer}
+.student-info-bulk-status-choice:has(input:checked){background:#166534;color:#fff}
+.student-info-bulk-status-choice:has(input:focus-visible){outline:2px solid #86efac;outline-offset:1px}
+.student-info-bulk-status-choice input{position:absolute;width:1px;height:1px;opacity:0}
+.student-info-bulk-attendance-error{margin:0;color:#fca5a5;font-size:.84rem}
+.student-info-attendance-dialog-footer{display:flex;justify-content:flex-end;gap:8px;padding:12px 20px 16px;border-top:1px solid rgba(255,255,255,.1);background:#202326}
+.student-info-attendance-dialog-footer>.btn{min-width:104px}
+@media (min-width:981px){.student-info-page .student-details>.student-notes-section>.student-info-notes-editor{grid-column:1 / 3!important;grid-row:3!important;width:100%!important;justify-self:stretch!important}}
+@media(max-width:600px){
+  .student-info-attendance-dialog{width:calc(100vw - 16px)!important;height:calc(100dvh - 16px)!important;max-height:calc(100dvh - 16px)!important;border-radius:8px!important}
+  .student-info-attendance-dialog-shell{height:100%;max-height:none}
+  .student-info-attendance-dialog-header{padding:14px 14px 12px}
+  .student-info-attendance-dialog-body{gap:14px;padding:12px 14px}
+  .student-info-calendar-weekdays,.student-info-calendar-days{gap:3px}
+  .student-info-calendar-days{grid-auto-rows:42px}
+  .student-info-calendar-days>.student-info-calendar-day{min-height:40px}
+  .student-info-attendance-dialog-footer{padding:10px 14px calc(10px + env(safe-area-inset-bottom))}
+  .student-info-attendance-dialog-footer>.btn{flex:1 1 0}
+}
 
 /* Keep rank belt markers true to their authored colors in dark-mode browsers. */
 .attendance-page .belt-stripe{color-scheme:only light!important;forced-color-adjust:none!important;box-sizing:border-box!important;border:1px solid rgba(255,255,255,.72)!important;outline:1px solid rgba(0,0,0,.72)!important;outline-offset:1px!important;box-shadow:0 0 6px rgba(255,255,255,.16)!important}
