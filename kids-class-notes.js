@@ -1,4 +1,5 @@
 import { syncFromCloud, syncLocalNotes } from './class-notes-cloud.js';
+import { sanitizeNotesHtml, openLinkBar, insertLink, initNotesEditor } from './notes-editor.js?v=2';
 
 const NOTES_KEY = 'bjj_class_notes';
 const dateInput = document.getElementById('notesDate');
@@ -52,12 +53,7 @@ function loadNote(date) {
   dateInput.value = date; currentKey = currentKeyFor(date); const note = currentNote();
   classInput.value = note?.className || 'Kids Class'; coachInput.value = note?.coach || ''; titleInput.value = note?.title || ''; editor.innerHTML = note?.content || defaultContent(); dirty = false; setStatus(note ? 'Loaded' : 'New note for selected date'); refreshCoachOptions(); renderHistory();
 }
-function sanitizeHtml(html) {
-  const parser = new DOMParser(); const doc = parser.parseFromString(`<div>${html || ''}</div>`, 'text/html'); const root = doc.body.firstElementChild; if (!root) return '';
-  const allowed = new Set(['P', 'BR', 'STRONG', 'EM', 'U', 'UL', 'OL', 'LI', 'H3', 'H4', 'BLOCKQUOTE', 'SPAN']); const walker = doc.createTreeWalker(root, NodeFilter.SHOW_ELEMENT); const nodes = []; let node = walker.nextNode(); while (node) { nodes.push(node); node = walker.nextNode(); }
-  nodes.forEach((element) => { const weight = element.style.fontWeight; if (!allowed.has(element.tagName)) { const parent = element.parentNode; while (element.firstChild) parent.insertBefore(element.firstChild, element); parent.removeChild(element); return; } if (element.tagName === 'SPAN') { while (element.attributes.length) element.removeAttribute(element.attributes[0].name); if (weight === 'normal' || weight === 'bold') element.style.fontWeight = weight; } else { while (element.attributes.length) element.removeAttribute(element.attributes[0].name); } });
-  return root.innerHTML;
-}
+function sanitizeHtml(html) { return sanitizeNotesHtml(html); }
 function saveNote() {
   const date = dateInput.value; if (!date) return alert('Select a date'); const now = new Date().toISOString(); const notes = loadNotes(); const old = notes.find((note) => note.key === currentKey); const note = { key: currentKeyFor(date), date, sessionId: 'kids-class', className: classInput.value.trim() || 'Kids Class', coach: coachInput.value.trim(), title: titleInput.value.trim(), content: sanitizeHtml(editor.innerHTML), createdAt: old?.createdAt || now, updatedAt: now };
   const index = notes.findIndex((item) => item.key === note.key); if (index === -1) notes.push(note); else notes[index] = note; saveNotes(notes); currentKey = note.key; dirty = false; setStatus('Saved'); refreshCoachOptions(); renderHistory();
@@ -65,8 +61,10 @@ function saveNote() {
 function deleteNote() { const notes = loadNotes(); const filtered = notes.filter((note) => note.key !== currentKey); if (filtered.length === notes.length) return setStatus('Nothing to delete'); saveNotes(filtered); loadNote(dateInput.value); setStatus('Deleted'); }
 function copyPrevious() { const previous = loadNotes().filter((note) => note.date < dateInput.value).sort((a, b) => b.date.localeCompare(a.date))[0]; if (!previous) return alert('No previous Kids class note found'); classInput.value = previous.className || 'Kids Class'; coachInput.value = previous.coach || ''; titleInput.value = previous.title || ''; editor.innerHTML = previous.content || defaultContent(); markDirty(); }
 function rememberSelection() { const selection = window.getSelection(); if (selection?.rangeCount && editor.contains(selection.anchorNode)) savedRange = selection.getRangeAt(0).cloneRange(); }
-function applyCommand(command, value) { editor.focus(); if (savedRange) { const selection = window.getSelection(); selection.removeAllRanges(); selection.addRange(savedRange); } document.execCommand(command, false, value || null); markDirty(); }
+function restoreSelection() { editor.focus(); if (savedRange) { const selection = window.getSelection(); selection.removeAllRanges(); selection.addRange(savedRange); } }
+function applyCommand(command, value) { if (command === 'createLink') { openLinkBar(toolbar, (url) => { restoreSelection(); insertLink(url); markDirty(); }); return; } restoreSelection(); document.execCommand(command, false, value || null); markDirty(); }
 
+initNotesEditor(editor);
 document.addEventListener('selectionchange', rememberSelection);
 toolbar.addEventListener('mousedown', (event) => { if (event.target.closest('button[data-cmd]')) { rememberSelection(); event.preventDefault(); } });
 toolbar.addEventListener('click', (event) => { const button = event.target.closest('button[data-cmd]'); if (button) applyCommand(button.dataset.cmd, button.dataset.value || ''); });

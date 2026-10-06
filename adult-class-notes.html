@@ -4,7 +4,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1" />
     <title>Adult Class Notes — BJJ Attendance</title>
-    <link rel="stylesheet" href="styles.css?v=107" />
+    <link rel="stylesheet" href="styles.css?v=109" />
   </head>
   <body class="adult-notes-page">
     <main class="container">
@@ -26,7 +26,7 @@
             <label for="adultNotesTitle">Lesson Title</label><input id="adultNotesTitle" type="text" placeholder="Armbar from Mount" />
           </div>
           <div class="notes-toolbar" id="adultNotesToolbar" role="toolbar" aria-label="Adult class notes formatting toolbar">
-            <button type="button" class="btn" data-cmd="bold"><strong>B</strong></button><button type="button" class="btn" data-cmd="italic"><em>I</em></button><button type="button" class="btn" data-cmd="underline"><u>U</u></button><button type="button" class="btn" data-cmd="insertUnorderedList">Bullets</button><button type="button" class="btn" data-cmd="insertOrderedList">Numbered</button><button type="button" class="btn" data-cmd="formatBlock" data-value="h3">H3</button><button type="button" class="btn" data-cmd="formatBlock" data-value="p">Paragraph</button><button type="button" class="btn" data-cmd="removeFormat">Clear</button>
+            <button type="button" class="btn" data-cmd="bold"><strong>B</strong></button><button type="button" class="btn" data-cmd="italic"><em>I</em></button><button type="button" class="btn" data-cmd="underline"><u>U</u></button><button type="button" class="btn" data-cmd="insertUnorderedList">Bullets</button><button type="button" class="btn" data-cmd="insertOrderedList">Numbered</button><button type="button" class="btn" data-cmd="formatBlock" data-value="h3">H3</button><button type="button" class="btn" data-cmd="formatBlock" data-value="p">Paragraph</button><button type="button" class="btn" data-cmd="createLink">Link</button><button type="button" class="btn" data-cmd="removeFormat">Clear</button>
           </div>
           <div id="adultNotesEditor" class="rich-editor" contenteditable="true" aria-label="Adult class notes rich text editor"></div>
           <div class="notes-actions-row"><button id="saveAdultNote" class="btn save">Save</button><button id="copyPreviousAdultNote" class="btn">Copy Previous</button><button id="deleteAdultNote" class="btn cancel">Delete This Note</button><span id="adultNotesStatus" class="muted">Ready</span></div>
@@ -35,6 +35,6 @@
     </main>
     <script type="module" src="auth-guard.js"></script>
     <script type="module" src="nav.js?v=20"></script>
-    <script type="module" src="adult-class-notes.js?v=3"></script>
+    <script type="module" src="adult-class-notes.js?v=5"></script>
   </body>
 </html>
