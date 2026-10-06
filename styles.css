@@ -694,6 +694,9 @@ main .promo-headers .col, main .promo-row .col { box-sizing: border-box }
 .rich-editor:focus{outline:none;border-color:rgba(239,68,68,0.7);box-shadow:0 0 0 3px rgba(239,68,68,0.06)}
 .rich-editor h3{margin:10px 0 6px}
 .rich-editor p{margin:0 0 10px}
+.notes-link-bar{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin:8px 0}
+.notes-link-bar input{flex:1 1 260px;min-width:0;padding:8px 10px;border:1px solid rgba(255,255,255,.12);border-radius:6px;background:#161b20;color:var(--text)}
+.rich-editor a{color:#8ab4ff;text-decoration:underline;cursor:pointer}
 
 .notes-actions-row{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-top:10px}
 
