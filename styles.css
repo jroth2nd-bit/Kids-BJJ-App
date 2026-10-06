@@ -692,8 +692,19 @@ main .promo-headers .col, main .promo-row .col { box-sizing: border-box }
   overflow:auto;
 }
 .rich-editor:focus{outline:none;border-color:rgba(239,68,68,0.7);box-shadow:0 0 0 3px rgba(239,68,68,0.06)}
-.rich-editor h3{margin:10px 0 6px}
-.rich-editor p{margin:0 0 10px}
+.rich-editor h2,.rich-editor h3,.rich-editor h4{margin:12px 0 4px;line-height:1.25}
+.rich-editor h2{font-size:1.5rem}
+.rich-editor h3{font-size:1.2rem}
+.rich-editor h4{font-size:1.02rem}
+.rich-editor>:first-child{margin-top:0}
+.rich-editor p{margin:0}
+.rich-editor p:empty{min-height:1.45em}
+.rich-editor ul,.rich-editor ol{margin:2px 0 6px;padding-left:26px}
+.rich-editor ul ul,.rich-editor ol ol,.rich-editor ul ol,.rich-editor ol ul{margin:0;padding-left:24px}
+.rich-editor ul{list-style:disc}
+.rich-editor ul ul{list-style:circle}
+.rich-editor ul ul ul{list-style:square}
+.rich-editor ol ol{list-style:lower-alpha}
 .notes-link-bar{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin:8px 0}
 .notes-link-bar input{flex:1 1 260px;min-width:0;padding:8px 10px;border:1px solid rgba(255,255,255,.12);border-radius:6px;background:#161b20;color:var(--text)}
 .rich-editor a{color:#8ab4ff;text-decoration:underline;cursor:pointer}

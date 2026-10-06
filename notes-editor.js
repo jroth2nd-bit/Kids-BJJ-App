@@ -1,5 +1,5 @@
-const ALLOWED_TAGS = new Set(['P', 'BR', 'STRONG', 'EM', 'U', 'UL', 'OL', 'LI', 'H3', 'H4', 'BLOCKQUOTE', 'SPAN', 'A']);
-const BLOCK_TAGS = new Set(['P', 'DIV', 'UL', 'OL', 'LI', 'H3', 'H4', 'BLOCKQUOTE']);
+const ALLOWED_TAGS = new Set(['P', 'BR', 'STRONG', 'EM', 'U', 'UL', 'OL', 'LI', 'H2', 'H3', 'H4', 'BLOCKQUOTE', 'SPAN', 'A']);
+const BLOCK_TAGS = new Set(['P', 'DIV', 'UL', 'OL', 'LI', 'H2', 'H3', 'H4', 'BLOCKQUOTE']);
 const SAFE_LINK_PROTOCOLS = new Set(['http:', 'https:', 'mailto:']);
 
 export function normalizeLinkUrl(value) {
@@ -21,6 +21,41 @@ function unwrap(element) {
   parent.removeChild(element);
 }
 
+const HEADINGS = new Set(['H2', 'H3', 'H4']);
+const TEXT_BLOCKS = new Set(['P', 'H2', 'H3', 'H4']);
+
+// Chrome can leave blocks inside blocks (for example a heading inside a heading); keep the innermost.
+function flattenBlocks(root) {
+  Array.from(root.querySelectorAll('p, h2, h3, h4')).forEach((el) => {
+    const parent = el.parentElement;
+    if (!parent || el === root) return;
+    if (el.tagName === 'P' && (TEXT_BLOCKS.has(parent.tagName) || parent.tagName === 'LI')) unwrap(el);
+  });
+  Array.from(root.querySelectorAll('h2, h3, h4, p')).forEach((el) => {
+    if (!el.parentNode) return;
+    const nested = Array.from(el.children).some((child) => HEADINGS.has(child.tagName) || (el.tagName === 'P' && TEXT_BLOCKS.has(child.tagName)) || ['UL', 'OL', 'BLOCKQUOTE'].includes(child.tagName));
+    if (nested) unwrap(el);
+  });
+}
+
+// Empty paragraphs need a placeholder line, otherwise heading/list commands nest oddly inside them.
+export function fillEmptyBlocks(root) {
+  root.querySelectorAll('p, h2, h3, h4, li').forEach((el) => { if (!el.firstChild) el.appendChild(document.createElement('br')); });
+}
+// Browsers may put a list directly inside a list; HTML requires it to live inside an li.
+function nestLists(doc, root) {
+  Array.from(root.querySelectorAll('ul, ol')).forEach((list) => {
+    const parent = list.parentElement;
+    if (!parent || !['UL', 'OL'].includes(parent.tagName)) return;
+    let item = list.previousElementSibling;
+    if (!item || item.tagName !== 'LI') {
+      item = doc.createElement('li');
+      parent.insertBefore(item, list);
+    }
+    item.appendChild(list);
+  });
+}
+
 export function sanitizeNotesHtml(html) {
   const doc = new DOMParser().parseFromString(`<div>${html || ''}</div>`, 'text/html');
   const root = doc.body.firstElementChild;
@@ -34,7 +69,7 @@ export function sanitizeNotesHtml(html) {
     // Browsers wrap each Enter-created line in a div; keep it as its own paragraph.
     if (tag === 'DIV') {
       const hasBlockChild = Array.from(element.children).some((child) => BLOCK_TAGS.has(child.tagName));
-      const inTextBlock = element.parentNode && ['P', 'LI', 'H3', 'H4'].includes(element.parentNode.tagName);
+      const inTextBlock = element.parentNode && ['P', 'LI', 'H2', 'H3', 'H4'].includes(element.parentNode.tagName);
       if (hasBlockChild || inTextBlock) {
         unwrap(element);
       } else {
@@ -67,6 +102,8 @@ export function sanitizeNotesHtml(html) {
     if (tag === 'SPAN' && (weight === 'normal' || weight === 'bold')) element.style.fontWeight = weight;
   });
 
+  flattenBlocks(root);
+  nestLists(doc, root);
   return root.innerHTML;
 }
 
@@ -102,8 +139,21 @@ export function insertLink(url) {
   document.execCommand('insertHTML', false, `<a href="${url.replace(/"/g, '%22')}">${label}</a>`);
 }
 
-export function initNotesEditor(editor) {
+function selectionInList(editor) {
+  const selection = window.getSelection();
+  const node = selection && selection.anchorNode;
+  const element = node && (node.nodeType === 1 ? node : node.parentElement);
+  return Boolean(element && editor.contains(element) && element.closest('li'));
+}
+
+export function initNotesEditor(editor, onChange) {
   document.execCommand('defaultParagraphSeparator', false, 'p');
+  editor.addEventListener('keydown', (event) => {
+    if (event.key !== 'Tab' || event.ctrlKey || event.altKey || event.metaKey || !selectionInList(editor)) return;
+    event.preventDefault();
+    document.execCommand(event.shiftKey ? 'outdent' : 'indent');
+    if (onChange) onChange();
+  });
   editor.addEventListener('click', (event) => {
     const link = event.target.closest && event.target.closest('a[href]');
     if (!link || !editor.contains(link) || !(event.ctrlKey || event.metaKey)) return;

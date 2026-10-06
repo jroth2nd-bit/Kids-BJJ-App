@@ -36,3 +36,13 @@ export async function syncLocalNotes(program, notes) {
   const { error } = await supabase.from('class_notes').upsert(rows, { onConflict: 'program,class_date,session_id' });
   if (error) throw error;
 }
+
+export async function deleteCloudNote(program, date, sessionId) {
+  const { error } = await supabase
+    .from('class_notes')
+    .delete()
+    .eq('program', program)
+    .eq('class_date', date)
+    .eq('session_id', sessionId);
+  if (error) throw error;
+}
