@@ -1,6 +1,6 @@
 import * as adultAttendance from './adult-attendance.js?v=5';
-import { syncFromCloud, syncLocalNotes } from './class-notes-cloud.js';
-import { sanitizeNotesHtml, openLinkBar, insertLink, initNotesEditor } from './notes-editor.js?v=2';
+import { syncFromCloud, syncLocalNotes, deleteCloudNote } from './class-notes-cloud.js?v=2';
+import { sanitizeNotesHtml, openLinkBar, insertLink, initNotesEditor, fillEmptyBlocks } from './notes-editor.js?v=4';
 
 const NOTES_KEY = 'bjj_adult_class_notes';
 const dateInput = document.getElementById('adultNotesDate');
@@ -52,7 +52,7 @@ function renderHistory() {
 function loadNote(date, sessionId) {
   dateInput.value = date; refreshSessionOptions(sessionId); currentKey = noteKey(date, sessionSelect.value || sessionId);
   const note = getCurrentNote();
-  coachInput.value = note?.coach || ''; titleInput.value = note?.title || ''; editor.innerHTML = note?.content || defaultContent(); dirty = false; setStatus(note ? 'Loaded' : 'New note for selected class'); refreshCoachOptions(); renderHistory();
+  coachInput.value = note?.coach || ''; titleInput.value = note?.title || ''; editor.innerHTML = note?.content || defaultContent(); fillEmptyBlocks(editor); dirty = false; setStatus(note ? 'Loaded' : 'New note for selected class'); refreshCoachOptions(); renderHistory();
 }
 function sanitizeHtml(html) { return sanitizeNotesHtml(html); }
 function saveCurrentNote() {
@@ -61,13 +61,13 @@ function saveCurrentNote() {
   const notes = loadNotes(); const index = notes.findIndex((item) => item.key === note.key); if (index === -1) { note.createdAt = now; notes.push(note); } else { note.createdAt = notes[index].createdAt || now; notes[index] = note; }
   saveNotes(notes); currentKey = note.key; dirty = false; setStatus('Saved'); refreshCoachOptions(); renderHistory();
 }
-function deleteCurrentNote() { const notes = loadNotes().filter((note) => note.key !== currentKey); if (notes.length === loadNotes().length) return setStatus('Nothing to delete'); saveNotes(notes); loadNote(dateInput.value, sessionSelect.value); setStatus('Deleted'); }
-function copyPreviousNote() { const previous = loadNotes().filter((note) => note.date < dateInput.value).sort((a, b) => `${b.date}${b.sessionId}`.localeCompare(`${a.date}${a.sessionId}`))[0]; if (!previous) return alert('No previous Adult class note found'); coachInput.value = previous.coach || ''; titleInput.value = previous.title || ''; editor.innerHTML = previous.content || defaultContent(); markDirty(); setStatus(`Copied from ${previous.date}`); }
+async function deleteCurrentNote() { const all = loadNotes(); const target = all.find((note) => note.key === currentKey); if (!target) return setStatus('Nothing to delete'); if (!confirm('Delete this note for ' + target.date + '? This removes it from cloud storage and cannot be undone.')) return; setStatus('Deleting...'); try { await deleteCloudNote('adult', target.date, target.sessionId); } catch (error) { console.error('Cloud adult note delete failed', error); return setStatus('Delete failed: ' + (error.message || 'cloud error') + '. Note kept.'); } saveNotes(all.filter((note) => note.key !== currentKey)); loadNote(dateInput.value, sessionSelect.value); setStatus('Deleted'); }
+function copyPreviousNote() { const previous = loadNotes().filter((note) => note.date < dateInput.value).sort((a, b) => `${b.date}${b.sessionId}`.localeCompare(`${a.date}${a.sessionId}`))[0]; if (!previous) return alert('No previous Adult class note found'); coachInput.value = previous.coach || ''; titleInput.value = previous.title || ''; editor.innerHTML = previous.content || defaultContent(); fillEmptyBlocks(editor); markDirty(); setStatus(`Copied from ${previous.date}`); }
 function rememberSelection() { const selection = window.getSelection(); if (selection?.rangeCount && editor.contains(selection.anchorNode)) savedRange = selection.getRangeAt(0).cloneRange(); }
-function restoreSelection() { editor.focus(); if (savedRange) { const selection = window.getSelection(); selection.removeAllRanges(); selection.addRange(savedRange); } }
-function applyCommand(command, value) { if (command === 'createLink') { openLinkBar(toolbar, (url) => { restoreSelection(); insertLink(url); markDirty(); }); return; } restoreSelection(); document.execCommand(command, false, value || null); markDirty(); }
+function restoreSelection() { const current = window.getSelection(); if (document.activeElement === editor && current?.rangeCount && editor.contains(current.anchorNode)) return; editor.focus(); if (savedRange) { const selection = window.getSelection(); selection.removeAllRanges(); selection.addRange(savedRange); } }
+function applyCommand(command, value) { if (command === 'createLink') { openLinkBar(toolbar, (url) => { restoreSelection(); insertLink(url); markDirty(); }); return; } restoreSelection(); const caret = window.getSelection(); const keepText = caret?.isCollapsed && caret.anchorNode?.nodeType === 3 ? caret.anchorNode.data : null; const keepOffset = caret?.anchorOffset || 0; document.execCommand(command, false, value || null); if (keepText) { const now = window.getSelection(); if (now.isCollapsed && now.anchorNode?.nodeType === 3 && now.anchorNode.data === keepText && now.anchorOffset !== keepOffset) now.collapse(now.anchorNode, keepOffset); } markDirty(); }
 
-initNotesEditor(editor);
+initNotesEditor(editor, markDirty);
 document.addEventListener('selectionchange', rememberSelection);
 toolbar.addEventListener('mousedown', (event) => { if (event.target.closest('button[data-cmd]')) { rememberSelection(); event.preventDefault(); } });
 toolbar.addEventListener('click', (event) => { const button = event.target.closest('button[data-cmd]'); if (button) applyCommand(button.dataset.cmd, button.dataset.value || ''); });
