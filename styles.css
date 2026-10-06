@@ -1650,12 +1650,12 @@ button,input,select,.btn{min-height:38px}
 .header:not(.attendance-header)>#global-nav{grid-column:2;grid-row:1;min-width:0}
 .header:not(.attendance-header) .header-nav-wrapper{justify-content:center;width:100%;min-width:0}
 .header:not(.attendance-header) .topnav{margin:0}
-@media (min-width:1241px){
-  .topnav .nav-link{min-height:36px;padding:7px 8px;font-size:.76rem}
+@media (min-width:1321px){
+  .topnav .nav-link{min-height:36px;padding:7px 7px;font-size:.76rem;white-space:nowrap}
   .attendance-page .attendance-header{grid-template-columns:215px minmax(0,1fr) 71px!important;gap:14px!important;padding-left:32px!important;padding-right:32px!important}
   .attendance-page .attendance-header .attendance-brand{width:215px!important;min-width:215px!important}
   .attendance-page .attendance-header #global-nav{grid-column:2!important;min-width:0!important}
-  .attendance-page .attendance-header .topnav{width:922px!important;flex:0 0 922px!important}
+  .attendance-page .attendance-header .topnav{width:max-content!important;max-width:100%!important;flex:0 0 auto!important;flex-wrap:nowrap!important;gap:4px!important}
   .attendance-page .attendance-header .attendance-primary{grid-column:3!important;justify-self:end!important}
   .header:not(.attendance-header){display:grid!important;grid-template-columns:215px minmax(0,1fr) 71px!important;align-items:center!important;gap:14px!important;min-width:100vw!important;min-height:65px!important;height:65px!important;margin:-20px 0 0 calc(clamp(14px,2.5vw,32px) * -1)!important;padding:13px 32px!important;border-radius:0!important;background:#202326!important;border-bottom:1px solid rgba(255,255,255,.1)!important;box-shadow:none!important;position:static!important}
   .header:not(.attendance-header)>.attendance-brand{width:215px!important;min-width:215px!important}
@@ -1665,9 +1665,9 @@ button,input,select,.btn{min-height:38px}
   .header:not(.attendance-header)>.page-heading .sub{display:none!important}
   .header:not(.attendance-header)>#global-nav{grid-column:2!important;grid-row:1!important}
   .header:not(.attendance-header) .header-nav-wrapper{justify-content:center!important;width:100%!important;height:40px!important}
-  .header:not(.attendance-header) .topnav{width:922px!important;flex:0 0 922px!important;padding:2px!important;margin:0!important;height:40px!important}
+  .header:not(.attendance-header) .topnav{width:max-content!important;max-width:100%!important;flex:0 0 auto!important;flex-wrap:nowrap!important;gap:4px!important;padding:2px!important;margin:0!important;height:40px!important}
 }
-@media(max-width:1240px){
+@media(max-width:1320px){
   .header:not(.attendance-header){width:100vw!important;margin:-20px calc(clamp(14px,2.5vw,32px) * -1) 0!important}
   .header:not(.attendance-header)>#global-nav{grid-column:3!important;grid-row:1!important}
   .header:not(.attendance-header) .header-nav-wrapper{position:static!important;width:auto!important}
