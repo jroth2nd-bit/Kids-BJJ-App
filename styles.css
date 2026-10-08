@@ -2080,3 +2080,11 @@ button,input,select,.btn{min-height:38px}
 
 /* Keep rank belt markers true to their authored colors in dark-mode browsers. */
 .attendance-page .belt-stripe{color-scheme:only light!important;forced-color-adjust:none!important;box-sizing:border-box!important;border:1px solid rgba(255,255,255,.72)!important;outline:1px solid rgba(0,0,0,.72)!important;outline-offset:1px!important;box-shadow:0 0 6px rgba(255,255,255,.16)!important}
+.attendance-page .student-name-button>.student-name-text{display:grid!important;flex:0 1 auto;gap:3px;min-width:0}
+.attendance-page .student-name-button>.birthday-reminder{display:inline-flex!important;flex:0 0 auto;align-items:center;padding:3px 7px;border:1px solid rgba(248,113,113,.38);border-radius:999px;background:rgba(248,113,113,.12);color:#fca5a5;font-size:.7rem;font-weight:700;line-height:1.25;white-space:nowrap}
+@media (max-width:760px){
+  .attendance-page .student-name-button.has-birthday-reminder{display:grid!important;grid-template-columns:7px minmax(0,1fr)!important;grid-template-rows:auto auto!important;column-gap:12px!important;row-gap:4px!important}
+  .attendance-page .student-name-button.has-birthday-reminder>.belt-stripe{grid-column:1!important;grid-row:1 / 3!important}
+  .attendance-page .student-name-button.has-birthday-reminder>.student-name-text{grid-column:2!important;grid-row:1!important;width:100%!important}
+  .attendance-page .student-name-button.has-birthday-reminder>.birthday-reminder{grid-column:2!important;grid-row:2!important;justify-self:start!important}
+}

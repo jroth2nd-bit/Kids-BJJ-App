@@ -1,6 +1,7 @@
 import * as students from './students.js?v=6';
 import * as attendance from './attendance.js?v=6';
 import * as unified from './unified-students.js?v=5';
+import * as waiverStore from './waiver-store.js?v=1';
 import { syncFromCloud as syncPromotionRecordsFromCloud } from './promotion-cloud.js?v=3';
 
 const datePicker = document.getElementById('datePicker');
@@ -17,6 +18,34 @@ function beltClass(rank) { return `belt-${String(rank || 'white').toLowerCase().
 function makeButton(text, className, handler) { const button = document.createElement('button'); button.type = 'button'; button.className = `btn ${className}`; button.textContent = text; button.addEventListener('click', handler); return button; }
 function openStudentInfo(studentType, studentId) { const query = new URLSearchParams({ studentType, studentId: String(studentId), expand: 'true' }); window.location.href = `student-info.html?${query}`; }
 function stagedPromotion(studentId) { try { const records = JSON.parse(localStorage.getItem('bjj_promotions') || '[]'); return Array.isArray(records) ? records.find((record) => Number(record.studentId) === Number(studentId) && record.staged === true) || null : null; } catch { return null; } }
+function birthdayOffset(dateOfBirth) {
+  const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(String(dateOfBirth || ''));
+  if (!match) return null;
+  const month = Number(match[2]);
+  const day = Number(match[3]);
+  const birthdayCheck = new Date(Date.UTC(2000, month - 1, day));
+  if (birthdayCheck.getUTCMonth() !== month - 1 || birthdayCheck.getUTCDate() !== day) return null;
+
+  const now = new Date();
+  const today = Date.UTC(now.getFullYear(), now.getMonth(), now.getDate());
+  let birthday = Date.UTC(now.getFullYear(), month - 1, day);
+  let offset = Math.round((birthday - today) / 86400000);
+  if (offset > 10) {
+    birthday = Date.UTC(now.getFullYear() - 1, month - 1, day);
+    offset = Math.round((birthday - today) / 86400000);
+  } else if (offset < -5) {
+    birthday = Date.UTC(now.getFullYear() + 1, month - 1, day);
+    offset = Math.round((birthday - today) / 86400000);
+  }
+  return offset >= -5 && offset <= 10 ? offset : null;
+}
+function birthdayReminder(student) {
+  const waiver = waiverStore.getLatestWaiverForStudent('kids', student.id);
+  const offset = birthdayOffset(waiver?.contact?.dateOfBirth);
+  if (offset === null) return null;
+  if (offset === 0) return '🎉 Birthday today!';
+  return offset > 0 ? `🎂 Birthday in ${offset} day${offset === 1 ? '' : 's'}` : `🎂 Birthday was ${Math.abs(offset)} day${offset === -1 ? '' : 's'} ago`;
+}
 function compareStudents(a, b) {
   const primary = String(a[sortField] || '').localeCompare(String(b[sortField] || ''));
   const secondaryField = sortField === 'firstName' ? 'lastName' : 'firstName';
@@ -56,8 +85,15 @@ function renderActiveStudents(date) {
     const main = document.createElement('div'); main.className = 'student-main';
     const name = document.createElement('div'); name.className = 'student-name-button';
     const stripe = document.createElement('span'); stripe.className = 'belt-stripe'; stripe.setAttribute('aria-hidden', 'true');
-    const nameText = document.createElement('span'); nameText.innerHTML = `<strong data-last-name="${student.lastName}">${student.firstName}</strong><small>${student.rank || 'White'} belt</small>`; name.append(stripe, nameText);
+    const nameText = document.createElement('span'); nameText.className = 'student-name-text'; nameText.innerHTML = `<strong data-last-name="${student.lastName}">${student.firstName}</strong><small>${student.rank || 'White'} belt</small>`; name.append(stripe, nameText);
     const lastName = Object.assign(document.createElement('span'), { className: 'student-last-name', textContent: student.lastName });
+    const birthday = birthdayReminder(student);
+    if (birthday) {
+      name.classList.add('has-birthday-reminder');
+      const birthdayBadge = Object.assign(document.createElement('span'), { className: 'birthday-reminder', textContent: birthday });
+      birthdayBadge.setAttribute('aria-label', birthday);
+      name.appendChild(birthdayBadge);
+    }
     if (stage) nameText.appendChild(Object.assign(document.createElement('small'), { className: 'promotion-notice', textContent: `Staged · ${stage.newRank || 'Target rank not set'}` }));
     const record = attendance.getAttendance(student.id, date);
     const present = document.createElement('button'); present.type = 'button'; present.className = `attendance-toggle ${record?.present ? 'is-present' : ''}`; present.textContent = record?.present ? 'Present' : 'Absent'; present.title = attendance.isScheduledClassDate(date) ? 'Toggle attendance' : 'Attendance is recorded on Tuesdays and Thursdays';
@@ -82,10 +118,10 @@ addStudentForm.addEventListener('submit', async (event) => { event.preventDefaul
 datePicker.addEventListener('change', render);
 
 if (!datePicker.value) datePicker.value = todayISO();
-await Promise.allSettled([students.syncFromCloud(), attendance.syncFromCloud(), syncPromotionRecordsFromCloud('kids', 'bjj_promotions')]);
+await Promise.allSettled([students.syncFromCloud(), attendance.syncFromCloud(), waiverStore.syncFromCloud(), syncPromotionRecordsFromCloud('kids', 'bjj_promotions')]);
 render();
-window.addEventListener('storage', (event) => { if (['bjj_students', 'bjj_attendance', 'bjj_promotions'].includes(event.key)) render(); });
-window.addEventListener('focus', async () => { await Promise.allSettled([students.syncFromCloud(), attendance.syncFromCloud(), syncPromotionRecordsFromCloud('kids', 'bjj_promotions')]); render(); });
+window.addEventListener('storage', (event) => { if (['bjj_students', 'bjj_attendance', 'bjj_waivers', 'bjj_promotions'].includes(event.key)) render(); });
+window.addEventListener('focus', async () => { await Promise.allSettled([students.syncFromCloud(), attendance.syncFromCloud(), waiverStore.syncFromCloud(), syncPromotionRecordsFromCloud('kids', 'bjj_promotions')]); render(); });
 
 export function refresh() { render(); }
 export default { refresh };
