@@ -1152,7 +1152,6 @@ button,input,select,.btn{min-height:38px}
 .ideas-col-head h3{margin:0;font-size:1rem}
 
 .ideas-list{list-style:none;padding:0;margin:0 0 12px 0;display:flex;flex-direction:column;gap:8px;max-height:240px;overflow:auto}
-.ideas-item{display:block}
 .ideas-item-btn{
   width:100%;
   text-align:left;
@@ -1168,7 +1167,14 @@ button,input,select,.btn{min-height:38px}
 }
 .ideas-item-btn:hover{border-color:rgba(239,68,68,0.45)}
 .ideas-item-btn.active{border-color:rgba(239,68,68,0.65);background:rgba(239,68,68,0.08)}
-.ideas-item.dragging{opacity:0.6}
+.ideas-item{display:flex;align-items:stretch;gap:6px;touch-action:pan-y}
+.ideas-item-btn{flex:1 1 auto;min-width:0}
+.drag-handle{flex:0 0 auto;display:inline-flex;align-items:center;justify-content:center;width:32px;border:0;border-radius:8px;background:transparent;color:var(--muted);cursor:grab;touch-action:none;-webkit-user-select:none;user-select:none}
+.drag-handle:hover{background:rgba(255,255,255,.06);color:var(--text)}
+.drag-handle:focus-visible{outline:2px solid #ef4444;outline-offset:1px}
+.is-sorting,.is-sorting .drag-handle{cursor:grabbing}
+.ideas-item.dragging{opacity:.9;background:rgba(239,68,68,.12);border-radius:8px;box-shadow:0 6px 16px rgba(0,0,0,.4);position:relative;z-index:2}
+@media (max-width:760px){.drag-handle{width:44px}}
 
 .ideas-meta-row{display:grid;grid-template-columns:auto 1fr auto auto;gap:8px;align-items:center;margin-bottom:10px}
 .ideas-meta-row input{
