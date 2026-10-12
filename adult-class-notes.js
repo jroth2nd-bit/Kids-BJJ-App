@@ -1,6 +1,6 @@
-import * as adultAttendance from './adult-attendance.js?v=5';
+﻿import * as adultAttendance from './adult-attendance.js?v=5';
 import { syncFromCloud, syncLocalNotes, deleteCloudNote } from './class-notes-cloud.js?v=2';
-import { sanitizeNotesHtml, openLinkBar, insertLink, initNotesEditor, fillEmptyBlocks } from './notes-editor.js?v=4';
+import { sanitizeNotesHtml, setupNotesToolbar, fillEmptyBlocks } from './notes-editor.js?v=5';
 
 const NOTES_KEY = 'bjj_adult_class_notes';
 const dateInput = document.getElementById('adultNotesDate');
@@ -14,7 +14,6 @@ const status = document.getElementById('adultNotesStatus');
 const toolbar = document.getElementById('adultNotesToolbar');
 let currentKey = '';
 let dirty = false;
-let savedRange = null;
 const expandedMonths = new Set([new Date().toISOString().slice(0, 7)]);
 
 function todayISO() { return new Date().toISOString().split('T')[0]; }
@@ -63,14 +62,8 @@ function saveCurrentNote() {
 }
 async function deleteCurrentNote() { const all = loadNotes(); const target = all.find((note) => note.key === currentKey); if (!target) return setStatus('Nothing to delete'); if (!confirm('Delete this note for ' + target.date + '? This removes it from cloud storage and cannot be undone.')) return; setStatus('Deleting...'); try { await deleteCloudNote('adult', target.date, target.sessionId); } catch (error) { console.error('Cloud adult note delete failed', error); return setStatus('Delete failed: ' + (error.message || 'cloud error') + '. Note kept.'); } saveNotes(all.filter((note) => note.key !== currentKey)); loadNote(dateInput.value, sessionSelect.value); setStatus('Deleted'); }
 function copyPreviousNote() { const previous = loadNotes().filter((note) => note.date < dateInput.value).sort((a, b) => `${b.date}${b.sessionId}`.localeCompare(`${a.date}${a.sessionId}`))[0]; if (!previous) return alert('No previous Adult class note found'); coachInput.value = previous.coach || ''; titleInput.value = previous.title || ''; editor.innerHTML = previous.content || defaultContent(); fillEmptyBlocks(editor); markDirty(); setStatus(`Copied from ${previous.date}`); }
-function rememberSelection() { const selection = window.getSelection(); if (selection?.rangeCount && editor.contains(selection.anchorNode)) savedRange = selection.getRangeAt(0).cloneRange(); }
-function restoreSelection() { const current = window.getSelection(); if (document.activeElement === editor && current?.rangeCount && editor.contains(current.anchorNode)) return; editor.focus(); if (savedRange) { const selection = window.getSelection(); selection.removeAllRanges(); selection.addRange(savedRange); } }
-function applyCommand(command, value) { if (command === 'createLink') { openLinkBar(toolbar, (url) => { restoreSelection(); insertLink(url); markDirty(); }); return; } restoreSelection(); const caret = window.getSelection(); const keepText = caret?.isCollapsed && caret.anchorNode?.nodeType === 3 ? caret.anchorNode.data : null; const keepOffset = caret?.anchorOffset || 0; document.execCommand(command, false, value || null); if (keepText) { const now = window.getSelection(); if (now.isCollapsed && now.anchorNode?.nodeType === 3 && now.anchorNode.data === keepText && now.anchorOffset !== keepOffset) now.collapse(now.anchorNode, keepOffset); } markDirty(); }
 
-initNotesEditor(editor, markDirty);
-document.addEventListener('selectionchange', rememberSelection);
-toolbar.addEventListener('mousedown', (event) => { if (event.target.closest('button[data-cmd]')) { rememberSelection(); event.preventDefault(); } });
-toolbar.addEventListener('click', (event) => { const button = event.target.closest('button[data-cmd]'); if (button) applyCommand(button.dataset.cmd, button.dataset.value || ''); });
+setupNotesToolbar(toolbar, editor, markDirty);
 dateInput.addEventListener('change', () => { if (dirty && !confirm('Discard unsaved changes?')) return; refreshSessionOptions(); loadNote(dateInput.value || todayISO(), sessionSelect.value); });
 sessionSelect.addEventListener('change', () => { if (dirty && !confirm('Discard unsaved changes?')) return; loadNote(dateInput.value, sessionSelect.value); });
 coachInput.addEventListener('input', markDirty); titleInput.addEventListener('input', markDirty); editor.addEventListener('input', markDirty);

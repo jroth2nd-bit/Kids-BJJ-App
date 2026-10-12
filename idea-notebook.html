@@ -4,7 +4,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1" />
     <title>Idea Notebook — BJJ Attendance</title>
-    <link rel="stylesheet" href="styles.css?v=107" />
+    <link rel="stylesheet" href="styles.css?v=112" />
   </head>
   <body>
     <main class="container">
@@ -44,18 +44,7 @@
             <button id="deleteSubsection" class="btn cancel">Delete Subsection</button>
           </div>
 
-          <div id="ideasToolbar" class="notes-toolbar" role="toolbar" aria-label="Idea notebook formatting toolbar">
-            <button type="button" class="btn" data-cmd="bold"><strong>B</strong></button>
-            <button type="button" class="btn" data-cmd="italic"><em>I</em></button>
-            <button type="button" class="btn" data-cmd="underline"><u>U</u></button>
-            <button type="button" class="btn" data-cmd="insertUnorderedList">Bullets</button>
-            <button type="button" class="btn" data-cmd="insertOrderedList">Numbered</button>
-            <button type="button" class="btn" data-cmd="formatBlock" data-value="h3">H3</button>
-            <button type="button" class="btn" data-cmd="formatBlock" data-value="p">Paragraph</button>
-            <input id="linkUrl" type="url" placeholder="https://youtube.com/..." class="link-url-input" />
-            <button type="button" id="insertLink" class="btn">Insert Link</button>
-            <button type="button" class="btn" data-cmd="removeFormat">Clear</button>
-          </div>
+          <div id="ideasToolbar" class="notes-toolbar" role="toolbar" aria-label="Idea notebook formatting toolbar"></div>
 
           <div id="ideaEditor" class="rich-editor" contenteditable="true" aria-label="Idea notebook rich text editor"></div>
 
@@ -69,6 +58,6 @@
 
     <script type="module" src="auth-guard.js"></script>
     <script type="module" src="nav.js?v=20"></script>
-    <script type="module" src="idea-notebook.js?v=7"></script>
+    <script type="module" src="idea-notebook.js?v=8"></script>
   </body>
 </html>

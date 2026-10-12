@@ -1,4 +1,5 @@
 import { syncFromCloud, syncLocalNotebook } from './idea-cloud.js';
+import { sanitizeNotesHtml, setupNotesToolbar } from './notes-editor.js?v=5';
 
 const IDEAS_KEY = 'bjj_idea_notebook';
 
@@ -18,8 +19,6 @@ const deleteSubsectionBtn = document.getElementById('deleteSubsection');
 
 const editor = document.getElementById('ideaEditor');
 const toolbar = document.getElementById('ideasToolbar');
-const insertLinkBtn = document.getElementById('insertLink');
-const linkUrlInput = document.getElementById('linkUrl');
 
 const saveIdeaBtn = document.getElementById('saveIdea');
 const statusEl = document.getElementById('ideasStatus');
@@ -27,7 +26,6 @@ const statusEl = document.getElementById('ideasStatus');
 let selectedSectionId = null;
 let selectedSubsectionId = null;
 let dirty = false;
-let savedEditorRange = null;
 
 function uid(prefix) {
   return `${prefix}_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
@@ -46,34 +44,21 @@ function markDirty() {
   setStatus('Unsaved changes');
 }
 
-function rememberEditorSelection() {
-  if (!editor) return;
-  const selection = window.getSelection();
-  if (!selection || selection.rangeCount === 0) return;
-  const range = selection.getRangeAt(0);
-  if (editor.contains(range.commonAncestorContainer)) {
-    savedEditorRange = range.cloneRange();
-  }
-}
-
-document.addEventListener('selectionchange', () => {
-  rememberEditorSelection();
-});
-
-function restoreEditorSelection() {
-  if (!editor || !savedEditorRange) return;
-  const selection = window.getSelection();
-  selection.removeAllRanges();
-  selection.addRange(savedEditorRange);
-}
-
 function clearDirty(message = 'Saved') {
   dirty = false;
   setStatus(message);
 }
 
+const LEGACY_SKELETON = '<h3>Overview</h3><p></p><h3>How To Run It</h3><p></p><h3>Coaching Notes</h3><p></p><h3>References</h3><p></p>';
+
 function defaultContent() {
-  return '<h3>Overview</h3><p></p><h3>How To Run It</h3><p></p><h3>Coaching Notes</h3><p></p><h3>References</h3><p></p>';
+  return '';
+}
+
+// Subsections never edited still hold the old heading skeleton; show them blank.
+function initialContent(html) {
+  const flat = String(html || '').replace(/<br\s*\/?>|\s/g, '');
+  return flat === LEGACY_SKELETON.replace(/\s/g, '') ? '' : (html || '');
 }
 
 function defaultNotebook() {
@@ -283,70 +268,8 @@ function renderSubsections() {
   });
 }
 
-function applyAnchorPolicies(root) {
-  const anchors = root.querySelectorAll('a');
-  anchors.forEach((a) => {
-    const href = a.getAttribute('href') || '';
-    if (!href || /^javascript:/i.test(href)) {
-      a.removeAttribute('href');
-      return;
-    }
-    a.setAttribute('target', '_blank');
-    a.setAttribute('rel', 'noopener noreferrer');
-  });
-}
-
 function sanitizeHtml(html) {
-  const parser = new DOMParser();
-  const doc = parser.parseFromString(`<div>${html || ''}</div>`, 'text/html');
-  const root = doc.body.firstElementChild;
-  if (!root) return '';
-
-  const allowed = new Set(['P', 'BR', 'STRONG', 'EM', 'U', 'UL', 'OL', 'LI', 'H3', 'H4', 'BLOCKQUOTE', 'SPAN', 'A']);
-  const walker = doc.createTreeWalker(root, NodeFilter.SHOW_ELEMENT, null);
-  const nodes = [];
-  let n = walker.nextNode();
-  while (n) {
-    nodes.push(n);
-    n = walker.nextNode();
-  }
-
-  nodes.forEach((el) => {
-    const tag = el.tagName;
-    const weight = el.style.fontWeight;
-    if (!allowed.has(tag)) {
-      const parent = el.parentNode;
-      if (!parent) return;
-      while (el.firstChild) parent.insertBefore(el.firstChild, el);
-      parent.removeChild(el);
-      return;
-    }
-
-    if (tag === 'A') {
-      const href = el.getAttribute('href') || '';
-      const attrs = ['href', 'target', 'rel'];
-      Array.from(el.attributes).forEach((a) => {
-        if (!attrs.includes(a.name)) el.removeAttribute(a.name);
-      });
-      if (!href || /^javascript:/i.test(href)) el.removeAttribute('href');
-      el.setAttribute('target', '_blank');
-      el.setAttribute('rel', 'noopener noreferrer');
-    } else if (tag === 'SPAN' || tag === 'H3' || tag === 'H4') {
-      while (el.attributes.length > 0) {
-        el.removeAttribute(el.attributes[0].name);
-      }
-      if (weight === 'normal' || weight === 'bold') {
-        el.style.fontWeight = weight;
-      }
-    } else {
-      while (el.attributes.length > 0) {
-        el.removeAttribute(el.attributes[0].name);
-      }
-    }
-  });
-
-  applyAnchorPolicies(root);
-  return root.innerHTML;
+  return sanitizeNotesHtml(html);
 }
 
 function renderEditor() {
@@ -358,8 +281,7 @@ function renderEditor() {
   if (subsectionNameInput) subsectionNameInput.value = sub ? (sub.title || '') : '';
 
   if (!editor) return;
-  editor.innerHTML = sub ? (sub.content || defaultContent()) : '';
-  applyAnchorPolicies(editor);
+  editor.innerHTML = sub ? initialContent(sub.content) : '';
 }
 
 function renderAll() {
@@ -493,74 +415,15 @@ function deleteSubsection() {
   renderAll();
 }
 
-function openLinkPrompt() {
-  if (!editor) return;
-  editor.focus();
-  let url = linkUrlInput ? linkUrlInput.value.trim() : '';
-  if (!url) {
-    alert('Enter a URL in the link field first');
-    return;
-  }
-  if (!/^https?:\/\//i.test(url)) {
-    url = `https://${url}`;
-  }
-
-  const selection = window.getSelection();
-  const hasText = selection && String(selection).trim().length > 0;
-  if (hasText) {
-    document.execCommand('createLink', false, url);
-  } else {
-    document.execCommand('insertHTML', false, `<a href="${url}" target="_blank" rel="noopener noreferrer">${url}</a>`);
-  }
-
-  applyAnchorPolicies(editor);
-  if (linkUrlInput) linkUrlInput.value = '';
-  markDirty();
-}
-
-function applyToolbarCommand(cmd, value) {
-  if (!editor) return;
-  editor.focus();
-  restoreEditorSelection();
-  if (cmd === 'formatBlock') {
-    document.execCommand('formatBlock', false, value || 'p');
-  } else {
-    document.execCommand(cmd, false, null);
-  }
-  applyAnchorPolicies(editor);
-  markDirty();
-}
-
 function noteToPlainText(html) {
   const div = document.createElement('div');
   div.innerHTML = html || '';
   return (div.textContent || '').replace(/\s+/g, ' ').trim();
 }
 
-if (toolbar) {
-  toolbar.addEventListener('mousedown', (e) => {
-    const btn = e.target.closest('button[data-cmd]');
-    if (!btn) return;
-    rememberEditorSelection();
-    e.preventDefault();
-  });
-  toolbar.addEventListener('click', (e) => {
-    const btn = e.target.closest('button[data-cmd]');
-    if (!btn) return;
-    applyToolbarCommand(btn.dataset.cmd, btn.dataset.value || '');
-  });
-}
-
-insertLinkBtn && insertLinkBtn.addEventListener('click', openLinkPrompt);
+if (toolbar && editor) setupNotesToolbar(toolbar, editor, markDirty);
 
 editor && editor.addEventListener('input', markDirty);
-editor && editor.addEventListener('click', (e) => {
-  const link = e.target.closest('a');
-  if (!link) return;
-  e.preventDefault();
-  const href = link.getAttribute('href');
-  if (href) window.open(href, '_blank', 'noopener,noreferrer');
-});
 
 saveIdeaBtn && saveIdeaBtn.addEventListener('click', persistCurrentEditor);
 addSectionBtn && addSectionBtn.addEventListener('click', addSection);
