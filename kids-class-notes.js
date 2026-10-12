@@ -1,5 +1,5 @@
-import { syncFromCloud, syncLocalNotes, deleteCloudNote } from './class-notes-cloud.js?v=2';
-import { sanitizeNotesHtml, openLinkBar, insertLink, initNotesEditor, fillEmptyBlocks } from './notes-editor.js?v=4';
+﻿import { syncFromCloud, syncLocalNotes, deleteCloudNote } from './class-notes-cloud.js?v=2';
+import { sanitizeNotesHtml, setupNotesToolbar, fillEmptyBlocks } from './notes-editor.js?v=5';
 
 const NOTES_KEY = 'bjj_class_notes';
 const dateInput = document.getElementById('notesDate');
@@ -13,7 +13,6 @@ const status = document.getElementById('notesStatus');
 const toolbar = document.getElementById('notesToolbar');
 let currentKey = '';
 let dirty = false;
-let savedRange = null;
 const expandedMonths = new Set([new Date().toISOString().slice(0, 7)]);
 
 function todayISO() { return new Date().toISOString().split('T')[0]; }
@@ -60,14 +59,8 @@ function saveNote() {
 }
 async function deleteNote() { const notes = loadNotes(); const target = notes.find((note) => note.key === currentKey); if (!target) return setStatus('Nothing to delete'); if (!confirm('Delete this note for ' + target.date + '? This removes it from cloud storage and cannot be undone.')) return; setStatus('Deleting...'); try { await deleteCloudNote('kids', target.date, target.sessionId || 'kids-class'); } catch (error) { console.error('Cloud kids note delete failed', error); return setStatus('Delete failed: ' + (error.message || 'cloud error') + '. Note kept.'); } saveNotes(notes.filter((note) => note.key !== currentKey)); loadNote(dateInput.value); setStatus('Deleted'); }
 function copyPrevious() { const previous = loadNotes().filter((note) => note.date < dateInput.value).sort((a, b) => b.date.localeCompare(a.date))[0]; if (!previous) return alert('No previous Kids class note found'); classInput.value = previous.className || 'Kids Class'; coachInput.value = previous.coach || ''; titleInput.value = previous.title || ''; editor.innerHTML = previous.content || defaultContent(); fillEmptyBlocks(editor); markDirty(); }
-function rememberSelection() { const selection = window.getSelection(); if (selection?.rangeCount && editor.contains(selection.anchorNode)) savedRange = selection.getRangeAt(0).cloneRange(); }
-function restoreSelection() { const current = window.getSelection(); if (document.activeElement === editor && current?.rangeCount && editor.contains(current.anchorNode)) return; editor.focus(); if (savedRange) { const selection = window.getSelection(); selection.removeAllRanges(); selection.addRange(savedRange); } }
-function applyCommand(command, value) { if (command === 'createLink') { openLinkBar(toolbar, (url) => { restoreSelection(); insertLink(url); markDirty(); }); return; } restoreSelection(); const caret = window.getSelection(); const keepText = caret?.isCollapsed && caret.anchorNode?.nodeType === 3 ? caret.anchorNode.data : null; const keepOffset = caret?.anchorOffset || 0; document.execCommand(command, false, value || null); if (keepText) { const now = window.getSelection(); if (now.isCollapsed && now.anchorNode?.nodeType === 3 && now.anchorNode.data === keepText && now.anchorOffset !== keepOffset) now.collapse(now.anchorNode, keepOffset); } markDirty(); }
 
-initNotesEditor(editor, markDirty);
-document.addEventListener('selectionchange', rememberSelection);
-toolbar.addEventListener('mousedown', (event) => { if (event.target.closest('button[data-cmd]')) { rememberSelection(); event.preventDefault(); } });
-toolbar.addEventListener('click', (event) => { const button = event.target.closest('button[data-cmd]'); if (button) applyCommand(button.dataset.cmd, button.dataset.value || ''); });
+setupNotesToolbar(toolbar, editor, markDirty);
 dateInput.addEventListener('change', () => { if (dirty && !confirm('Discard unsaved changes?')) return; loadNote(dateInput.value || todayISO()); });
 classInput.addEventListener('input', markDirty); coachInput.addEventListener('input', markDirty); titleInput.addEventListener('input', markDirty); editor.addEventListener('input', markDirty);
 document.getElementById('saveNote').addEventListener('click', saveNote); document.getElementById('copyPrevious').addEventListener('click', copyPrevious); document.getElementById('deleteNote').addEventListener('click', deleteNote); document.getElementById('newNote').addEventListener('click', () => loadNote(dateInput.value || todayISO()));
