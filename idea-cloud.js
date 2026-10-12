@@ -26,7 +26,8 @@ export async function syncLocalNotebook(notebook) {
     created_by: user.id,
     created_at: idea.createdAt || new Date().toISOString(),
     updated_at: idea.updatedAt || new Date().toISOString(),
-    legacy_key: `${idea.id || 'idea'}:${sectionIndex}:${subsectionIndex}`,
+    // Cloud-loaded ideas already carry their full key; appending indexes again would insert a new row on every save.
+    legacy_key: String(idea.id || '').includes(':') ? idea.id : `${idea.id || 'idea'}:${sectionIndex}:${subsectionIndex}`,
   })));
   if (!rows.length) return;
   const { error } = await supabase.from('idea_notes').upsert(rows, { onConflict: 'legacy_key' });

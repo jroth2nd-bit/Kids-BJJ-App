@@ -1,4 +1,4 @@
-import { syncFromCloud, syncLocalNotebook } from './idea-cloud.js';
+import { syncFromCloud, syncLocalNotebook } from './idea-cloud.js?v=2';
 import { sanitizeNotesHtml, setupNotesToolbar } from './notes-editor.js?v=5';
 
 const IDEAS_KEY = 'bjj_idea_notebook';
