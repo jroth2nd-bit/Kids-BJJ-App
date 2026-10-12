@@ -1,5 +1,6 @@
-import { syncFromCloud, syncLocalNotebook } from './idea-cloud.js?v=2';
+import { syncFromCloud, syncLocalNotebook } from './idea-cloud.js?v=3';
 import { sanitizeNotesHtml, setupNotesToolbar } from './notes-editor.js?v=5';
+import { makeSortable, gripIcon } from './reorder.js?v=2';
 
 const IDEAS_KEY = 'bjj_idea_notebook';
 
@@ -154,6 +155,39 @@ function ensureSelection() {
   }
 }
 
+function makeGrip(kind) {
+  const grip = document.createElement('button');
+  grip.type = 'button';
+  grip.className = 'drag-handle';
+  grip.innerHTML = gripIcon;
+  grip.title = `Drag to reorder (or use the arrow keys)`;
+  grip.setAttribute('aria-label', `Reorder ${kind}`);
+  return grip;
+}
+
+function reorderById(items, orderedIds) {
+  const byId = new Map(items.map((item) => [item.id, item]));
+  return orderedIds.map((id) => byId.get(id)).filter(Boolean);
+}
+
+function onSectionsReordered(orderedIds) {
+  const data = getNotebook();
+  data.sections = reorderById(data.sections, orderedIds);
+  replaceNotebook(data);
+  setStatus('Sections reordered');
+}
+
+function onSubsectionsReordered(orderedIds) {
+  const data = getNotebook();
+  const section = getSectionById(data, selectedSectionId);
+  if (!section) return;
+  section.subsections = reorderById(section.subsections, orderedIds);
+  replaceNotebook(data);
+  setStatus('Subsections reordered');
+}
+
+makeSortable(sectionsList, { onReorder: onSectionsReordered });
+makeSortable(subsectionsList, { onReorder: onSubsectionsReordered });
 function renderSections() {
   const notebook = getNotebook();
   if (!sectionsList) return;
@@ -162,7 +196,6 @@ function renderSections() {
   notebook.sections.forEach((section) => {
     const li = document.createElement('li');
     li.className = 'ideas-item';
-    li.draggable = true;
     li.dataset.id = section.id;
     li.dataset.kind = 'section';
 
@@ -179,32 +212,7 @@ function renderSections() {
       renderAll();
     });
 
-    li.addEventListener('dragstart', (e) => {
-      e.dataTransfer.setData('text/plain', `section:${section.id}`);
-      e.dataTransfer.effectAllowed = 'move';
-      li.classList.add('dragging');
-    });
-    li.addEventListener('dragend', () => li.classList.remove('dragging'));
-    li.addEventListener('dragover', (e) => e.preventDefault());
-    li.addEventListener('drop', (e) => {
-      e.preventDefault();
-      const raw = e.dataTransfer.getData('text/plain') || '';
-      const [kind, dragId] = raw.split(':');
-      if (kind !== 'section' || !dragId || dragId === section.id) return;
-
-      const data = getNotebook();
-      const from = data.sections.findIndex(s => s.id === dragId);
-      const to = data.sections.findIndex(s => s.id === section.id);
-      if (from === -1 || to === -1) return;
-
-      const moved = data.sections.splice(from, 1)[0];
-      data.sections.splice(to, 0, moved);
-      replaceNotebook(data);
-      setStatus('Sections reordered');
-      renderAll();
-    });
-
-    li.appendChild(btn);
+    li.append(makeGrip('section'), btn);
     sectionsList.appendChild(li);
   });
 }
@@ -220,7 +228,6 @@ function renderSubsections() {
   section.subsections.forEach((sub) => {
     const li = document.createElement('li');
     li.className = 'ideas-item';
-    li.draggable = true;
     li.dataset.id = sub.id;
     li.dataset.kind = 'subsection';
 
@@ -236,34 +243,7 @@ function renderSubsections() {
       renderAll();
     });
 
-    li.addEventListener('dragstart', (e) => {
-      e.dataTransfer.setData('text/plain', `subsection:${sub.id}`);
-      e.dataTransfer.effectAllowed = 'move';
-      li.classList.add('dragging');
-    });
-    li.addEventListener('dragend', () => li.classList.remove('dragging'));
-    li.addEventListener('dragover', (e) => e.preventDefault());
-    li.addEventListener('drop', (e) => {
-      e.preventDefault();
-      const raw = e.dataTransfer.getData('text/plain') || '';
-      const [kind, dragId] = raw.split(':');
-      if (kind !== 'subsection' || !dragId || dragId === sub.id) return;
-
-      const data = getNotebook();
-      const sec = getSectionById(data, selectedSectionId);
-      if (!sec) return;
-      const from = sec.subsections.findIndex(s => s.id === dragId);
-      const to = sec.subsections.findIndex(s => s.id === sub.id);
-      if (from === -1 || to === -1) return;
-
-      const moved = sec.subsections.splice(from, 1)[0];
-      sec.subsections.splice(to, 0, moved);
-      replaceNotebook(data);
-      setStatus('Subsections reordered');
-      renderAll();
-    });
-
-    li.appendChild(btn);
+    li.append(makeGrip('subsection'), btn);
     subsectionsList.appendChild(li);
   });
 }
