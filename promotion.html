@@ -4,7 +4,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1" />
     <title>Promotions — Black Lotus BJJ</title>
-    <link rel="stylesheet" href="styles.css?v=107" />
+    <link rel="stylesheet" href="styles.css?v=108" />
   </head>
   <body class="attendance-page promotion-workflow-page">
     <main class="container">
@@ -19,17 +19,17 @@
         <label>Rank<select id="promotionRank"><option value="">All ranks</option></select></label>
         <label>Attendance<select id="promotionAttendance"><option value="all">All attendance</option><option value="none">No attendance</option><option value="high">75% or higher</option><option value="low">Below 50%</option></select></label>
         <label>Staged<select id="promotionStaged"><option value="all">All students</option><option value="staged">Staged</option><option value="unstaged">Not staged</option></select></label>
-        <label>Sort<select id="promotionSort"><option value="name">Name</option><option value="current">Current rank</option><option value="target">Target rank</option><option value="date">Last promoted</option></select></label>
+        <label>Sort<select id="promotionSort"><option value="first">First name</option><option value="name" selected>Last name</option><option value="current">Current rank</option><option value="target">Target rank</option><option value="since">Since promotion</option><option value="date">Last promoted</option></select></label>
         <button id="clearStaged" class="btn cancel" type="button">Clear all staged</button>
       </section>
       <div id="promotionStatus" class="muted" role="status">Ready</div>
-      <section class="promotion-workflow-list" aria-label="Student promotions">
-        <div class="promotion-workflow-header"><span>Name</span><span>Current rank</span><span>Target rank</span><span>Status</span><span>Stage</span></div>
+      <section class="promotion-workflow-list student-info-table" aria-label="Student promotions">
+        <div class="promotion-workflow-header"><button type="button" data-sort="first">First name</button><button type="button" data-sort="name">Last name</button><button type="button" data-sort="current">Rank</button><button type="button" data-sort="target">Target rank</button><button type="button" data-sort="since" title="Classes attended / total since last promotion">Since promotion</button><span>Status</span><span>Stage</span></div>
         <div id="promotionWorkflowList"></div>
       </section>
     </main>
     <script type="module" src="auth-guard.js"></script>
     <script type="module" src="nav.js?v=20"></script>
-    <script type="module" src="promotion.js?v=45"></script>
+    <script type="module" src="promotion.js?v=46"></script>
   </body>
 </html>

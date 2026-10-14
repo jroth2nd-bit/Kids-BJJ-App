@@ -170,6 +170,20 @@ export function getRecentAttended(studentId, days = 30) {
   const start = end.toISOString().split('T')[0];
   return getAllAttendanceForStudent(studentId).filter((record) => record.present && record.date >= start && record.date <= todayISO()).length;
 }
+// Classes strictly after `afterDate` (ISO); with no date it matches the overall totals.
+export function getClassesSince(studentId, afterDate = '') {
+  const start = getSettings().startDate || DEFAULT_SETTINGS.startDate;
+  const end = todayISO();
+  const after = afterDate ? String(afterDate).slice(0, 10) : '';
+  let total = 0;
+  for (let current = new Date(`${start}T12:00:00`); current <= new Date(`${end}T12:00:00`); current.setDate(current.getDate() + 1)) {
+    if (!ADULT_CLASS_DAYS.has(current.getDay())) continue;
+    if (after && current.toISOString().slice(0, 10) <= after) continue;
+    total += 1;
+  }
+  const attended = new Set(getAllAttendanceForStudent(studentId).filter((record) => record.present && record.date >= start && record.date <= end && (!after || record.date > after)).map((record) => record.date)).size;
+  return { attended, total, percent: total ? Math.round((attended / total) * 100) : 0 };
+}
 export function getPercent(studentId) { const total = getTotalClasses(); return total ? Math.round((getTotalAttended(studentId) / total) * 100) : 0; }
 export function getLastClass(studentId) {
   const records = getAllAttendanceForStudent(studentId).filter((record) => record.present);
