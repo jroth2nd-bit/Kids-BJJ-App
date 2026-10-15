@@ -129,12 +129,23 @@ function makeNav(){
   wrapper.appendChild(navToggle);
   wrapper.appendChild(nav);
   container.appendChild(wrapper);
+
+  if (header) {
+    const updateStickyOffset = () => {
+      const height = Math.ceil(header.getBoundingClientRect().height);
+      document.documentElement.style.setProperty('--app-header-height', `${height}px`);
+    };
+    updateStickyOffset();
+    if (typeof ResizeObserver === 'function') new ResizeObserver(updateStickyOffset).observe(header);
+    window.addEventListener('resize', updateStickyOffset);
+  }
 }
 
 if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', makeNav);
 else makeNav();
 
 // Ensure no horizontal page scroll is introduced by content on any page
-try{ document.documentElement.style.overflowX = 'hidden'; document.body.style.overflowX = 'hidden'; }catch(e){}
+document.documentElement.style.overflowX = 'clip';
+document.body.style.overflowX = 'clip';
 
 export default { makeNav };
