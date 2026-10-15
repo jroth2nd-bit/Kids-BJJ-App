@@ -2141,7 +2141,7 @@ button,input,select,.btn{min-height:38px}
 .promotion-workflow-page .promotion-history-row .btn{min-height:30px;padding:4px 10px;font-size:.78rem}
 .promotion-workflow-page .promotion-date-field{display:grid;gap:4px;color:var(--muted);font-size:.8rem;font-weight:700}
 
-/* Promotions: header scrolls with the list (as on Student Info) so it never overlaps the first row. */
-.promotion-workflow-page .promotion-workflow-header{position:static!important;top:auto!important}
+/* Promotions: header stays pinned directly below the filter bar (height measured in promotion.js). */
+.promotion-workflow-page .promotion-workflow-header{position:sticky!important;top:var(--promotion-controls-height,76px)!important;z-index:15!important}
 .promotion-workflow-page .student-info-table{margin-top:8px;overflow:visible}
 .promotion-workflow-page .promotion-filters{z-index:20!important}

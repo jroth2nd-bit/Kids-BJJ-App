@@ -19,6 +19,11 @@ filtersToggle?.addEventListener('click', () => {
   const open = document.body.classList.toggle('mobile-filters-open');
   filtersToggle.setAttribute('aria-expanded', String(open));
 });
+const filterBar = document.getElementById('promotionFilters');
+function updateStickyOffset() { document.documentElement.style.setProperty('--promotion-controls-height', `${filterBar.offsetHeight}px`); }
+if (typeof ResizeObserver === 'function') new ResizeObserver(updateStickyOffset).observe(filterBar);
+window.addEventListener('resize', updateStickyOffset);
+updateStickyOffset();
 const status = document.getElementById('promotionStatus');
 const expanded = new Set();
 const pendingTargets = new Map();
