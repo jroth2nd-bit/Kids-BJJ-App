@@ -2119,3 +2119,35 @@ button,input,select,.btn{min-height:38px}
   .attendance-page .student-name-button.has-birthday-reminder>.student-name-text{grid-column:2!important;grid-row:1!important;width:100%!important}
   .attendance-page .student-name-button.has-birthday-reminder>.birthday-reminder{grid-column:2!important;grid-row:2!important;justify-self:start!important}
 }
+
+/* Promotions: first/last name columns, since-promotion attendance, and editable history to match Student Info. */
+.promotion-workflow-page .promotion-workflow-header>button{min-width:0;padding:2px 0;border:0;background:transparent;color:inherit;font:inherit;text-align:left;text-transform:inherit;cursor:pointer}
+.promotion-workflow-page .promotion-workflow-header>button:hover{color:var(--text)}
+.promotion-workflow-page .promotion-student-main>*{min-width:0}
+.promotion-workflow-page .promotion-last-name{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--text);font-size:.86rem}
+.promotion-workflow-page .promotion-since{font-size:.85rem;color:var(--muted);white-space:nowrap}
+.promotion-workflow-page .promotion-student-main .student-name-button strong[data-last-name]::after{content:none}
+@media (min-width:981px){
+  .promotion-workflow-page .promotion-workflow-header,.promotion-workflow-page .promotion-student-main{grid-template-columns:minmax(130px,1.35fr) minmax(110px,1.1fr) minmax(80px,.7fr) minmax(150px,1fr) 110px 85px 85px!important;gap:10px!important}
+}
+@media (max-width:980px){
+  .promotion-workflow-page .promotion-student-main .promotion-last-name,.promotion-workflow-page .promotion-student-main .promotion-since{display:none!important}
+  .promotion-workflow-page .promotion-student-main .student-name-button strong[data-last-name]::after{content:" " attr(data-last-name)}
+}
+.promotion-workflow-page .promotion-card-history{max-height:320px;overflow:auto}
+.promotion-workflow-page .promotion-history-row{grid-column:1 / -1;display:flex;flex-wrap:wrap;align-items:center;gap:6px 8px;color:var(--muted);font-size:.84rem}
+.promotion-workflow-page .promotion-history-row>span{flex:1 1 150px}
+.promotion-workflow-page .promotion-history-row input[type=date],.promotion-workflow-page .promotion-date-field input{min-height:34px;padding:5px 8px;border:1px solid rgba(255,255,255,.14);border-radius:6px;background:#151719;color:var(--text);font:inherit}
+.promotion-workflow-page .promotion-history-row .btn{min-height:30px;padding:4px 10px;font-size:.78rem}
+.promotion-workflow-page .promotion-date-field{display:grid;gap:4px;color:var(--muted);font-size:.8rem;font-weight:700}
+
+/* Promotions: header stays pinned directly below the filter bar (height measured in promotion.js). */
+.promotion-workflow-page .promotion-workflow-header{position:sticky!important;top:var(--promotion-controls-height,76px)!important;z-index:15!important}
+.promotion-workflow-page .student-info-table{margin-top:8px;overflow:visible}
+.promotion-workflow-page .promotion-filters{z-index:20!important}
+
+/* Pinned column headers: Student Info sits below its measured filter bar; roster pages stick to the top. */
+.student-info-page .student-info-header{position:sticky!important;top:var(--student-info-controls-height,76px)!important;z-index:15!important;background:#25292d!important}
+.student-info-page .student-info-table{overflow:visible}
+.attendance-page:not(.student-info-page):not(.promotion-workflow-page) .container{overflow:visible!important}
+.attendance-page:not(.student-info-page):not(.promotion-workflow-page) .attendance-headers{position:sticky;top:0;z-index:15;background:#25292d}

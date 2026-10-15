@@ -187,6 +187,19 @@ export function getTotalClasses(studentId) {
   return getScheduledClassDates(todayISO()).length;
 }
 
+// Classes strictly after `afterDate` (ISO); with no date it matches the overall totals.
+export function getClassesSince(studentId, afterDate = '') {
+  const endDate = todayISO();
+  const after = afterDate ? String(afterDate).slice(0, 10) : '';
+  const total = getScheduledClassDates(endDate).filter(d => !after || d > after).length;
+  const attended = new Set(
+    getAllAttendanceForStudent(studentId)
+      .filter(r => r.present && isWithinClassWindow(r.date, endDate) && isScheduledClassDate(r.date) && (!after || r.date > after))
+      .map(r => r.date)
+  ).size;
+  return { attended, total, percent: total ? Math.round((attended / total) * 100) : 0 };
+}
+
 export function getPercent(studentId) {
   const total = getTotalClasses(studentId);
   if (total === 0) return 0;
