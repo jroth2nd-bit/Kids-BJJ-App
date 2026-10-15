@@ -118,8 +118,18 @@ function isWithinClassWindow(dateStr, endDate = todayISO()) {
   return dateStr >= start && dateStr <= endDate;
 }
 
-function getScheduledClassDates(endDate = todayISO()) {
-  const start = getClassStartDate();
+// A student's counts begin at the later of the class start date and the date they were added.
+function getStudentStart(studentId) {
+  const classStart = getClassStartDate();
+  if (studentId === undefined || studentId === null) return classStart;
+  try {
+    const student = (JSON.parse(localStorage.getItem('bjj_students')) || []).find((item) => Number(item.id) === Number(studentId));
+    const added = String(student?.addedDate || '').slice(0, 10);
+    return isValidISODate(added) && added > classStart ? added : classStart;
+  } catch (e) { return classStart; }
+}
+
+function getScheduledClassDates(endDate = todayISO(), start = getClassStartDate()) {
   if (endDate < start) return [];
 
   const out = [];
@@ -171,30 +181,31 @@ export function getAllAttendanceForStudent(studentId) {
 
 export function getTotalAttended(studentId) {
   const endDate = todayISO();
+  const start = getStudentStart(studentId);
   // Count only scheduled class days between configured start date and today.
   const presentDates = new Set(
     getAllAttendanceForStudent(studentId)
       .filter(r => r.present)
       .map(r => r.date)
-      .filter(d => isWithinClassWindow(d, endDate) && isScheduledClassDate(d))
+      .filter(d => d >= start && d <= endDate && isScheduledClassDate(d))
   );
   return presentDates.size;
 }
 
 export function getTotalClasses(studentId) {
-  // Student-independent class count from start date through today (Tue/Thu only).
-  void studentId;
-  return getScheduledClassDates(todayISO()).length;
+  // Tue/Thu classes from the student's start (class start date or date added) through today.
+  return getScheduledClassDates(todayISO(), getStudentStart(studentId)).length;
 }
 
 // Classes strictly after `afterDate` (ISO); with no date it matches the overall totals.
 export function getClassesSince(studentId, afterDate = '') {
   const endDate = todayISO();
   const after = afterDate ? String(afterDate).slice(0, 10) : '';
-  const total = getScheduledClassDates(endDate).filter(d => !after || d > after).length;
+  const start = getStudentStart(studentId);
+  const total = getScheduledClassDates(endDate, start).filter(d => !after || d > after).length;
   const attended = new Set(
     getAllAttendanceForStudent(studentId)
-      .filter(r => r.present && isWithinClassWindow(r.date, endDate) && isScheduledClassDate(r.date) && (!after || r.date > after))
+      .filter(r => r.present && r.date >= start && r.date <= endDate && isScheduledClassDate(r.date) && (!after || r.date > after))
       .map(r => r.date)
   ).size;
   return { attended, total, percent: total ? Math.round((attended / total) * 100) : 0 };

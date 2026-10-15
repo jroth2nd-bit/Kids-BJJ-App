@@ -25,11 +25,11 @@ export function getStudents() { const list = loadStudents(); let changed = false
 export async function syncFromCloud() {
   const { data, error } = await supabase
     .from('students')
-    .select('legacy_id, first_name, last_name, active, rank, belt_size, notes')
+    .select('legacy_id, first_name, last_name, active, rank, belt_size, notes, created_at')
     .eq('program', 'adult')
     .order('legacy_id');
   if (error) throw error;
-  const list = data.map((student) => ({ id: Number(student.legacy_id), firstName: student.first_name, lastName: student.last_name, active: student.active, rank: student.rank, beltSize: student.belt_size, notes: student.notes }));
+  const list = data.map((student) => ({ id: Number(student.legacy_id), firstName: student.first_name, lastName: student.last_name, active: student.active, rank: student.rank, beltSize: student.belt_size, notes: student.notes, addedDate: localDate(student.created_at) }));
   saveStudents(list);
   localStorage.setItem(NEXT_ID_KEY, String(list.reduce((max, student) => Math.max(max, student.id), 0) + 1));
   return list;
@@ -37,10 +37,15 @@ export async function syncFromCloud() {
 export function getActiveStudents() { return loadStudents().filter((student) => student.active !== false); }
 export function getStudentById(id) { return loadStudents().find((student) => student.id === Number(id)) || null; }
 
+function localDate(value) {
+  const date = new Date(value);
+  return Number.isNaN(date.getTime()) ? '' : ${date.getFullYear()}--;
+}
+
 export function addStudent(firstName, lastName) {
   const list = loadStudents();
   const id = nextId();
-  const student = { id, firstName: String(firstName).trim(), lastName: String(lastName).trim(), active: true, rank: 'White', beltSize: '', notes: '' };
+  const student = { id, firstName: String(firstName).trim(), lastName: String(lastName).trim(), active: true, rank: 'White', beltSize: '', notes: '', addedDate: localDate(new Date()) };
   list.push(student);
   saveStudents(list);
   localStorage.setItem(NEXT_ID_KEY, String(id + 1));

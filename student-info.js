@@ -1,8 +1,8 @@
-import * as unified from './unified-students.js?v=4';
-import * as kidsStudents from './students.js?v=6';
-import * as adultStudents from './adult-students.js?v=4';
-import * as kidsAttendance from './attendance.js?v=6';
-import * as adultAttendance from './adult-attendance.js?v=5';
+import * as unified from './unified-students.js?v=5';
+import * as kidsStudents from './students.js?v=7';
+import * as adultStudents from './adult-students.js?v=5';
+import * as kidsAttendance from './attendance.js?v=7';
+import * as adultAttendance from './adult-attendance.js?v=6';
 import * as beltSizes from './shared-belt-sizes.js?v=1';
 import * as waiverStore from './waiver-store.js?v=1';
 
@@ -47,7 +47,7 @@ function stats(student) {
   const api = attendanceApi(student);
   const history = api.getAllAttendanceForStudent(student.sourceId);
   const count = api.getTotalAttended(student.sourceId);
-  const total = student.studentType === 'adult' ? api.getTotalClasses() : api.getTotalClasses(student.sourceId);
+  const total = api.getTotalClasses(student.sourceId);
   const last = history.filter((record) => record.present).reduce((latest, record) => record.date > latest ? record.date : latest, '');
   return { count, total, percent: total ? Math.round(count / total * 100) : 0, last, history };
 }
@@ -272,7 +272,18 @@ function detailsFor(student, row, nameGroup) {
   const beltLabel = document.createElement('label'); beltLabel.htmlFor = belt.id; beltLabel.textContent = 'Belt size';
   const saveBelt = makeButton('Save belt size', 'save student-info-save-belt', async () => { unified.updateBeltSize(student, belt.value); const synced = await unified.flushStudentUpdates(); student.beltSize = belt.value; setStatus(synced ? `${student.firstName} ${student.lastName} belt size synced` : 'Belt size saved locally; cloud sync failed.'); });
   beltField.append(beltLabel, belt, saveBelt);
-  fields.append(rankField, beltField);
+  const addedField = document.createElement('div'); addedField.className = 'student-info-added-field';
+  const addedInput = Object.assign(document.createElement('input'), { type: 'date', id: `student-info-added-${student.studentType}-${student.sourceId}`, value: student.addedDate || '', max: new Date().toISOString().slice(0, 10) });
+  const addedLabel = document.createElement('label'); addedLabel.htmlFor = addedInput.id; addedLabel.textContent = 'Date added (counts start here)';
+  const saveAdded = makeButton('Save date added', 'save student-info-save-added', async () => {
+    if (!addedInput.value) { setStatus('Choose a date added.'); return; }
+    unified.updateAddedDate(student, addedInput.value);
+    const synced = await unified.flushStudentUpdates();
+    setStatus(synced ? ` ${student.lastName} date added synced` : 'Date added saved locally; cloud sync failed.');
+    expanded.add(key(student)); render();
+  });
+  addedField.append(addedLabel, addedInput, saveAdded);
+  fields.append(rankField, beltField, addedField);
   const editName = makeButton('', 'student-info-name-edit', () => {
     fields.replaceChildren();
     const first = Object.assign(document.createElement('input'), { value: student.firstName, 'aria-label': 'First name' });

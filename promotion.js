@@ -1,8 +1,8 @@
-import * as unified from './unified-students.js?v=4';
-import * as kidsStudents from './students.js?v=6';
-import * as adultStudents from './adult-students.js?v=4';
-import * as kidsAttendance from './attendance.js?v=7';
-import * as adultAttendance from './adult-attendance.js?v=6';
+import * as unified from './unified-students.js?v=5';
+import * as kidsStudents from './students.js?v=7';
+import * as adultStudents from './adult-students.js?v=5';
+import * as kidsAttendance from './attendance.js?v=8';
+import * as adultAttendance from './adult-attendance.js?v=7';
 import * as beltSizes from './shared-belt-sizes.js?v=1';
 import * as kidsBeltSizes from './belt-sizes.js?v=1';
 import * as adultBeltSizes from './adult-belt-sizes.js?v=1';
@@ -47,7 +47,7 @@ function savePromotions(studentType, records) { const store = studentType === 'a
 function stagedRecord(student) { return readPromotions(student.studentType).find((record) => Number(record.studentId) === Number(student.sourceId) && record.staged === true) || null; }
 function matchesStage(record, stage) { if (!record || !stage || Number(record.studentId) !== Number(stage.studentId) || record.staged !== true) return false; if (record.legacyKey && stage.legacyKey) return record.legacyKey === stage.legacyKey; return String(record.createdAt || record.promotionDate || '') === String(stage.createdAt || stage.promotionDate || ''); }
 function historyRecords(student) { return readPromotions(student.studentType).filter((record) => Number(record.studentId) === Number(student.sourceId) && !record.staged).sort((a, b) => String(b.promotionDate || b.createdAt || '').localeCompare(String(a.promotionDate || a.createdAt || ''))); }
-function stats(student) { const api = attendanceApi(student); const total = student.studentType === 'adult' ? api.getTotalClasses() : api.getTotalClasses(student.sourceId); const attended = api.getTotalAttended(student.sourceId); return { attended, total, percent: total ? Math.round(attended * 100 / total) : 0 }; }
+function stats(student) { const api = attendanceApi(student); const total = api.getTotalClasses(student.sourceId); const attended = api.getTotalAttended(student.sourceId); return { attended, total, percent: total ? Math.round(attended * 100 / total) : 0 }; }
 function sinceStats(student) { const last = historyRecords(student)[0]; return attendanceApi(student).getClassesSince(student.sourceId, last ? dateOnly(last) : ''); }
 const sinceText = (value) => `${value.attended}/${value.total} · ${value.percent}%`;
 function makeButton(label, className, handler) { const button = document.createElement('button'); button.type = 'button'; button.className = `btn ${className}`; button.textContent = label; button.addEventListener('click', handler); return button; }

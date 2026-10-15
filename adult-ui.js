@@ -1,6 +1,6 @@
-import * as students from './adult-students.js?v=4';
-import * as attendance from './adult-attendance.js?v=5';
-import * as unified from './unified-students.js?v=5';
+import * as students from './adult-students.js?v=5';
+import * as attendance from './adult-attendance.js?v=6';
+import * as unified from './unified-students.js?v=6';
 import { syncFromCloud as syncPromotionRecordsFromCloud } from './promotion-cloud.js?v=3';
 
 const datePicker = document.getElementById('adultDatePicker');

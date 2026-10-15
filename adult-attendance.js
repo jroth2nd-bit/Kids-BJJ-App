@@ -146,15 +146,24 @@ export function deleteAttendanceForStudent(studentId) {
   void cloudStudentId(studentId).then((cloudId) => cloudId && supabase.from('attendance').delete().eq('student_id', cloudId).not('session_id', 'is', null)).catch((error) => console.error('Cloud adult student attendance delete failed', error));
 }
 
-export function getTotalClasses() {
-  const settings = getSettings();
-  const start = settings.startDate || DEFAULT_SETTINGS.startDate;
+// A student's counts begin at the later of the class start date and the date they were added.
+function getStudentStart(studentId) {
+  const classStart = getSettings().startDate || DEFAULT_SETTINGS.startDate;
+  if (studentId === undefined || studentId === null) return classStart;
+  try {
+    const student = (JSON.parse(localStorage.getItem('bjj_adult_students')) || []).find((item) => Number(item.id) === Number(studentId));
+    const added = String(student?.addedDate || '').slice(0, 10);
+    return /^\d{4}-\d{2}-\d{2}$/.test(added) && added > classStart ? added : classStart;
+  } catch (e) { return classStart; }
+}
+export function getTotalClasses(studentId) {
+  const start = getStudentStart(studentId);
   const end = todayISO();
   let total = 0;
     for (let current = new Date(`${start}T12:00:00`); current <= new Date(`${end}T12:00:00`); current.setDate(current.getDate() + 1)) if (ADULT_CLASS_DAYS.has(current.getDay())) total += 1;
   return total;
 }
-export function getTotalAttended(studentId) { return new Set(getAllAttendanceForStudent(studentId).filter((record) => record.present && record.date >= getSettings().startDate && record.date <= todayISO()).map((record) => record.date)).size; }
+export function getTotalAttended(studentId) { const start = getStudentStart(studentId); return new Set(getAllAttendanceForStudent(studentId).filter((record) => record.present && record.date >= start && record.date <= todayISO()).map((record) => record.date)).size; }
 export function getClassBreakdown(studentId) {
   const breakdown = {};
   getAllAttendanceForStudent(studentId).filter((record) => record.present && record.date >= getSettings().startDate && record.date <= todayISO()).forEach((record) => {
@@ -172,7 +181,7 @@ export function getRecentAttended(studentId, days = 30) {
 }
 // Classes strictly after `afterDate` (ISO); with no date it matches the overall totals.
 export function getClassesSince(studentId, afterDate = '') {
-  const start = getSettings().startDate || DEFAULT_SETTINGS.startDate;
+  const start = getStudentStart(studentId);
   const end = todayISO();
   const after = afterDate ? String(afterDate).slice(0, 10) : '';
   let total = 0;
@@ -184,7 +193,7 @@ export function getClassesSince(studentId, afterDate = '') {
   const attended = new Set(getAllAttendanceForStudent(studentId).filter((record) => record.present && record.date >= start && record.date <= end && (!after || record.date > after)).map((record) => record.date)).size;
   return { attended, total, percent: total ? Math.round((attended / total) * 100) : 0 };
 }
-export function getPercent(studentId) { const total = getTotalClasses(); return total ? Math.round((getTotalAttended(studentId) / total) * 100) : 0; }
+export function getPercent(studentId) { const total = getTotalClasses(studentId); return total ? Math.round((getTotalAttended(studentId) / total) * 100) : 0; }
 export function getLastClass(studentId) {
   const records = getAllAttendanceForStudent(studentId).filter((record) => record.present);
   if (!records.length) return '';
