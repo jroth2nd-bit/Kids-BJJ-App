@@ -1,6 +1,6 @@
-import * as students from './students.js?v=6';
-import * as attendance from './attendance.js?v=6';
-import * as unified from './unified-students.js?v=5';
+import * as students from './students.js?v=7';
+import * as attendance from './attendance.js?v=7';
+import * as unified from './unified-students.js?v=6';
 import * as waiverStore from './waiver-store.js?v=1';
 import { syncFromCloud as syncPromotionRecordsFromCloud } from './promotion-cloud.js?v=3';
 

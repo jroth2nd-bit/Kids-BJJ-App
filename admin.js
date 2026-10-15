@@ -1,7 +1,7 @@
 import * as students from './students.js';
-import * as attendance from './attendance.js?v=4';
+import * as attendance from './attendance.js?v=5';
 import * as beltSizes from './shared-belt-sizes.js?v=1';
-import * as adultAttendance from './adult-attendance.js?v=5';
+import * as adultAttendance from './adult-attendance.js?v=6';
 
 const importJsonFile = document.getElementById('importJsonFile');
 const csvImportFile = document.getElementById('csvImportFile');

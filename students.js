@@ -3,6 +3,11 @@ import { supabase } from './supabase-client.js';
 const STORAGE_KEY = 'bjj_students';
 const NEXT_ID_KEY = 'bjj_next_student_id';
 
+function localDate(value) {
+  const date = new Date(value);
+  return Number.isNaN(date.getTime()) ? '' : ${date.getFullYear()}--;
+}
+
 function loadStudents() {
   try {
     return JSON.parse(localStorage.getItem(STORAGE_KEY)) || [];
@@ -55,11 +60,11 @@ export function getStudents() {
 export async function syncFromCloud() {
   const { data, error } = await supabase
     .from('students')
-    .select('legacy_id, first_name, last_name, active, rank, belt_size, notes')
+    .select('legacy_id, first_name, last_name, active, rank, belt_size, notes, created_at')
     .eq('program', 'kids')
     .order('legacy_id');
   if (error) throw error;
-  const list = data.map((student) => ({ id: Number(student.legacy_id), firstName: student.first_name, lastName: student.last_name, active: student.active, rank: student.rank, beltSize: student.belt_size, notes: student.notes }));
+  const list = data.map((student) => ({ id: Number(student.legacy_id), firstName: student.first_name, lastName: student.last_name, active: student.active, rank: student.rank, beltSize: student.belt_size, notes: student.notes, addedDate: localDate(student.created_at) }));
   saveStudents(list);
   localStorage.setItem(NEXT_ID_KEY, String(list.reduce((max, student) => Math.max(max, student.id), 0) + 1));
   return list;
@@ -84,6 +89,7 @@ export function addStudent(firstName, lastName) {
     rank: 'White',
     beltSize: '',
     notes: '',
+    addedDate: localDate(new Date()),
   };
   list.push(student);
   saveStudents(list);

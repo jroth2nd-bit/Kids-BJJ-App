@@ -1,5 +1,5 @@
-import * as students from './adult-students.js?v=1';
-import * as attendance from './adult-attendance.js?v=5';
+import * as students from './adult-students.js?v=2';
+import * as attendance from './adult-attendance.js?v=6';
 import * as beltSizes from './adult-belt-sizes.js?v=1';
 import * as waiverStore from './waiver-store.js?v=1';
 import { syncFromCloud, syncLocalPromotions } from './promotion-cloud.js';

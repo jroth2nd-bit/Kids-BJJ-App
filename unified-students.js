@@ -36,6 +36,7 @@ export function updateStudent(student, patch) {
   if ('rank' in patch) cloudPatch.rank = String(patch.rank || 'White');
   if ('beltSize' in patch) cloudPatch.belt_size = String(patch.beltSize || '');
   if ('notes' in patch) cloudPatch.notes = String(patch.notes || '');
+  if ('addedDate' in patch && /^\d{4}-\d{2}-\d{2}$/.test(String(patch.addedDate))) cloudPatch.created_at = ${patch.addedDate}T12:00:00Z;
   if (Object.keys(cloudPatch).length) {
     pendingStudentSync = pendingStudentSync.then(async () => {
       const { error } = await supabase.from('students').update(cloudPatch)
@@ -89,5 +90,6 @@ export function changeStudentType(student, targetType) {
 export function updateBeltSize(student, beltSize) { return updateStudent(student, { beltSize }); }
 export function updateRank(student, rank) { return updateStudent(student, { rank }); }
 export function updateNotes(student, notes) { return updateStudent(student, { notes }); }
+export function updateAddedDate(student, addedDate) { return updateStudent(student, { addedDate }); }
 export async function flushStudentUpdates() { await pendingStudentSync; const succeeded = !studentSyncFailed; studentSyncFailed = false; return succeeded; }
-export default { getStudents, getStudent, updateStudent, changeStudentType, updateBeltSize, updateRank, updateNotes, flushStudentUpdates };
+export default { getStudents, getStudent, updateStudent, changeStudentType, updateBeltSize, updateRank, updateNotes, updateAddedDate, flushStudentUpdates };
