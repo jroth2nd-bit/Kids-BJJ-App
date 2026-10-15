@@ -36,7 +36,7 @@ export function updateStudent(student, patch) {
   if ('rank' in patch) cloudPatch.rank = String(patch.rank || 'White');
   if ('beltSize' in patch) cloudPatch.belt_size = String(patch.beltSize || '');
   if ('notes' in patch) cloudPatch.notes = String(patch.notes || '');
-  if ('addedDate' in patch && /^\d{4}-\d{2}-\d{2}$/.test(String(patch.addedDate))) cloudPatch.created_at = ${patch.addedDate}T12:00:00Z;
+  if ('addedDate' in patch && /^\d{4}-\d{2}-\d{2}$/.test(String(patch.addedDate))) cloudPatch.created_at = `${patch.addedDate}T12:00:00Z`;
   if (Object.keys(cloudPatch).length) {
     pendingStudentSync = pendingStudentSync.then(async () => {
       const { error } = await supabase.from('students').update(cloudPatch)
