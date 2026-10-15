@@ -272,14 +272,14 @@ function detailsFor(student, row, nameGroup) {
   const beltLabel = document.createElement('label'); beltLabel.htmlFor = belt.id; beltLabel.textContent = 'Belt size';
   const saveBelt = makeButton('Save belt size', 'save student-info-save-belt', async () => { unified.updateBeltSize(student, belt.value); const synced = await unified.flushStudentUpdates(); student.beltSize = belt.value; setStatus(synced ? `${student.firstName} ${student.lastName} belt size synced` : 'Belt size saved locally; cloud sync failed.'); });
   beltField.append(beltLabel, belt, saveBelt);
-  const addedField = document.createElement('div'); addedField.className = 'student-info-added-field';
+  const addedField = document.createElement('div'); addedField.className = 'student-info-added-field student-info-belt-field';
   const addedInput = Object.assign(document.createElement('input'), { type: 'date', id: `student-info-added-${student.studentType}-${student.sourceId}`, value: student.addedDate || '', max: new Date().toISOString().slice(0, 10) });
-  const addedLabel = document.createElement('label'); addedLabel.htmlFor = addedInput.id; addedLabel.textContent = 'Date added (counts start here)';
-  const saveAdded = makeButton('Save date added', 'save student-info-save-added', async () => {
-    if (!addedInput.value) { setStatus('Choose a date added.'); return; }
+  const addedLabel = document.createElement('label'); addedLabel.htmlFor = addedInput.id; addedLabel.textContent = 'Start date';
+  const saveAdded =   makeButton('Save start date', 'save student-info-save-added', async () => {
+      if (!addedInput.value) { setStatus('Choose a start date.'); return; }
     unified.updateAddedDate(student, addedInput.value);
     const synced = await unified.flushStudentUpdates();
-    setStatus(synced ? `${student.firstName} ${student.lastName} date added synced` : 'Date added saved locally; cloud sync failed.');
+    setStatus(synced ? `${student.firstName} ${student.lastName} start date synced` : 'Start date saved locally; cloud sync failed.');
     expanded.add(key(student)); render();
   });
   addedField.append(addedLabel, addedInput, saveAdded);

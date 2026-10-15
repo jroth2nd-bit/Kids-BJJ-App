@@ -1950,13 +1950,17 @@ button,input,select,.btn{min-height:38px}
 }
 
 .student-info-page .student-details>.student-info-edit-fields>.student-info-rank-field,
-.student-info-page .student-details>.student-info-edit-fields>.student-info-belt-field{display:grid!important;grid-template-columns:minmax(0,1fr) minmax(94px,auto)!important;grid-template-rows:auto auto!important;align-items:end!important;gap:5px 8px!important;min-width:0!important}
+.student-info-page .student-details>.student-info-edit-fields>.student-info-belt-field,
+.student-info-page .student-details>.student-info-edit-fields>.student-info-added-field{display:grid!important;grid-template-columns:minmax(0,1fr) minmax(94px,auto)!important;grid-template-rows:auto auto!important;align-items:end!important;gap:5px 8px!important;min-width:0!important}
 .student-info-page .student-details>.student-info-edit-fields>.student-info-rank-field>label,
-.student-info-page .student-details>.student-info-edit-fields>.student-info-belt-field>label{display:block!important;grid-column:1 / -1!important;grid-row:1!important;min-width:0!important;color:var(--muted)!important}
+.student-info-page .student-details>.student-info-edit-fields>.student-info-belt-field>label,
+.student-info-page .student-details>.student-info-edit-fields>.student-info-added-field>label{display:block!important;grid-column:1 / -1!important;grid-row:1!important;min-width:0!important;color:var(--muted)!important}
 .student-info-page .student-details>.student-info-edit-fields>.student-info-rank-field>select,
-.student-info-page .student-details>.student-info-edit-fields>.student-info-belt-field>select{grid-column:1!important;grid-row:2!important;width:100%!important;min-width:0!important;max-width:100%!important}
+.student-info-page .student-details>.student-info-edit-fields>.student-info-belt-field>select,
+.student-info-page .student-details>.student-info-edit-fields>.student-info-added-field>input{grid-column:1!important;grid-row:2!important;width:100%!important;min-width:0!important;max-width:100%!important}
 .student-info-page .student-details>.student-info-edit-fields>.student-info-rank-field>.btn,
-.student-info-page .student-details>.student-info-edit-fields>.student-info-belt-field>.btn{grid-column:2!important;grid-row:2!important;justify-self:stretch!important;align-self:end!important;width:auto!important;min-width:94px!important;min-height:38px!important;padding:6px 8px!important;white-space:nowrap!important}
+.student-info-page .student-details>.student-info-edit-fields>.student-info-belt-field>.btn,
+.student-info-page .student-details>.student-info-edit-fields>.student-info-added-field>.btn{grid-column:2!important;grid-row:2!important;justify-self:stretch!important;align-self:end!important;width:auto!important;min-width:94px!important;min-height:38px!important;padding:6px 8px!important;white-space:nowrap!important}
 .student-info-page .student-detail-info>.student-info-summary-active{display:flex!important;flex-direction:row!important;align-items:center!important;gap:8px!important;width:100%!important;min-width:0!important;min-height:56px!important;padding:9px 2px!important;border:0!important;border-bottom:1px solid rgba(255,255,255,.08)!important;color:var(--text)!important;font-size:.84rem!important;font-weight:600!important;box-sizing:border-box!important}
 .student-info-page .student-detail-info>.student-info-summary-active>input{flex:0 0 20px!important;width:20px!important;height:20px!important;min-width:20px!important;min-height:20px!important;margin:0!important}
 @media (max-width:760px){
@@ -2151,3 +2155,5 @@ button,input,select,.btn{min-height:38px}
 .student-info-page .student-info-table{overflow:visible}
 .attendance-page:not(.student-info-page):not(.promotion-workflow-page) .container{overflow:visible!important}
 .attendance-page:not(.student-info-page):not(.promotion-workflow-page) .attendance-headers{position:sticky;top:0;z-index:15;background:#25292d}
+
+.student-info-page .student-info-edit-fields input[type=date]{min-height:38px;padding:7px 9px;border:1px solid rgba(255,255,255,.14);border-radius:6px;background:#202326;color:var(--text);font:inherit}
