@@ -5,7 +5,7 @@ const NEXT_ID_KEY = 'bjj_next_student_id';
 
 function localDate(value) {
   const date = new Date(value);
-  return Number.isNaN(date.getTime()) ? '' : ${date.getFullYear()}--;
+  return Number.isNaN(date.getTime()) ? '' : `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
 }
 
 function loadStudents() {

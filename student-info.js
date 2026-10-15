@@ -279,7 +279,7 @@ function detailsFor(student, row, nameGroup) {
     if (!addedInput.value) { setStatus('Choose a date added.'); return; }
     unified.updateAddedDate(student, addedInput.value);
     const synced = await unified.flushStudentUpdates();
-    setStatus(synced ? ` ${student.lastName} date added synced` : 'Date added saved locally; cloud sync failed.');
+    setStatus(synced ? `${student.firstName} ${student.lastName} date added synced` : 'Date added saved locally; cloud sync failed.');
     expanded.add(key(student)); render();
   });
   addedField.append(addedLabel, addedInput, saveAdded);
