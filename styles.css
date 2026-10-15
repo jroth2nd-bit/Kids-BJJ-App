@@ -2169,3 +2169,59 @@ button,input,select,.btn{min-height:38px}
 .student-info-page .student-info-header{top:calc(var(--app-header-height,76px) + var(--student-info-controls-height,76px))!important}
 .promotion-workflow-page .promotion-workflow-header{top:calc(var(--app-header-height,76px) + var(--promotion-controls-height,76px))!important}
 .attendance-page:not(.student-info-page):not(.promotion-workflow-page) .attendance-headers{top:var(--app-header-height,76px)}
+
+.admin-page .container{display:flex;flex-direction:column;gap:16px}
+.admin-page .header{margin-bottom:0}
+.admin-page .admin-layout{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));align-items:start;gap:16px}
+.admin-page .admin-card{height:auto;min-width:0;padding:clamp(14px,1.6vw,22px);border-color:rgba(255,255,255,.1);background:var(--card);border-radius:8px}
+.admin-page .admin-card h2{font-size:1.08rem;line-height:1.35}
+.admin-page .admin-card .muted{font-size:.84rem;line-height:1.5}
+.admin-page .admin-card-import .csv-import-container:empty{display:none}
+.admin-page .admin-card-import .csv-import-container{margin-top:8px}
+.admin-page .admin-card-export{justify-content:flex-start}
+.admin-page .admin-actions-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,145px),1fr));gap:8px;margin-top:4px}
+.admin-page .admin-actions-row .btn{width:100%;min-width:0;min-height:42px;flex:none;padding:9px 10px}
+.admin-page .admin-row{min-width:0;gap:8px}
+.admin-page .admin-row>*{min-width:0;max-width:100%}
+.admin-page .admin-row label{font-size:.84rem;line-height:1.4}
+.admin-page .admin-row select,.admin-page .admin-row input[type=date],.admin-page .admin-row input[type=text],.admin-page .admin-row input[type=file]{min-width:0;max-width:100%;font:inherit;font-size:.85rem}
+.admin-page .admin-settings-row{display:grid;grid-template-columns:minmax(0,1fr) minmax(130px,.8fr) auto}
+.admin-page .admin-settings-row label{overflow-wrap:anywhere}
+.admin-page .admin-settings-row small{grid-column:1/-1}
+.admin-page .admin-settings-row #adultSettingsStatus{grid-column:1/-1}
+.admin-page .admin-list-item{min-width:0;background:#202326;border-color:rgba(255,255,255,.1)}
+.admin-page .admin-list-item .btn{min-height:36px}
+.admin-page .csv-mode{min-width:0;flex-wrap:wrap}
+.admin-page .csv-mode label{width:auto;min-width:0}
+.admin-page .footer{margin-top:0}
+
+@media (max-width:900px){
+  .admin-page .admin-layout{grid-template-columns:minmax(0,1fr)}
+  .admin-page .admin-card{width:100%}
+}
+@media (max-width:640px){
+  .admin-page .container{gap:12px;padding-top:12px;padding-bottom:16px}
+  .admin-page .admin-layout{gap:12px}
+  .admin-page .admin-card{padding:14px}
+  .admin-page .admin-row{display:grid;grid-template-columns:minmax(0,1fr);align-items:stretch;gap:7px}
+  .admin-page .admin-row label{min-width:0;width:auto}
+  .admin-page .admin-row select,.admin-page .admin-row input[type=date],.admin-page .admin-row input[type=text],.admin-page .admin-row input[type=file],.admin-page .admin-row button{width:100%}
+  .admin-page .admin-actions-row{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .admin-page .admin-settings-row{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}
+  .admin-page .admin-settings-row label,.admin-page .admin-settings-row small,.admin-page .admin-settings-row #adultSettingsStatus{grid-column:1/-1}
+  .admin-page .admin-settings-row input[type=date]{grid-column:1}
+  .admin-page .admin-settings-row button{grid-column:2}
+  .admin-page .csv-mode{justify-content:flex-start}
+  .admin-page .csv-mode label{width:auto}
+  .admin-page .admin-list-item{flex-direction:row;align-items:center}
+  .admin-page .footer{padding-top:4px}
+}
+@media (max-width:360px){
+  .admin-page .container{padding-right:12px;padding-left:12px}
+  .admin-page .header{padding:10px}
+  .admin-page .admin-card{padding:12px}
+  .admin-page .admin-actions-row{grid-template-columns:minmax(0,1fr)}
+  .admin-page .admin-settings-row{grid-template-columns:minmax(0,1fr)}
+  .admin-page .admin-settings-row input[type=date],.admin-page .admin-settings-row button{grid-column:1}
+  .admin-page .admin-list-item{padding:8px}
+}
