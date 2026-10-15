@@ -10,7 +10,7 @@
 }
 @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;600;700&display=swap');
 *{box-sizing:border-box}
-html,body{height:100%;overflow-x:hidden !important}
+html,body{height:100%;overflow-x:clip !important}
 body{
   margin:0;
   font-family: 'Montserrat', system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
@@ -23,7 +23,7 @@ body{
   max-width:var(--container-width);
   margin:0 auto;
   padding:20px 28px;
-  overflow-x: hidden;
+  overflow-x: clip;
 }
 .header h1{margin:0;font-size:1.6rem}
 .sub{margin:4px 0 12px;color:var(--muted)}
@@ -1627,7 +1627,7 @@ button,input,select,.btn{min-height:38px}
 @media (min-width:761px) and (max-width:980px){.promotion-workflow-page .student-details{grid-template-columns:minmax(0,.9fr) minmax(0,1.1fr)!important;grid-template-areas:"meta meta" "history belt" "history notes" "history actions";column-gap:12px!important}.promotion-workflow-page .promotion-card-history{grid-template-columns:minmax(0,1fr);gap:5px;padding-right:10px}}
 
 /* UX follow-up: keep sticky layers stacked, preserve mobile navigation, and size filters to their content. */
-.student-info-page .student-info-header{top:calc(var(--student-info-controls-height, 76px) + 6px)!important}
+.student-info-page .student-info-header{top:var(--student-info-controls-height, 76px)!important}
 .student-info-page .attendance-nav-header{position:static!important}
 .student-info-page .container,.promotion-workflow-page .container{overflow:visible!important}
 .attendance-page.student-info-page .student-info-controls{z-index:20!important;align-items:end!important}
@@ -2157,3 +2157,15 @@ button,input,select,.btn{min-height:38px}
 .attendance-page:not(.student-info-page):not(.promotion-workflow-page) .attendance-headers{position:sticky;top:0;z-index:15;background:#25292d}
 
 .student-info-page .student-info-edit-fields input[type=date]{min-height:38px;padding:7px 9px;border:1px solid rgba(255,255,255,.14);border-radius:6px;background:#202326;color:var(--text);font:inherit}
+
+/* Keep the page title and shared navigation visible while scrolling. */
+.container>header.header,.container>header.attendance-header{position:sticky!important;top:0!important;z-index:50!important;background:#202326!important;isolation:isolate}
+@media (min-width:761px){
+  .attendance-page.student-info-page .student-info-controls,.promotion-workflow-page .promotion-filters{top:var(--app-header-height,76px)!important}
+}
+@media (max-width:760px){
+  .attendance-page.student-info-page .student-info-controls{top:var(--app-header-height,76px)!important}
+}
+.student-info-page .student-info-header{top:calc(var(--app-header-height,76px) + var(--student-info-controls-height,76px))!important}
+.promotion-workflow-page .promotion-workflow-header{top:calc(var(--app-header-height,76px) + var(--promotion-controls-height,76px))!important}
+.attendance-page:not(.student-info-page):not(.promotion-workflow-page) .attendance-headers{top:var(--app-header-height,76px)}
