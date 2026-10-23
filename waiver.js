@@ -93,9 +93,9 @@ function validateForm(isChild) {
     ['dateOfBirth', 'Enter a valid date of birth, such as 04/27/2012.'],
     ['phone', 'Enter a 10-digit phone number.'],
     ['email', 'Enter an email address.'],
-    ['emergencyName', 'Enter an emergency contact name.'],
-    ['emergencyRelationship', 'Enter the emergency contact relationship.'],
-    ['emergencyPhone', 'Enter a 10-digit emergency phone number.'],
+    ['emergencyName', 'Enter a primary contact name.'],
+    ['emergencyRelationship', 'Enter the contact relationship.'],
+    ['emergencyPhone', 'Enter a 10-digit primary phone number.'],
   ];
   if (isChild) checks.push(['parentGuardianName', 'Enter the parent or guardian name.']);
   let firstInvalid = null;
@@ -239,7 +239,7 @@ function renderRecord(record) {
   heading.append(title, date, toggle); card.appendChild(heading);
   const meta = document.createElement('p'); meta.className = 'muted'; meta.textContent = `${record.studentType === 'kids' ? 'Child' : 'Adult'} waiver · ${record.parentGuardianName ? `Parent/Guardian: ${record.parentGuardianName}` : 'Participant signer'}`; body.appendChild(meta);
   const grid = document.createElement('div'); grid.className = 'waiver-record-grid';
-  [['Date of birth', 'dateOfBirth'], ['Phone', 'phone'], ['Email', 'email'], ['Emergency name', 'emergencyName'], ['Emergency relationship', 'emergencyRelationship'], ['Emergency phone', 'emergencyPhone']].forEach(([label, field]) => grid.appendChild(makeInput(label, field, record)));
+  [['Date of birth', 'dateOfBirth'], ['Phone', 'phone'], ['Email', 'email'], ['Primary Contact', 'emergencyName'], ['Relationship', 'emergencyRelationship'], ['Primary Phone', 'emergencyPhone']].forEach(([label, field]) => grid.appendChild(makeInput(label, field, record)));
   body.appendChild(grid);
   const save = document.createElement('button'); save.className = 'btn save'; save.textContent = 'Save contact changes'; save.addEventListener('click', () => { const contact = {}; grid.querySelectorAll('input').forEach((input) => { contact[input.dataset.field] = input.dataset.field === 'dateOfBirth' ? normalizeDate(input.value) : input.dataset.field === 'phone' || input.dataset.field === 'emergencyPhone' ? normalizePhone(input.value) : input.value.trim(); }); if (!contact.dateOfBirth || !contact.phone || !contact.emergencyPhone) { setStatus('Enter a valid date of birth and phone numbers.'); return; } waiverStore.updateWaiverContact(record.id, contact); setStatus('Contact details updated'); renderRecords(); });
   const print = document.createElement('button'); print.className = 'btn'; print.textContent = 'Print signed waiver'; print.addEventListener('click', () => printFullRecord(record));
