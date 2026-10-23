@@ -239,8 +239,8 @@ function detailsFor(student, row, nameGroup) {
     ['Last attended', formatDate(studentStats.last)],
     ['Phone', formatPhone(waiverContact.phone)],
     ['Date of birth', waiverContact.dateOfBirth ? formatDate(waiverContact.dateOfBirth) : 'Not set'],
-    ['Emergency contact', waiverContact.emergencyName || 'Not set'],
-    ['Emergency phone', formatPhone(waiverContact.emergencyPhone)],
+    ['Primary Contact', waiverContact.emergencyName || 'Not set'],
+    ['Primary Phone', formatPhone(waiverContact.emergencyPhone)],
     ['Relationship', waiverContact.emergencyRelationship || 'Not set'],
   ].forEach(([label, value]) => info.appendChild(studentSummaryField(label, value)));
   const activeLabel = document.createElement('label'); activeLabel.className = 'active-toggle student-info-summary-active'; activeLabel.appendChild(Object.assign(document.createElement('input'), { type: 'checkbox', checked: student.active !== false })); activeLabel.append(' Active');

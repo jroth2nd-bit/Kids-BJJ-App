@@ -47,8 +47,9 @@ function appendWaiverSummary(detail, student) {
     const contact = waiver.contact || {};
     summary.textContent = `Signed ${String(waiver.signedAt || '').slice(0, 10)}`;
     const phone = document.createElement('span'); phone.className = 'waiver-contact-summary'; phone.textContent = `Phone: ${formatPhone(contact.phone)}`;
-    const emergency = document.createElement('span'); emergency.className = 'waiver-contact-summary'; emergency.textContent = `Emergency: ${contact.emergencyName || '—'} · ${formatPhone(contact.emergencyPhone)}`;
-    section.append(title, summary, phone, emergency);
+    const primaryContact = document.createElement('span'); primaryContact.className = 'waiver-contact-summary'; primaryContact.textContent = `Primary Contact: ${contact.emergencyName || '—'}`;
+    const primaryPhone = document.createElement('span'); primaryPhone.className = 'waiver-contact-summary'; primaryPhone.textContent = `Primary Phone: ${formatPhone(contact.emergencyPhone)}`;
+    section.append(title, summary, phone, primaryContact, primaryPhone);
   } else {
     summary.textContent = 'Not signed';
     section.append(title, summary);
