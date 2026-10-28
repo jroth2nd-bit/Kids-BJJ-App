@@ -3,7 +3,7 @@ import * as adultStudents from './adult-students.js?v=5';
 import * as waiverStore from './waiver-store.js?v=2';
 import { sha256Hex } from './waiver-pdf.js?v=1';
 
-const fields = ['participantName', 'dateOfBirth', 'phone', 'email', 'emergencyName', 'emergencyRelationship', 'emergencyPhone', 'parentGuardianName'];
+const fields = ['participantName', 'dateOfBirth', 'phone', 'email', 'emergencyName', 'emergencyRelationship', 'emergencyPhone', 'parentGuardianName', 'signerRelationship'];
 const participantType = document.getElementById('participantType');
 const studentRecord = document.getElementById('studentRecord');
 const recordsEl = document.getElementById('waiverRecords');
@@ -116,11 +116,9 @@ function validateForm(isChild) {
     ['dateOfBirth', 'Enter a valid date of birth, such as 04/27/2012.'],
     ['phone', 'Enter a 10-digit phone number.'],
     ['email', 'Enter an email address.'],
-    ['emergencyName', 'Enter a primary contact name.'],
-    ['emergencyRelationship', 'Enter the contact relationship.'],
-    ['emergencyPhone', 'Enter a 10-digit primary phone number.'],
   ];
-  if (isChild) checks.push(['parentGuardianName', 'Enter the parent or guardian name.'], ['signerRelationship', 'Enter the relationship to the participant.']);
+  if (!usesGuardianContact(isChild)) checks.push(['emergencyName', 'Enter a primary contact name.'], ['emergencyRelationship', 'Enter the contact relationship.'], ['emergencyPhone', 'Enter a 10-digit primary phone number.']);
+  if (isChild) checks.push(['parentGuardianName', 'Enter the parent or guardian name.'], ['signerRelationship', 'Enter the relationship to the child.']);
   let firstInvalid = null;
   checks.forEach(([id, message]) => {
     const field = el(id); const valid = id === 'dateOfBirth' ? Boolean(normalizeDate(value(id))) : id === 'phone' || id === 'emergencyPhone' ? Boolean(normalizePhone(value(id))) : Boolean(value(id));
@@ -161,6 +159,24 @@ function populateStudents() {
   if (current) studentRecord.value = current;
 }
 
+function usesGuardianContact(isChild) { return isChild && el('sameContact').checked; }
+
+function updateContactSections() {
+  const isChild = participantType.value === 'child';
+  el('contactHeading').textContent = isChild ? 'Parent/Guardian (signer)' : 'Contact';
+  el('sameContactField').hidden = !isChild;
+  el('emergencyFields').hidden = usesGuardianContact(isChild);
+}
+
+// A date of birth under 18 switches a new record to Child; a selected student keeps their own type.
+function syncTypeFromBirthDate() {
+  if (studentRecord.value) return;
+  const birthDate = normalizeDate(value('dateOfBirth'));
+  if (!birthDate) return;
+  const next = ageOn(birthDate) < 18 ? 'child' : 'adult';
+  if (participantType.value !== next) { participantType.value = next; syncType(); }
+}
+
 function syncType() {
   const isChild = participantType.value === 'child';
   el('guardianFields').hidden = !isChild;
@@ -168,6 +184,7 @@ function syncType() {
   el('minorGuardianDocument').hidden = !isChild;
   el('guardianTypedSignature').required = isChild;
   el('participantTypedSignature').required = !isChild;
+  updateContactSections();
   populateStudents();
   updatePreview();
 }
@@ -195,6 +212,13 @@ function applyWaiverRecord(record) {
   fields.forEach((field) => { if (field !== 'participantName' && el(field)) el(field).value = field === 'dateOfBirth' ? displayDate(contact[field]) : field === 'phone' || field === 'emergencyPhone' ? formatPhoneInput(contact[field]) : contact[field] || (field === 'parentGuardianName' ? record.parentGuardianName || '' : ''); });
   const sig = record.signature?.typed || record.signature?.drawnDataUrl ? record.signature : record.snapshot?.signature || {};
   el('signerRelationship').value = record.signerRelationship || '';
+  const sameDigits = (a, b) => String(a || '').replace(/\D/g, '') === String(b || '').replace(/\D/g, '');
+  const sameName = (a, b) => String(a || '').trim().toLowerCase() === String(b || '').trim().toLowerCase();
+  const guardianName = record.parentGuardianName || contact.parentGuardianName;
+  const sameContact = record.studentType === 'kids' && Boolean(guardianName) && sameName(contact.emergencyName, guardianName) && sameDigits(contact.emergencyPhone, contact.phone);
+  el('sameContact').checked = record.studentType !== 'kids' || sameContact;
+  if (sameContact && !el('signerRelationship').value) el('signerRelationship').value = contact.emergencyRelationship || '';
+  updateContactSections();
   const isChild = getStudentType() === 'kids';
   const prefix = isChild ? 'guardian' : 'participant';
   const other = isChild ? 'participant' : 'guardian';
@@ -225,6 +249,8 @@ function resetForm(message = 'Ready') {
   fields.forEach((field) => { if (el(field)) el(field).value = ''; });
   el('signerRelationship').value = '';
   el('studentRecord').value = '';
+  el('sameContact').checked = true;
+  updateContactSections();
   el('participantTypedSignature').value = '';
   el('guardianTypedSignature').value = '';
   el('agreement').checked = false;
@@ -246,7 +272,16 @@ async function buildRecord() {
   const isChild = getStudentType() === 'kids';
   if (!validateForm(isChild)) return null;
   const dateOfBirth = normalizeDate(value('dateOfBirth'));
-  const contact = { dateOfBirth, phone: normalizePhone(value('phone')), email: value('email'), emergencyName: value('emergencyName'), emergencyRelationship: value('emergencyRelationship'), emergencyPhone: normalizePhone(value('emergencyPhone')), parentGuardianName: isChild ? value('parentGuardianName') : '' };
+  const sameAsGuardian = usesGuardianContact(isChild);
+  const contact = {
+    dateOfBirth,
+    phone: normalizePhone(value('phone')),
+    email: value('email'),
+    emergencyName: sameAsGuardian ? value('parentGuardianName') : value('emergencyName'),
+    emergencyRelationship: sameAsGuardian ? value('signerRelationship') : value('emergencyRelationship'),
+    emergencyPhone: sameAsGuardian ? normalizePhone(value('phone')) : normalizePhone(value('emergencyPhone')),
+    parentGuardianName: isChild ? value('parentGuardianName') : '',
+  };
   const typedSignature = isChild ? value('guardianTypedSignature') : value('participantTypedSignature');
   const drawnCanvas = isChild ? signatureCanvas('guardianSignature') : signatureCanvas('participantSignature');
   const student = await ensureStudent();
@@ -396,7 +431,9 @@ function printFullRecord(record) {
 }
 
 fields.forEach((field) => el(field)?.addEventListener('input', (event) => { if (field === 'phone' || field === 'emergencyPhone') event.target.value = formatPhoneInput(event.target.value); clearFieldError(event.target); updatePreview(); }));
-el('dateOfBirth').addEventListener('input', (event) => { event.target.value = formatDateInput(event.target.value); updatePreview(); });
+el('dateOfBirth').addEventListener('input', (event) => { event.target.value = formatDateInput(event.target.value); updatePreview(); if (event.target.value.length === 10) syncTypeFromBirthDate(); });
+el('dateOfBirth').addEventListener('change', syncTypeFromBirthDate);
+el('sameContact').addEventListener('change', updateContactSections);
 el('agreement').addEventListener('change', (event) => clearFieldError(event.target));
 participantType.addEventListener('change', syncType);
 studentRecord.addEventListener('change', loadSelectedStudent);
