@@ -153,8 +153,36 @@ function loadSelectedStudent() {
   el('participantName').value = `${student.firstName} ${student.lastName}`;
   const record = waiverStore.getLatestWaiverForStudent(getStudentType(), student.id);
   if (!record) return;
+  applyWaiverRecord(record);
+}
+
+function loadWaiverIntoForm(record) {
+  participantType.value = record.studentType === 'kids' ? 'child' : 'adult';
+  syncType();
+  studentRecord.value = String(record.studentId);
+  el('participantName').value = record.participantName || '';
+  applyWaiverRecord(record);
+  setStatus('Waiver loaded');
+}
+
+function applyWaiverRecord(record) {
   const contact = record.contact || {};
   fields.forEach((field) => { if (field !== 'participantName' && el(field)) el(field).value = field === 'dateOfBirth' ? displayDate(contact[field]) : field === 'phone' || field === 'emergencyPhone' ? formatPhoneInput(contact[field]) : contact[field] || (field === 'parentGuardianName' ? record.parentGuardianName || '' : ''); });
+  const sig = record.signature?.typed || record.signature?.drawnDataUrl ? record.signature : record.snapshot?.signature || {};
+  const isChild = getStudentType() === 'kids';
+  const prefix = isChild ? 'guardian' : 'participant';
+  const other = isChild ? 'participant' : 'guardian';
+  el(`${other}TypedSignature`).value = '';
+  clearCanvas(`${other}Signature`);
+  el(`${prefix}TypedSignature`).value = sig.typed || '';
+  el('agreement').checked = Boolean(sig.typed || sig.drawnDataUrl) && sig.agreed !== false;
+  clearCanvas(`${prefix}Signature`);
+  if (sig.drawnDataUrl) {
+    const canvas = signatureCanvas(`${prefix}Signature`);
+    const image = new Image();
+    image.onload = () => canvas.getContext('2d').drawImage(image, 0, 0, canvas.width, canvas.height);
+    image.src = sig.drawnDataUrl;
+  }
   updatePreview();
 }
 
@@ -202,8 +230,8 @@ async function buildRecord() {
     participantName: value('participantName'),
     parentGuardianName: contact.parentGuardianName,
     contact,
-    signature: { typed: typedSignature, drawnDataUrl: drawnCanvas.toDataURL('image/png') },
-    snapshot: { participantName: value('participantName'), parentGuardianName: contact.parentGuardianName, contact: { ...contact }, signature: { ...{ typed: typedSignature, drawnDataUrl: drawnCanvas.toDataURL('image/png') } } },
+    signature: { typed: typedSignature, drawnDataUrl: drawnCanvas.toDataURL('image/png'), agreed: el('agreement').checked },
+    snapshot: { participantName: value('participantName'), parentGuardianName: contact.parentGuardianName, contact: { ...contact }, signature: { typed: typedSignature, drawnDataUrl: drawnCanvas.toDataURL('image/png'), agreed: el('agreement').checked } },
   };
 }
 
@@ -235,12 +263,21 @@ function renderRecord(record) {
     body.hidden = !body.hidden;
     toggle.textContent = body.hidden ? 'View / Edit' : 'Hide details';
     toggle.setAttribute('aria-expanded', String(!body.hidden));
+    if (!body.hidden) loadWaiverIntoForm(record);
   });
   heading.append(title, date, toggle); card.appendChild(heading);
   const meta = document.createElement('p'); meta.className = 'muted'; meta.textContent = `${record.studentType === 'kids' ? 'Child' : 'Adult'} waiver · ${record.parentGuardianName ? `Parent/Guardian: ${record.parentGuardianName}` : 'Participant signer'}`; body.appendChild(meta);
   const grid = document.createElement('div'); grid.className = 'waiver-record-grid';
   [['Date of birth', 'dateOfBirth'], ['Phone', 'phone'], ['Email', 'email'], ['Primary Contact', 'emergencyName'], ['Relationship', 'emergencyRelationship'], ['Primary Phone', 'emergencyPhone']].forEach(([label, field]) => grid.appendChild(makeInput(label, field, record)));
   body.appendChild(grid);
+  const sig = record.signature?.typed || record.signature?.drawnDataUrl ? record.signature : record.snapshot?.signature || {};
+  const sigBox = document.createElement('div'); sigBox.className = 'waiver-record-signature';
+  const typedLine = document.createElement('p'); typedLine.textContent = `Typed signature: ${sig.typed || 'Not saved'}`;
+  const agreedLine = document.createElement('p'); agreedLine.textContent = `Agreement accepted: ${sig.agreed === false ? '☐ No' : '☑ Yes'}`;
+  sigBox.append(typedLine);
+  if (sig.drawnDataUrl) { const img = document.createElement('img'); img.src = sig.drawnDataUrl; img.alt = 'Drawn signature'; img.className = 'printed-signature'; img.style.cssText = 'max-width:280px;max-height:90px;border:1px solid #ccc;background:#fff'; sigBox.append(img); } else { const none = document.createElement('p'); none.textContent = 'Drawn signature: Not saved'; sigBox.append(none); }
+  sigBox.append(agreedLine);
+  body.appendChild(sigBox);
   const save = document.createElement('button'); save.className = 'btn save'; save.textContent = 'Save contact changes'; save.addEventListener('click', () => { const contact = {}; grid.querySelectorAll('input').forEach((input) => { contact[input.dataset.field] = input.dataset.field === 'dateOfBirth' ? normalizeDate(input.value) : input.dataset.field === 'phone' || input.dataset.field === 'emergencyPhone' ? normalizePhone(input.value) : input.value.trim(); }); if (!contact.dateOfBirth || !contact.phone || !contact.emergencyPhone) { setStatus('Enter a valid date of birth and phone numbers.'); return; } waiverStore.updateWaiverContact(record.id, contact); setStatus('Contact details updated'); renderRecords(); });
   const print = document.createElement('button'); print.className = 'btn'; print.textContent = 'Print signed waiver'; print.addEventListener('click', () => printFullRecord(record));
   const actions = document.createElement('div'); actions.className = 'waiver-record-actions'; actions.append(save, print); body.appendChild(actions);
