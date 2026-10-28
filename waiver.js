@@ -1,6 +1,7 @@
 import * as kidsStudents from './students.js?v=7';
 import * as adultStudents from './adult-students.js?v=5';
-import * as waiverStore from './waiver-store.js?v=1';
+import * as waiverStore from './waiver-store.js?v=2';
+import { sha256Hex } from './waiver-pdf.js?v=1';
 
 const fields = ['participantName', 'dateOfBirth', 'phone', 'email', 'emergencyName', 'emergencyRelationship', 'emergencyPhone', 'parentGuardianName'];
 const participantType = document.getElementById('participantType');
@@ -64,6 +65,28 @@ function displayDate(value) {
   const [year, month, day] = normalized.split('-');
   return `${month}/${day}/${year}`;
 }
+function ageOn(isoDate) {
+  const [year, month, day] = isoDate.split('-').map(Number);
+  const now = new Date();
+  let age = now.getFullYear() - year;
+  if (now.getMonth() + 1 < month || (now.getMonth() + 1 === month && now.getDate() < day)) age -= 1;
+  return age;
+}
+
+// Exact wording shown on screen, without the name/signature/date preview rows.
+function waiverWording(isChild) {
+  const lines = [];
+  const article = document.querySelector('.waiver-document');
+  article.querySelectorAll('p, h3, li').forEach((node) => {
+    if (node.closest('.waiver-document-brand') || node.closest('.waiver-signature-grid')) return;
+    if (!isChild && node.closest('#minorGuardianDocument')) return;
+    const text = node.textContent.replace(/\s+/g, ' ').trim();
+    if (!text) return;
+    lines.push(node.tagName === 'LI' ? `${[...node.parentElement.children].indexOf(node) + 1}. ${text}` : text);
+  });
+  return lines.join('\n\n');
+}
+
 function getStudentType() { return participantType.value === 'child' ? 'kids' : 'adult'; }
 function getStudents() { return getStudentType() === 'kids' ? kidsStudents.getStudents() : adultStudents.getStudents(); }
 function signatureCanvas(id) { return el(id); }
@@ -97,12 +120,14 @@ function validateForm(isChild) {
     ['emergencyRelationship', 'Enter the contact relationship.'],
     ['emergencyPhone', 'Enter a 10-digit primary phone number.'],
   ];
-  if (isChild) checks.push(['parentGuardianName', 'Enter the parent or guardian name.']);
+  if (isChild) checks.push(['parentGuardianName', 'Enter the parent or guardian name.'], ['signerRelationship', 'Enter the relationship to the participant.']);
   let firstInvalid = null;
   checks.forEach(([id, message]) => {
     const field = el(id); const valid = id === 'dateOfBirth' ? Boolean(normalizeDate(value(id))) : id === 'phone' || id === 'emergencyPhone' ? Boolean(normalizePhone(value(id))) : Boolean(value(id));
     if (!valid) { markFieldError(field, message); if (!firstInvalid) firstInvalid = field; }
   });
+  const birthDate = normalizeDate(value('dateOfBirth'));
+  if (!isChild && birthDate && ageOn(birthDate) < 18) { markFieldError(el('dateOfBirth'), 'Participants under 18 must use the Child type with a parent or guardian signature.'); if (!firstInvalid) firstInvalid = el('dateOfBirth'); }
   const typedSignature = isChild ? el('guardianTypedSignature') : el('participantTypedSignature');
   const drawnCanvas = isChild ? signatureCanvas('guardianSignature') : signatureCanvas('participantSignature');
   if (!value(typedSignature.id)) { markFieldError(typedSignature, 'Enter the required typed signature.'); if (!firstInvalid) firstInvalid = typedSignature; }
@@ -169,6 +194,7 @@ function applyWaiverRecord(record) {
   const contact = record.contact || {};
   fields.forEach((field) => { if (field !== 'participantName' && el(field)) el(field).value = field === 'dateOfBirth' ? displayDate(contact[field]) : field === 'phone' || field === 'emergencyPhone' ? formatPhoneInput(contact[field]) : contact[field] || (field === 'parentGuardianName' ? record.parentGuardianName || '' : ''); });
   const sig = record.signature?.typed || record.signature?.drawnDataUrl ? record.signature : record.snapshot?.signature || {};
+  el('signerRelationship').value = record.signerRelationship || '';
   const isChild = getStudentType() === 'kids';
   const prefix = isChild ? 'guardian' : 'participant';
   const other = isChild ? 'participant' : 'guardian';
@@ -197,6 +223,7 @@ function updatePreview() {
 
 function resetForm(message = 'Ready') {
   fields.forEach((field) => { if (el(field)) el(field).value = ''; });
+  el('signerRelationship').value = '';
   el('studentRecord').value = '';
   el('participantTypedSignature').value = '';
   el('guardianTypedSignature').value = '';
@@ -224,25 +251,41 @@ async function buildRecord() {
   const drawnCanvas = isChild ? signatureCanvas('guardianSignature') : signatureCanvas('participantSignature');
   const student = await ensureStudent();
   if (!student) return null;
+  const waiverText = waiverWording(isChild);
+  const signature = { typed: typedSignature, drawnDataUrl: drawnCanvas.toDataURL('image/png'), agreed: el('agreement').checked };
   return {
     studentType: student.type,
     studentId: student.id,
     participantName: value('participantName'),
     parentGuardianName: contact.parentGuardianName,
+    signerRelationship: isChild ? value('signerRelationship') : '',
     contact,
-    signature: { typed: typedSignature, drawnDataUrl: drawnCanvas.toDataURL('image/png'), agreed: el('agreement').checked },
-    snapshot: { participantName: value('participantName'), parentGuardianName: contact.parentGuardianName, contact: { ...contact }, signature: { typed: typedSignature, drawnDataUrl: drawnCanvas.toDataURL('image/png'), agreed: el('agreement').checked } },
+    signature,
+    waiverText,
+    waiverTextSha256: await sha256Hex(waiverText),
+    signedUserAgent: navigator.userAgent,
+    snapshot: { participantName: value('participantName'), parentGuardianName: contact.parentGuardianName, contact: { ...contact }, signature: { ...signature } },
   };
 }
 
 async function saveWaiver() {
+  const button = el('saveWaiver');
+  if (button.disabled) return;
   let record;
   try { record = await buildRecord(); } catch (error) { setStatus(`Student could not be synced: ${error.message}`); return; }
   if (!record) { setStatus('Complete all fields, draw the required signature, and accept the waiver'); return; }
-  waiverStore.createWaiver(record);
-  setStatus('Saved and locked');
-  renderRecords();
-  resetForm('Saved and locked. Ready for a new waiver.');
+  button.disabled = true;
+  setStatus('Saving waiver...');
+  try {
+    const saved = await waiverStore.createWaiver(record);
+    renderRecords();
+    resetForm(saved.pdfError ? 'Waiver saved. The PDF copy failed; open the waiver under Signed Waivers and use Create PDF copy.' : 'Saved and locked. PDF copy stored. Ready for a new waiver.');
+  } catch (error) {
+    console.error('Waiver save failed', error);
+    setStatus(`NOT SAVED: ${error.message || error}. The form was kept; check your connection and try again.`);
+  } finally {
+    button.disabled = false;
+  }
 }
 
 function makeInput(label, field, record) {
@@ -277,10 +320,18 @@ function renderRecord(record) {
   sigBox.append(typedLine);
   if (sig.drawnDataUrl) { const img = document.createElement('img'); img.src = sig.drawnDataUrl; img.alt = 'Drawn signature'; img.className = 'printed-signature'; img.style.cssText = 'max-width:280px;max-height:90px;border:1px solid #ccc;background:#fff'; sigBox.append(img); } else { const none = document.createElement('p'); none.textContent = 'Drawn signature: Not saved'; sigBox.append(none); }
   sigBox.append(agreedLine);
+  const audit = document.createElement('p'); audit.className = 'muted';
+  audit.textContent = `Signed ${record.signedAt || ''} (server time) · Collected by: ${record.signedByEmail || 'not recorded'}${record.signerRelationship ? ` · Signer relationship: ${record.signerRelationship}` : ''}${record.waiverTextSha256 ? ` · Wording hash: ${record.waiverTextSha256.slice(0, 12)}…` : ' · Wording not stored (signed before this was tracked)'}`;
+  sigBox.append(audit);
   body.appendChild(sigBox);
-  const save = document.createElement('button'); save.className = 'btn save'; save.textContent = 'Save contact changes'; save.addEventListener('click', () => { const contact = {}; grid.querySelectorAll('input').forEach((input) => { contact[input.dataset.field] = input.dataset.field === 'dateOfBirth' ? normalizeDate(input.value) : input.dataset.field === 'phone' || input.dataset.field === 'emergencyPhone' ? normalizePhone(input.value) : input.value.trim(); }); if (!contact.dateOfBirth || !contact.phone || !contact.emergencyPhone) { setStatus('Enter a valid date of birth and phone numbers.'); return; } waiverStore.updateWaiverContact(record.id, contact); setStatus('Contact details updated'); renderRecords(); });
+  const save = document.createElement('button'); save.className = 'btn save'; save.textContent = 'Save contact changes'; save.addEventListener('click', async () => { const contact = {}; grid.querySelectorAll('input').forEach((input) => { contact[input.dataset.field] = input.dataset.field === 'dateOfBirth' ? normalizeDate(input.value) : input.dataset.field === 'phone' || input.dataset.field === 'emergencyPhone' ? normalizePhone(input.value) : input.value.trim(); }); if (!contact.dateOfBirth || !contact.phone || !contact.emergencyPhone) { setStatus('Enter a valid date of birth and phone numbers.'); return; } try { await waiverStore.updateWaiverContact(record.id, contact); setStatus('Contact details updated'); renderRecords(); } catch (error) { setStatus(`Contact changes NOT saved: ${error.message || error}`); } });
+  const pdf = document.createElement('button'); pdf.className = 'btn'; pdf.textContent = record.pdfPath ? 'Open PDF copy' : 'Create PDF copy'; pdf.disabled = !record.waiverText;
+  pdf.addEventListener('click', async () => {
+    const popup = window.open('', '_blank');
+    try { const url = await waiverStore.getPdfUrl(record.id); if (popup) popup.location.href = url; else window.location.href = url; renderRecords(); } catch (error) { popup?.close(); setStatus(`PDF copy unavailable: ${error.message || error}`); }
+  });
   const print = document.createElement('button'); print.className = 'btn'; print.textContent = 'Print signed waiver'; print.addEventListener('click', () => printFullRecord(record));
-  const actions = document.createElement('div'); actions.className = 'waiver-record-actions'; actions.append(save, print); body.appendChild(actions);
+  const actions = document.createElement('div'); actions.className = 'waiver-record-actions'; actions.append(save, pdf, print); body.appendChild(actions);
   card.appendChild(body); return card;
 }
 

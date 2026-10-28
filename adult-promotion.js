@@ -1,7 +1,7 @@
 import * as students from './adult-students.js?v=2';
 import * as attendance from './adult-attendance.js?v=6';
 import * as beltSizes from './adult-belt-sizes.js?v=1';
-import * as waiverStore from './waiver-store.js?v=1';
+import * as waiverStore from './waiver-store.js?v=2';
 import { syncFromCloud, syncLocalPromotions } from './promotion-cloud.js';
 
 const RANKS = ['White', 'White 1', 'White 2', 'White 3', 'White 4', 'Blue', 'Blue 1', 'Blue 2', 'Blue 3', 'Blue 4', 'Purple', 'Purple 1', 'Purple 2', 'Purple 3', 'Purple 4', 'Brown', 'Brown 1', 'Brown 2', 'Brown 3', 'Brown 4', 'Black', 'Black 1', 'Black 2', 'Black 3', 'Black 4'];
