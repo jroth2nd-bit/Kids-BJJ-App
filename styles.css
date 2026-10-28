@@ -2100,6 +2100,14 @@ button,input,select,.btn{min-height:38px}
 .student-info-bulk-attendance-error{margin:0;color:#fca5a5;font-size:.84rem}
 .student-info-attendance-dialog-footer{display:flex;justify-content:flex-end;gap:8px;padding:12px 20px 16px;border-top:1px solid rgba(255,255,255,.1);background:#202326}
 .student-info-attendance-dialog-footer>.btn{min-width:104px}
+.waiver-thanks-dialog{width:min(440px,calc(100vw - 32px))!important;margin:auto!important;padding:0!important;border:1px solid rgba(255,255,255,.16)!important;border-radius:8px!important;background:#202326!important;color:var(--text)!important;box-shadow:0 24px 80px rgba(0,0,0,.5)!important;text-align:center}
+.waiver-thanks-dialog::backdrop{background:rgba(8,10,12,.72);backdrop-filter:blur(2px)}
+.waiver-thanks-dialog[open]{display:block!important}
+.waiver-thanks-shell{display:grid;gap:12px;padding:24px 24px 0}
+.waiver-thanks-shell h2{margin:0;font-size:1.3rem}
+.waiver-thanks-shell p{margin:0;color:var(--muted);line-height:1.5}
+.waiver-thanks-footer{display:flex;justify-content:center;padding:18px 0 22px}
+.waiver-thanks-footer>.btn{min-width:120px}
 @media (min-width:981px){.student-info-page .student-details>.student-notes-section>.student-info-notes-editor{grid-column:1 / 3!important;grid-row:3!important;width:100%!important;justify-self:stretch!important}}
 @media(max-width:600px){
   .student-info-attendance-dialog{width:calc(100vw - 16px)!important;height:calc(100dvh - 16px)!important;max-height:calc(100dvh - 16px)!important;border-radius:8px!important}

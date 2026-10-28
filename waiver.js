@@ -268,6 +268,27 @@ async function buildRecord() {
   };
 }
 
+const THANK_YOU_SECONDS = 5;
+
+function showThankYou(name) {
+  document.querySelector('.waiver-thanks-dialog')?.remove();
+  const dialog = document.createElement('dialog'); dialog.className = 'waiver-thanks-dialog';
+  dialog.setAttribute('aria-labelledby', 'waiverThanksTitle');
+  const shell = document.createElement('div'); shell.className = 'waiver-thanks-shell';
+  const title = document.createElement('h2'); title.id = 'waiverThanksTitle'; title.textContent = `Thank you, ${name}!`;
+  const message = document.createElement('p'); message.textContent = 'Your waiver has been signed and saved. Welcome to Black Lotus BJJ. We look forward to seeing you on the mats.';
+  const ok = document.createElement('button'); ok.type = 'button'; ok.className = 'btn save'; ok.textContent = 'OK';
+  const footer = document.createElement('footer'); footer.className = 'waiver-thanks-footer'; footer.appendChild(ok);
+  shell.append(title, message, footer); dialog.appendChild(shell);
+  const dismiss = () => { clearTimeout(timer); if (dialog.open) dialog.close(); dialog.remove(); };
+  const timer = setTimeout(dismiss, THANK_YOU_SECONDS * 1000);
+  ok.addEventListener('click', dismiss);
+  dialog.addEventListener('cancel', (event) => event.preventDefault());
+  document.body.appendChild(dialog);
+  dialog.showModal();
+  ok.focus();
+}
+
 async function saveWaiver() {
   const button = el('saveWaiver');
   if (button.disabled) return;
@@ -280,6 +301,7 @@ async function saveWaiver() {
     const saved = await waiverStore.createWaiver(record);
     renderRecords();
     resetForm(saved.pdfError ? 'Waiver saved. The PDF copy failed; open the waiver under Signed Waivers and use Create PDF copy.' : 'Saved and locked. PDF copy stored. Ready for a new waiver.');
+    showThankYou(saved.participantName || record.participantName);
   } catch (error) {
     console.error('Waiver save failed', error);
     setStatus(`NOT SAVED: ${error.message || error}. The form was kept; check your connection and try again.`);
