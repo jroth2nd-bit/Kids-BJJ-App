@@ -4,7 +4,7 @@ import * as adultStudents from './adult-students.js?v=5';
 import * as kidsAttendance from './attendance.js?v=7';
 import * as adultAttendance from './adult-attendance.js?v=6';
 import * as beltSizes from './shared-belt-sizes.js?v=1';
-import * as waiverStore from './waiver-store.js?v=1';
+import * as waiverStore from './waiver-store.js?v=2';
 
 const list = document.getElementById('studentInfoList');
 const filters = {
