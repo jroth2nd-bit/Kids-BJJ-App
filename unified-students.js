@@ -48,6 +48,27 @@ export function updateStudent(student, patch) {
   return true;
 }
 
+export async function deleteStudent(student) {
+  const isChild = student.studentType === 'child';
+  const studentKey = isChild ? KIDS_KEY : ADULT_KEY;
+  const studentId = Number(student.sourceId);
+  const students = read(studentKey);
+  if (!students.some((item) => Number(item.id) === studentId)) return false;
+
+  await pendingStudentSync;
+  const { error } = await supabase.from('students').delete()
+    .eq('program', isChild ? 'kids' : 'adult')
+    .eq('legacy_id', studentId);
+  if (error) throw error;
+
+  write(studentKey, students.filter((item) => Number(item.id) !== studentId));
+  const attendanceKey = isChild ? KIDS_ATTENDANCE_KEY : ADULT_ATTENDANCE_KEY;
+  write(attendanceKey, read(attendanceKey).filter((item) => Number(item.studentId) !== studentId));
+  const promotionKey = isChild ? KIDS_PROMO_KEY : ADULT_PROMO_KEY;
+  write(promotionKey, read(promotionKey).filter((item) => Number(item.studentId) !== studentId));
+  return true;
+}
+
 function moveAttendance(student, targetType, targetId) {
   const sourceKey = student.studentType === 'child' ? KIDS_ATTENDANCE_KEY : ADULT_ATTENDANCE_KEY;
   const targetKey = targetType === 'child' ? KIDS_ATTENDANCE_KEY : ADULT_ATTENDANCE_KEY;
@@ -92,4 +113,4 @@ export function updateRank(student, rank) { return updateStudent(student, { rank
 export function updateNotes(student, notes) { return updateStudent(student, { notes }); }
 export function updateAddedDate(student, addedDate) { return updateStudent(student, { addedDate }); }
 export async function flushStudentUpdates() { await pendingStudentSync; const succeeded = !studentSyncFailed; studentSyncFailed = false; return succeeded; }
-export default { getStudents, getStudent, updateStudent, changeStudentType, updateBeltSize, updateRank, updateNotes, updateAddedDate, flushStudentUpdates };
+export default { getStudents, getStudent, updateStudent, deleteStudent, changeStudentType, updateBeltSize, updateRank, updateNotes, updateAddedDate, flushStudentUpdates };
