@@ -1,4 +1,4 @@
-import * as unified from './unified-students.js?v=5';
+import * as unified from './unified-students.js?v=6';
 import * as kidsStudents from './students.js?v=7';
 import * as adultStudents from './adult-students.js?v=5';
 import * as kidsAttendance from './attendance.js?v=7';
@@ -343,7 +343,32 @@ function detailsFor(student, row, nameGroup) {
   });
   historyTitle.append(historyToggle, historyHeading, addAttendanceButton);
   history.appendChild(addArea); attendanceHistory(student, history);
-  detail.append(info, fields, waiverRow, notes, historyTitle, history);
+  const deleteRow = document.createElement('div'); deleteRow.className = 'student-info-delete-row';
+  const deleteButton = makeButton('Delete student', 'cancel student-info-delete', async () => {
+    const name = `${student.firstName} ${student.lastName}`;
+    if (!confirm(`Delete ${name}? This permanently removes the student and their attendance and promotion history. Signed waiver records are retained, and a signed waiver may prevent deletion.`)) return;
+    deleteButton.disabled = true;
+    setStatus(`Deleting ${name}...`);
+    try {
+      if (!await unified.deleteStudent(student)) {
+        setStatus('Student no longer exists.');
+        render();
+        return;
+      }
+      expanded.delete(key(student));
+      setStatus(`${name} deleted.`);
+      render();
+    } catch (error) {
+      console.error('Student deletion failed', error);
+      const message = error && error.code === '23503'
+        ? 'A signed waiver prevents deletion. The student and history were kept.'
+        : `Student deletion failed: ${error && (error.message || String(error)) || String(error)}`;
+      setStatus(message);
+      deleteButton.disabled = false;
+    }
+  });
+  deleteRow.appendChild(deleteButton);
+  detail.append(info, fields, waiverRow, notes, historyTitle, history, deleteRow);
   detail.classList.add('student-info-expanded-details');
   row.appendChild(detail);
 }
