@@ -24,12 +24,27 @@ function unwrap(element) {
 const HEADINGS = new Set(['H2', 'H3', 'H4']);
 const TEXT_BLOCKS = new Set(['P', 'H2', 'H3', 'H4']);
 
+const isBlank = (el) => !el.textContent.trim() && !el.querySelector(':not(br)');
+
+// Moves a paragraph out of the text block containing it, splitting that block so
+// the text before and after keeps its own line and style.
+function hoist(el) {
+  const parent = el.parentElement;
+  const tail = parent.cloneNode(false);
+  while (el.nextSibling) tail.appendChild(el.nextSibling);
+  parent.after(el);
+  el.after(tail);
+  if (isBlank(parent)) parent.remove();
+  if (isBlank(tail)) tail.remove();
+}
+
 // Chrome can leave blocks inside blocks (for example a heading inside a heading); keep the innermost.
 function flattenBlocks(root) {
   Array.from(root.querySelectorAll('p, h2, h3, h4')).forEach((el) => {
     const parent = el.parentElement;
     if (!parent || el === root) return;
-    if (el.tagName === 'P' && (TEXT_BLOCKS.has(parent.tagName) || parent.tagName === 'LI')) unwrap(el);
+    if (el.tagName === 'P' && TEXT_BLOCKS.has(parent.tagName)) hoist(el);
+    else if (el.tagName === 'P' && parent.tagName === 'LI') unwrap(el);
   });
   Array.from(root.querySelectorAll('h2, h3, h4, p')).forEach((el) => {
     if (!el.parentNode) return;
@@ -70,7 +85,8 @@ export function sanitizeNotesHtml(html) {
     if (tag === 'DIV') {
       const hasBlockChild = Array.from(element.children).some((child) => BLOCK_TAGS.has(child.tagName));
       const inTextBlock = element.parentNode && ['P', 'LI', 'H2', 'H3', 'H4'].includes(element.parentNode.tagName);
-      if (hasBlockChild || inTextBlock) {
+      const inListItem = inTextBlock && element.parentNode.tagName === 'LI';
+      if (hasBlockChild || inListItem) {
         unwrap(element);
       } else {
         const paragraph = doc.createElement('p');

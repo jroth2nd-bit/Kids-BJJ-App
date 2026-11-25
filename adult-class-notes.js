@@ -1,6 +1,6 @@
 import * as adultAttendance from './adult-attendance.js?v=6';
 import { syncFromCloud, syncLocalNotes, deleteCloudNote } from './class-notes-cloud.js?v=2';
-import { sanitizeNotesHtml, setupNotesToolbar, fillEmptyBlocks } from './notes-editor.js?v=5';
+import { sanitizeNotesHtml, setupNotesToolbar, fillEmptyBlocks } from './notes-editor.js?v=6';
 
 const NOTES_KEY = 'bjj_adult_class_notes';
 const dateInput = document.getElementById('adultNotesDate');

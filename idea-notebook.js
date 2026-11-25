@@ -1,5 +1,5 @@
 import { syncFromCloud, syncLocalNotebook } from './idea-cloud.js?v=3';
-import { sanitizeNotesHtml, setupNotesToolbar } from './notes-editor.js?v=5';
+import { sanitizeNotesHtml, setupNotesToolbar } from './notes-editor.js?v=6';
 import { makeSortable, gripIcon } from './reorder.js?v=2';
 
 const IDEAS_KEY = 'bjj_idea_notebook';
