@@ -58,7 +58,12 @@ function studentSummaryField(label, value) {
   return field;
 }
 function fillRanks(select, type, selected) { select.replaceChildren(); ranks(type).forEach((rank) => select.appendChild(new Option(rank, rank, false, rank === selected))); }
-function fillBelts(select, type, selected) { select.replaceChildren(new Option('Select size', '')); beltSizes.getSizesForType(type === 'child' ? 'kids' : 'adult').forEach((size) => select.appendChild(new Option(size, size, false, size === selected))); }
+function fillBelts(select, type, selected) {
+  select.replaceChildren(new Option('Select size', ''));
+  const sizes = type === 'child' ? [...beltSizes.getSizesForType('kids'), ...beltSizes.getSizesForType('adult')] : beltSizes.getSizesForType('adult');
+  if (selected && !sizes.includes(selected)) sizes.push(selected);
+  sizes.forEach((size) => select.appendChild(new Option(size, size, false, size === selected)));
+}
 function sanitizeNotesMarkup(value) {
   const parsed = new DOMParser().parseFromString(String(value || ''), 'text/html');
   const allowed = new Set(['P', 'BR', 'STRONG', 'B', 'EM', 'I', 'U', 'UL', 'OL', 'LI', 'H3']);
